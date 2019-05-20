@@ -22,7 +22,7 @@
             android:layout_height="60dp"
             android:layout_marginTop="20dp"
             android:background="@android:color/holo_red_dark"
-            android:text="Sound"
+            android:text="Sound on/off"
             android:textSize="15dp" />
 
         <Button
@@ -31,7 +31,7 @@
             android:layout_height="60dp"
             android:layout_marginTop="20dp"
             android:background="@android:color/holo_red_dark"
-            android:text="Login"
+            android:text="Login out"
             android:textSize="20dp" />
 
         <Button
@@ -40,7 +40,7 @@
             android:layout_height="60dp"
             android:layout_marginTop="20dp"
             android:background="@android:color/holo_red_dark"
-            android:text="offline"
+            android:text="go offline"
             android:textSize="15dp" />
 
     </LinearLayout>
@@ -63,6 +63,7 @@
             android:textSize="35dp" />
 
         <Button
+            android:id="@+id/collect_main_btn"
             android:layout_width="200dp"
             android:layout_height="70dp"
             android:layout_marginTop="70dp"
@@ -70,16 +71,18 @@
             android:textSize="35dp" />
 
         <Button
+            android:id="@+id/discover_main_btn"
             android:layout_width="200dp"
             android:layout_height="70dp"
             android:text="Discover"
             android:textSize="35dp" />
 
         <Button
+            android:id="@+id/profile_main_btn"
             android:layout_width="200dp"
             android:layout_height="70dp"
             android:layout_marginTop="30dp"
-            android:text="Friends"
+            android:text="Profile"
             android:textSize="35dp" />
 
     </LinearLayout>

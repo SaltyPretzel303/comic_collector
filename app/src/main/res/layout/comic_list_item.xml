@@ -30,7 +30,7 @@
             android:weightSum="4">
 
             <TextView
-                android:id="@+id/comic_list_item_comic_title"
+                android:id="@+id/comic_list_item_title"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
@@ -39,7 +39,7 @@
                 android:textAlignment="center" />
 
             <TextView
-                android:id="@+id/comic_list_item_author_name"
+                android:id="@+id/comic_list_item_author"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_weight="3"
@@ -53,13 +53,14 @@
     </LinearLayout>
 
     <ProgressBar
-        android:id="@+id/comic_list_item_progress_bar"
+        android:id="@+id/comic_list_item_progress"
         style="@android:style/Widget.ProgressBar.Horizontal"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="10dp"
         android:layout_weight="7"
         android:max="100"
-        android:progressBackgroundTint="@android:color/holo_green_dark" />
+        android:progressBackgroundTint="@android:color/holo_orange_dark"
+        android:progressTint="@android:color/holo_green_dark" />
 
 </LinearLayout>

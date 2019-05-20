@@ -2,6 +2,9 @@ package mosis.comiccollector.manager;
 
 import android.content.Context;
 
+import mosis.comiccollector.storage.DataStorage;
+import mosis.comiccollector.storage.FirebaseDataStorage;
+
 // SINGLETON
 public class AppManager {
 
@@ -9,6 +12,8 @@ public class AppManager {
     public Context context;
 
     private static AppManager instance;
+
+    private DataStorage comic_storage;
 
     public static AppManager getInstance() {
 
@@ -22,7 +27,12 @@ public class AppManager {
 
     private AppManager() {
 
+        this.comic_storage = new FirebaseDataStorage();
 
+    }
+
+    public DataStorage getStorage() {
+        return this.comic_storage;
     }
 
     // data storage

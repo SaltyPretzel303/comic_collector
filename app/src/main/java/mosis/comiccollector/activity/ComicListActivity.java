@@ -5,15 +5,21 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import mosis.comiccollector.R;
 import mosis.comiccollector.comic.Comic;
 import mosis.comiccollector.comic.ComicListAdapter;
+import mosis.comiccollector.manager.AppManager;
+import mosis.comiccollector.storage.DataRetrievedHandler;
 
 public class ComicListActivity extends AppCompatActivity {
 
@@ -21,52 +27,177 @@ public class ComicListActivity extends AppCompatActivity {
 
     private List<Comic> comics;
     private ComicListAdapter adapter;
-
     private ListView comics_list_view;
 
     private Button sort_button;
 
     private int selected;
 
+    private ComicListContext list_context;
+    private Map<ComicListContext, ViewInitializer> view_initializers;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.comic_list);
 
-        this.loadCommics();
-        this.initView();
+        this.populateInitializersMap();
+
+        Intent intent = this.getIntent();
+        this.list_context = ComicListContext.valueOf(intent.getStringExtra("list_context"));
+
+        this.initView(this.list_context);
 
     }
 
-    private void loadCommics() {
+    private void initView(ComicListContext list_context) {
 
-        this.comics = new ArrayList<Comic>();
+//        this.comics = new ArrayList<Comic>();
+//        this.adapter = new ComicListAdapter(getApplicationContext(), R.layout.comic_list_item, this.comics);
 
+        this.comics_list_view = (ListView) findViewById(R.id.comics_container);
+//        this.comics_list_view.setAdapter(this.adapter);
+
+        ViewInitializer initializer = this.view_initializers.get(list_context);
+        initializer.execute();
 
     }
 
-    private void initView() {
+    private void populateInitializersMap() {
 
-        this.sort_button = (Button) this.findViewById(R.id.sort_list_button);
+        this.view_initializers = new HashMap<ComicListContext, ViewInitializer>();
 
-        this.sort_button.setOnClickListener(new View.OnClickListener() {
+        this.view_initializers.put(ComicListContext.CollectedComicsList, new ViewInitializer() {
             @Override
-            public void onClick(View v) {
+            public void execute() {
 
-                Intent sort_intent = new Intent(ComicListActivity.this, SortActivity.class);
-                startActivityForResult(sort_intent, ComicListActivity.SORT_RESULT_CODE);
+                sort_button = (Button) findViewById(R.id.sort_list_button);
+                sort_button.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        Intent sort_intent = new Intent(ComicListActivity.this, SortActivity.class);
+                        startActivityForResult(sort_intent, ComicListActivity.SORT_RESULT_CODE);
+
+                    }
+                });
+
+                comics_list_view.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                        Intent preview_intent = new Intent(ComicListActivity.this, ComicPreviewActivity.class);
+
+                        preview_intent.putExtra("comic_index", position);
+
+                        startActivity(preview_intent);
+
+                    }
+                });
+
+                loadCollectedCommics();
 
             }
         });
 
-        this.comics_list_view = (ListView) this.findViewById(R.id.comics_container);
+        // ----------------------------------
 
-        for (int i = 0; i < 20; i++) {
-            this.comics.add(new Comic());
+        this.view_initializers.put(ComicListContext.DiscoverComicsList, new ViewInitializer() {
+            @Override
+            public void execute() {
+
+                sort_button = (Button) findViewById(R.id.sort_list_button);
+                sort_button.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        Intent sort_intent = new Intent(ComicListActivity.this, SortActivity.class);
+                        startActivityForResult(sort_intent, ComicListActivity.SORT_RESULT_CODE);
+
+                    }
+                });
+
+                comics_list_view.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                        Intent preview_intent = new Intent(ComicListActivity.this, ComicPreviewActivity.class);
+
+                        preview_intent.putExtra("comic_index", position);
+
+                        startActivity(preview_intent);
+
+                    }
+                });
+
+                loadDisoverComics();
+            }
+        });
+
+    }
+
+    private void loadCollectedCommics() {
+
+        DataRetrievedHandler handler = new DataRetrievedHandler() {
+            @Override
+            public void onListRetrieved(List<Comic> retrieved_data) {
+
+                comics = retrieved_data;
+                adapter = new ComicListAdapter(getApplicationContext(), R.layout.comic_list_item, comics);
+                comics_list_view.setAdapter(adapter);
+
+                adapter.notifyDataSetChanged();
+
+            }
+
+            @Override
+            public void onComicRetrieved(int index, Comic comic) {
+
+            }
+
+        };
+
+        boolean fetch_result = AppManager.getInstance().getStorage().getCollectedComics(0, handler);
+
+        if (fetch_result == true) {
+            // service available
+
+            // TODO display some please wait message
+
         }
 
-        this.adapter = new ComicListAdapter(getApplicationContext(), R.layout.comic_list_item, this.comics);
-        this.comics_list_view.setAdapter(this.adapter);
+
+    }
+
+    private void loadDisoverComics() {
+
+        DataRetrievedHandler handler = new DataRetrievedHandler() {
+            @Override
+            public void onListRetrieved(List<Comic> retrieved_data) {
+
+                comics = retrieved_data;
+                adapter = new ComicListAdapter(getApplicationContext(), R.layout.comic_list_item, comics);
+                comics_list_view.setAdapter(adapter);
+
+                adapter.notifyDataSetChanged();
+
+            }
+
+            @Override
+            public void onComicRetrieved(int index, Comic comic) {
+
+            }
+
+        };
+
+        boolean fetch_result = AppManager.getInstance().getStorage().getDiscoverComics(0, handler);
+
+        if (fetch_result == true) {
+            // service available
+
+            // TODO display some please wait message
+
+        }
 
     }
 
@@ -76,4 +207,5 @@ public class ComicListActivity extends AppCompatActivity {
 
 
     }
+
 }

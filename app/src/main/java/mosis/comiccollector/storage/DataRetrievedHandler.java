@@ -6,6 +6,8 @@ import mosis.comiccollector.comic.Comic;
 
 public interface DataRetrievedHandler {
 
-    void execute(List<Comic> retrieved_data);
+    void onListRetrieved(List<Comic> retrieved_data);
+
+    void onComicRetrieved(int index, Comic comic);
 
 }

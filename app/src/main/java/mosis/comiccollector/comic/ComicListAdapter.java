@@ -41,9 +41,9 @@ public class ComicListAdapter extends ArrayAdapter<Comic> {
         // populate view with model data
 
         ((ImageView) old_view.findViewById(R.id.comic_list_item_icon)).setImageBitmap(comic.icon);
-        ((TextView) old_view.findViewById(R.id.comic_list_item_comic_title)).setText(comic.title);
-        ((TextView) old_view.findViewById(R.id.comic_list_item_author_name)).setText(comic.author);
-        ((ProgressBar) old_view.findViewById(R.id.comic_list_item_progress_bar)).setProgress(comic.progress);
+        ((TextView) old_view.findViewById(R.id.comic_list_item_title)).setText(comic.title);
+        ((TextView) old_view.findViewById(R.id.comic_list_item_author)).setText(comic.author);
+        ((ProgressBar) old_view.findViewById(R.id.comic_list_item_progress)).setProgress(comic.progress);
 
         return old_view;
     }

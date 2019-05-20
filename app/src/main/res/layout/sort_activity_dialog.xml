@@ -9,7 +9,10 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="20dp"
-        android:background="@android:color/white" />
+        android:background="@android:color/transparent"
+        android:paddingHorizontal="10dp"
+        android:text="Sort by: "
+        android:textColor="@android:color/white" />
 
     <LinearLayout
         android:layout_width="match_parent"
