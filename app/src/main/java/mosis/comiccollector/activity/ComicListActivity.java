@@ -8,9 +8,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
-import android.widget.Toast;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +32,7 @@ public class ComicListActivity extends AppCompatActivity {
     private int selected;
 
     private ComicListContext list_context;
+    // remove
     private Map<ComicListContext, ViewInitializer> view_initializers;
 
     @Override
@@ -41,33 +40,64 @@ public class ComicListActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.comic_list);
 
-        this.populateInitializersMap();
+//        this.populateInitializersMap();
 
         Intent intent = this.getIntent();
         this.list_context = ComicListContext.valueOf(intent.getStringExtra("list_context"));
 
         this.initView(this.list_context);
+        this.initClickHandlers();
 
     }
 
     private void initView(ComicListContext list_context) {
 
-//        this.comics = new ArrayList<Comic>();
-//        this.adapter = new ComicListAdapter(getApplicationContext(), R.layout.comic_list_item, this.comics);
-
         this.comics_list_view = (ListView) findViewById(R.id.comics_container);
+        this.sort_button = (Button) this.findViewById(R.id.sort_list_button);
+
+        this.loadComics();
+//        this.adapter = new ComicListAdapter(getApplicationContext(), R.layout.small_preview, this.comics);
+
 //        this.comics_list_view.setAdapter(this.adapter);
 
-        ViewInitializer initializer = this.view_initializers.get(list_context);
-        initializer.execute();
+//        ViewInitializer initializer = this.view_initializers.get(list_context);
+//        initializer.execute();
 
     }
 
+    private void loadComics() {
+
+        switch (this.list_context) {
+            case CollectedComics:
+
+                this.loadCollectedCommics();
+
+                break;
+            case DiscoverComics:
+
+                this.loadDiscoverComics();
+
+                break;
+            case QueuedComics:
+
+                this.loadQueuedComics();
+
+                break;
+            case MyComics:
+
+                this.loadMyComics();
+
+                break;
+        }
+
+    }
+
+    // TODO overengineering, remove this method
     private void populateInitializersMap() {
 
         this.view_initializers = new HashMap<ComicListContext, ViewInitializer>();
 
-        this.view_initializers.put(ComicListContext.CollectedComicsList, new ViewInitializer() {
+        this.view_initializers.put(ComicListContext.CollectedComics, new ViewInitializer() {
             @Override
             public void execute() {
 
@@ -86,7 +116,7 @@ public class ComicListActivity extends AppCompatActivity {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
-                        Intent preview_intent = new Intent(ComicListActivity.this, ComicPreviewActivity.class);
+                        Intent preview_intent = new Intent(ComicListActivity.this, FullPreviewActivity.class);
 
                         preview_intent.putExtra("comic_index", position);
 
@@ -102,7 +132,7 @@ public class ComicListActivity extends AppCompatActivity {
 
         // ----------------------------------
 
-        this.view_initializers.put(ComicListContext.DiscoverComicsList, new ViewInitializer() {
+        this.view_initializers.put(ComicListContext.DiscoverComics, new ViewInitializer() {
             @Override
             public void execute() {
 
@@ -121,7 +151,7 @@ public class ComicListActivity extends AppCompatActivity {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
-                        Intent preview_intent = new Intent(ComicListActivity.this, ComicPreviewActivity.class);
+                        Intent preview_intent = new Intent(ComicListActivity.this, FullPreviewActivity.class);
 
                         preview_intent.putExtra("comic_index", position);
 
@@ -130,7 +160,26 @@ public class ComicListActivity extends AppCompatActivity {
                     }
                 });
 
-                loadDisoverComics();
+                loadDiscoverComics();
+            }
+        });
+
+        this.view_initializers.put(ComicListContext.QueuedComics, new ViewInitializer() {
+            @Override
+            public void execute() {
+
+                sort_button = (Button) findViewById(R.id.sort_list_button);
+                sort_button.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        Intent sort_intent = new Intent(ComicListActivity.this, SortActivity.class);
+                        startActivityForResult(sort_intent, ComicListActivity.SORT_RESULT_CODE);
+
+                    }
+                });
+
+
             }
         });
 
@@ -143,7 +192,7 @@ public class ComicListActivity extends AppCompatActivity {
             public void onListRetrieved(List<Comic> retrieved_data) {
 
                 comics = retrieved_data;
-                adapter = new ComicListAdapter(getApplicationContext(), R.layout.comic_list_item, comics);
+                adapter = new ComicListAdapter(getApplicationContext(), R.layout.small_preview, comics);
                 comics_list_view.setAdapter(adapter);
 
                 adapter.notifyDataSetChanged();
@@ -157,7 +206,7 @@ public class ComicListActivity extends AppCompatActivity {
 
         };
 
-        boolean fetch_result = AppManager.getInstance().getStorage().getCollectedComics(0, handler);
+        boolean fetch_result = AppManager.getInstance().getStorage().fetchCollectedComics(0, handler);
 
         if (fetch_result == true) {
             // service available
@@ -169,14 +218,14 @@ public class ComicListActivity extends AppCompatActivity {
 
     }
 
-    private void loadDisoverComics() {
+    private void loadDiscoverComics() {
 
         DataRetrievedHandler handler = new DataRetrievedHandler() {
             @Override
             public void onListRetrieved(List<Comic> retrieved_data) {
 
                 comics = retrieved_data;
-                adapter = new ComicListAdapter(getApplicationContext(), R.layout.comic_list_item, comics);
+                adapter = new ComicListAdapter(getApplicationContext(), R.layout.small_preview, comics);
                 comics_list_view.setAdapter(adapter);
 
                 adapter.notifyDataSetChanged();
@@ -190,7 +239,7 @@ public class ComicListActivity extends AppCompatActivity {
 
         };
 
-        boolean fetch_result = AppManager.getInstance().getStorage().getDiscoverComics(0, handler);
+        boolean fetch_result = AppManager.getInstance().getStorage().fetchDiscoverComics(0, handler);
 
         if (fetch_result == true) {
             // service available
@@ -198,6 +247,48 @@ public class ComicListActivity extends AppCompatActivity {
             // TODO display some please wait message
 
         }
+
+    }
+
+    // TODO implement
+    private void loadQueuedComics() {
+        this.loadCollectedCommics();
+    }
+
+
+    // TODO implement
+    private void loadMyComics() {
+
+    }
+
+    private void initClickHandlers() {
+
+        this.sort_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                Intent sort_intent = new Intent(ComicListActivity.this, SortActivity.class);
+
+                sort_intent.putExtra("sort_context", String.valueOf(list_context));
+
+                startActivityForResult(sort_intent, ComicListActivity.SORT_RESULT_CODE);
+
+            }
+        });
+
+        this.comics_list_view.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                Intent full_preview = new Intent(ComicListActivity.this, FullPreviewActivity.class);
+
+                full_preview.putExtra("comic_index", position);
+                full_preview.putExtra("preview_context", String.valueOf(list_context));
+
+                startActivity(full_preview);
+
+            }
+        });
 
     }
 

@@ -11,23 +11,19 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:ignore="AllowBackup,GoogleAppIndexingWarning">
-        <activity android:name=".activity.ProfileActivity"></activity>
+        <activity android:name=".activity.ProfileActivity" />
         <activity
             android:name=".activity.ReadActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_read"
             android:theme="@style/FullscreenTheme" />
-
         <activity
-            android:name=".activity.ComicPreviewActivity"
+            android:name=".activity.FullPreviewActivity"
             android:theme="@style/NoTitleDialog" />
-
         <activity
             android:name=".activity.SortActivity"
             android:theme="@style/NoTitleDialog" />
-
         <activity android:name=".activity.ComicListActivity" />
-
         <activity android:name=".activity.MainPageActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

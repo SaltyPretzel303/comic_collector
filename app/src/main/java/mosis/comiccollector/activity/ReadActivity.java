@@ -44,7 +44,7 @@ public class ReadActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.read_activity);
+        setContentView(R.layout.read_page);
 
 
         this.extreactInfo();
@@ -57,7 +57,7 @@ public class ReadActivity extends AppCompatActivity {
         Intent data_intent = this.getIntent();
         int comic_index = Integer.parseInt(data_intent.getExtras().get("comic_index").toString());
 
-        this.comic = AppManager.getInstance().getStorage().getSingleComic(comic_index);
+        this.comic = AppManager.getInstance().getStorage().getComicAt(comic_index);
 
     }
 

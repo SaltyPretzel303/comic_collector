@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/darker_gray"
+    android:gravity="center"
+    android:orientation="vertical">
+
+    <include
+        android:id="@+id/basic_preview"
+        layout="@layout/small_preview" />
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/preview_pages_list"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:layout_marginHorizontal="10dp"
+        android:layout_marginTop="5dp"
+        android:orientation="horizontal"
+        app:layoutManager="android.support.v7.widget.LinearLayoutManager">
+
+    </android.support.v7.widget.RecyclerView>
+
+    <LinearLayout
+        android:id="@+id/full_preview_controls_container"
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
+        android:orientation="vertical" />
+
+</LinearLayout>

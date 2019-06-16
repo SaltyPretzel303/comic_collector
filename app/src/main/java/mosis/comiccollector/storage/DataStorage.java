@@ -6,12 +6,22 @@ import mosis.comiccollector.comic.Comic;
 
 public interface DataStorage {
 
-    // OK
-    boolean getCollectedComics(int index, DataRetrievedHandler handler);
+    List<Comic> getCollectedComcis();
 
-    // OK
-    boolean getDiscoverComics(int index, DataRetrievedHandler handler);
+    List<Comic> getDiscoverComics();
 
-    Comic getSingleComic(int index);
+    List<Comic> getQueuedComics();
+
+    List<Comic> getMyComics();
+
+    boolean fetchCollectedComics(int index, DataRetrievedHandler handler);
+
+    boolean fetchDiscoverComics(int index, DataRetrievedHandler handler);
+
+    Comic getComicAt(int index);
+
+    Comic getComic(String name, String author);
+
+    void downloadCollectedPaged(int index);
 
 }

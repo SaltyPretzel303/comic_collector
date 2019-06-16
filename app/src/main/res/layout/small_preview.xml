@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="150dp"
-    android:background="@drawable/comic_list_item_background"
+    android:background="@drawable/small_preview_background"
     android:orientation="vertical"
     android:padding="10dp"
     android:weightSum="8">

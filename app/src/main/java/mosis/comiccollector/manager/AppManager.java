@@ -2,18 +2,22 @@ package mosis.comiccollector.manager;
 
 import android.content.Context;
 
+import mosis.comiccollector.login.FakeLoginManager;
+import mosis.comiccollector.login.LoginManager;
 import mosis.comiccollector.storage.DataStorage;
-import mosis.comiccollector.storage.FirebaseDataStorage;
+import mosis.comiccollector.storage.MemoryDataStorage;
 
-// SINGLETON
+// ATTENTION SINGLETON
 public class AppManager {
 
-    // TODO REMOVE
+    // TODO REMOVE; just for testing
+    // used in no-argument Comic constructor
     public Context context;
 
     private static AppManager instance;
 
     private DataStorage comic_storage;
+    private LoginManager login_manager;
 
     public static AppManager getInstance() {
 
@@ -27,12 +31,20 @@ public class AppManager {
 
     private AppManager() {
 
-        this.comic_storage = new FirebaseDataStorage();
+        // TODO replace with FirebaseDataStorage, this one is just for testing
+        this.comic_storage = new MemoryDataStorage();
+
+        // TODO replace with FirebaseDataStorage
+        this.login_manager = new FakeLoginManager();
 
     }
 
     public DataStorage getStorage() {
         return this.comic_storage;
+    }
+
+    public LoginManager getLoginManager() {
+        return this.login_manager;
     }
 
     // data storage

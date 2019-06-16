@@ -55,6 +55,13 @@ public class Comic {
 
     }
 
+    public void addPage(Bitmap new_page) {
+
+        this.pages.add(new_page);
+
+    }
+
+
     public void addPages(List<Bitmap> new_pages) {
 
         this.pages.addAll(new_pages);

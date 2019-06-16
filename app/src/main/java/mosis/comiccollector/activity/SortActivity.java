@@ -16,10 +16,18 @@ public class SortActivity extends AppCompatActivity {
 
     private String sort_type;
 
+    private ComicListContext sort_context;
+
+    // TODO create map with viewInitializers
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.sort_activity_dialog);
+
+        Intent intent = this.getIntent();
+        this.sort_context = ComicListContext.valueOf(intent.getStringExtra("sort_context"));
 
         this.initView();
 

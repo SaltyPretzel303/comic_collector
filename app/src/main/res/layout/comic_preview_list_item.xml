@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="match_parent"
-    android:background="@drawable/comic_list_item_background">
+    android:background="@drawable/small_preview_background">
 
     <android.support.v7.widget.CardView
         android:layout_width="wrap_content"
