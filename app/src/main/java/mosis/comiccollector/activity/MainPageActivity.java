@@ -1,6 +1,8 @@
 package mosis.comiccollector.activity;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -30,8 +32,10 @@ public class MainPageActivity extends AppCompatActivity {
 
         this.initButtons();
 
-        if (!this.isLoggedIn()) {
-            this.showLoginDialog();
+        if (!this.hasUser()) {
+
+            this.showLoginDialog(true);
+
         }
 
     }
@@ -95,17 +99,25 @@ public class MainPageActivity extends AppCompatActivity {
 
     }
 
-    private boolean isLoggedIn() {
+    private boolean hasUser() {
 
-        // TODO check localstoreage
+        Context context = getApplicationContext();
 
-        return true;
+        SharedPreferences prefs = context.getSharedPreferences("comic_collector", MODE_PRIVATE);
+        if (prefs.contains("user_username")) {
+
+            AppManager.getInstance().getUsersManager().reloadUser(prefs);
+
+            return true;
+        } else {
+
+            return false;
+        }
+
     }
 
 
-    private void showLoginDialog() {
-
-        final boolean forced = false;
+    private void showLoginDialog(final boolean forced) {
 
         this.login_dialog = new LoginDialog(this, forced, new BackPressHandler() {
             @Override

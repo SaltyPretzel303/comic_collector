@@ -1,11 +1,14 @@
 package mosis.comiccollector.manager;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 
-import mosis.comiccollector.login.FakeLoginManager;
-import mosis.comiccollector.login.LoginManager;
+import mosis.comiccollector.login.FirebaseUsersManager;
+import mosis.comiccollector.login.UsersManager;
 import mosis.comiccollector.storage.DataStorage;
 import mosis.comiccollector.storage.MemoryDataStorage;
+
+import mosis.comiccollector.storage.model.User;
 
 // ATTENTION SINGLETON
 public class AppManager {
@@ -17,7 +20,7 @@ public class AppManager {
     private static AppManager instance;
 
     private DataStorage comic_storage;
-    private LoginManager login_manager;
+    private UsersManager login_manager;
 
     public static AppManager getInstance() {
 
@@ -34,8 +37,7 @@ public class AppManager {
         // TODO replace with FirebaseDataStorage, this one is just for testing
         this.comic_storage = new MemoryDataStorage();
 
-        // TODO replace with FirebaseDataStorage
-        this.login_manager = new FakeLoginManager();
+        this.login_manager = new FirebaseUsersManager();
 
     }
 
@@ -43,11 +45,13 @@ public class AppManager {
         return this.comic_storage;
     }
 
-    public LoginManager getLoginManager() {
+    public UsersManager getUsersManager() {
         return this.login_manager;
     }
 
-    // data storage
+    // data storage manager
+
+    // login manager
 
     // user information
 

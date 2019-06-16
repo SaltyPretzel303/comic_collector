@@ -1,7 +1,5 @@
 package mosis.comiccollector.storage;
 
-import com.google.firebase.firestore.remote.Datastore;
-
 import java.util.List;
 
 import mosis.comiccollector.comic.Comic;

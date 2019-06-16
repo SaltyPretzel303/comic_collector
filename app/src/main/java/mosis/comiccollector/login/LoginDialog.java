@@ -2,6 +2,7 @@ package mosis.comiccollector.login;
 
 import android.app.Dialog;
 import android.content.Context;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -16,6 +17,8 @@ public class LoginDialog extends Dialog {
     private Context app_context;
 
     private boolean forced;
+
+    private TextView login_status_tv;
 
     private EditText username_et;
     private EditText password_et;
@@ -35,7 +38,7 @@ public class LoginDialog extends Dialog {
 
     private BackPressHandler back_press_handler;
 
-    public LoginDialog(Context context, boolean forced,BackPressHandler back_handler) {
+    public LoginDialog(Context context, boolean forced, BackPressHandler back_handler) {
         super(context);
         this.setContentView(R.layout.login_layout);
 
@@ -49,7 +52,7 @@ public class LoginDialog extends Dialog {
 
         this.app_context = context;
 
-        this.back_press_handler=back_handler;
+        this.back_press_handler = back_handler;
 
         this.initClickActions();
 
@@ -65,17 +68,33 @@ public class LoginDialog extends Dialog {
 
                 // TODO check inputs (empty strings, null, ... )
 
-                AppManager.getInstance().getLoginManager().login(username_et.getText().toString(),
-                                                                 password_et.getText().toString(),
-                                                                 new OnResponseAction() {
-                                                                     @Override
-                                                                     public void execute(boolean result) {
-                                                                         Toast.makeText(app_context,
-                                                                                        "Successful login ... ",
-                                                                                        Toast.LENGTH_SHORT).show();
-                                                                         dismiss();
-                                                                     }
-                                                                 });
+                final String username = username_et.getText().toString();
+                final String password = password_et.getText().toString();
+
+
+                AppManager.getInstance().getUsersManager().login(username, password, new OnResponseAction() {
+                    @Override
+                    public void execute(LoginResponseType response) {
+
+                        if (response == LoginResponseType.Success) {
+
+                            // write user to local storage
+
+
+                            dismiss();
+                            Toast.makeText(app_context, "Successfull login", Toast.LENGTH_SHORT).show();
+
+                        } else {
+
+                            handleError(response);
+
+                            Toast.makeText(app_context, "Login error ... ", Toast.LENGTH_SHORT).show();
+
+                        }
+
+                    }
+                });
+
 
             }
         };
@@ -87,35 +106,31 @@ public class LoginDialog extends Dialog {
                 final String username = username_et.getText().toString();
                 final String password = password_et.getText().toString();
 
-                AppManager.getInstance().getLoginManager().register(username,
-                                                                    password,
-                                                                    new OnResponseAction() {
-                                                                        @Override
-                                                                        public void execute(boolean result) {
-                                                                            Toast.makeText(app_context,
-                                                                                           "Successful registration ... ",
-                                                                                           Toast.LENGTH_SHORT).show();
+                // TODO check inputs
+
+                AppManager.getInstance().getUsersManager().register(username, password, new OnResponseAction() {
+                    @Override
+                    public void execute(LoginResponseType response) {
+
+                        if (response == LoginResponseType.Success) {
+
+                            showMessage("Successful registration ... ");
+                            context_switch.performClick();
+                            // switch form to loginForm
 
 
-                                                                            // login registered user
+                        } else {
 
-                                                                            AppManager.getInstance()
-                                                                                    .getLoginManager()
-                                                                                    .login(
-                                                                                            username,
-                                                                                            password,
-                                                                                            new OnResponseAction() {
-                                                                                                @Override
-                                                                                                public void execute(
-                                                                                                        boolean result) {
+                            handleError(response);
 
-                                                                                                    dismiss();
+                            Toast.makeText(app_context, "Registration error ... ", Toast.LENGTH_SHORT).show();
 
-                                                                                                }
-                                                                                            });
+                        }
 
-                                                                        }
-                                                                    });
+
+                    }
+                });
+
 
             }
         };
@@ -125,6 +140,7 @@ public class LoginDialog extends Dialog {
             public void onClick(View v) {
 
                 // TODO adjust text watchers
+                // clear text inputs
 
                 rep_password_et.setVisibility(View.GONE);
                 rep_password_tw.setVisibility(View.GONE);
@@ -144,6 +160,7 @@ public class LoginDialog extends Dialog {
             public void onClick(View v) {
 
                 // TODO adjust text watchers
+                // clear text inputs
 
                 rep_password_et.setVisibility(View.VISIBLE);
                 rep_password_tw.setVisibility(View.VISIBLE);
@@ -160,6 +177,8 @@ public class LoginDialog extends Dialog {
     }
 
     private void initView() {
+
+        this.login_status_tv = (TextView) this.findViewById(R.id.login_status_field);
 
         this.username_et = (EditText) this.findViewById(R.id.login_username_et);
         this.password_et = (EditText) this.findViewById(R.id.login_password_et);
@@ -196,11 +215,28 @@ public class LoginDialog extends Dialog {
 
     @Override
     public void onBackPressed() {
-//        super.onBackPressed();
 
         if (this.back_press_handler != null) {
             this.back_press_handler.execute();
+        } else {
+            super.onBackPressed();
         }
 
     }
+
+    private void handleError(LoginResponseType error_type) {
+
+        showMessage(error_type.toString());
+        Log.e("FirebaseLogin", error_type.toString());
+
+    }
+
+
+    private void showMessage(String message) {
+
+        this.login_status_tv.setText(message);
+
+    }
+
 }
+

@@ -25,7 +25,7 @@ public class ComicListActivity extends AppCompatActivity {
 
     private List<Comic> comics;
     private ComicListAdapter adapter;
-    private ListView comics_list_view;
+    private ListView list_view;
 
     private Button sort_button;
 
@@ -52,13 +52,13 @@ public class ComicListActivity extends AppCompatActivity {
 
     private void initView(ComicListContext list_context) {
 
-        this.comics_list_view = (ListView) findViewById(R.id.comics_container);
+        this.list_view = (ListView) findViewById(R.id.comics_container);
         this.sort_button = (Button) this.findViewById(R.id.sort_list_button);
 
         this.loadComics();
 //        this.adapter = new ComicListAdapter(getApplicationContext(), R.layout.small_preview, this.comics);
 
-//        this.comics_list_view.setAdapter(this.adapter);
+//        this.list_view.setAdapter(this.adapter);
 
 //        ViewInitializer initializer = this.view_initializers.get(list_context);
 //        initializer.execute();
@@ -112,7 +112,7 @@ public class ComicListActivity extends AppCompatActivity {
                     }
                 });
 
-                comics_list_view.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                list_view.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
@@ -147,7 +147,7 @@ public class ComicListActivity extends AppCompatActivity {
                     }
                 });
 
-                comics_list_view.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                list_view.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
@@ -193,9 +193,11 @@ public class ComicListActivity extends AppCompatActivity {
 
                 comics = retrieved_data;
                 adapter = new ComicListAdapter(getApplicationContext(), R.layout.small_preview, comics);
-                comics_list_view.setAdapter(adapter);
+                list_view.setAdapter(adapter);
 
                 adapter.notifyDataSetChanged();
+
+                // cancel loading screen
 
             }
 
@@ -226,7 +228,7 @@ public class ComicListActivity extends AppCompatActivity {
 
                 comics = retrieved_data;
                 adapter = new ComicListAdapter(getApplicationContext(), R.layout.small_preview, comics);
-                comics_list_view.setAdapter(adapter);
+                list_view.setAdapter(adapter);
 
                 adapter.notifyDataSetChanged();
 
@@ -276,7 +278,7 @@ public class ComicListActivity extends AppCompatActivity {
             }
         });
 
-        this.comics_list_view.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        this.list_view.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
