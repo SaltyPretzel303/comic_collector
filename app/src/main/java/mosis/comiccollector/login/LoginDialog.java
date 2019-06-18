@@ -80,7 +80,6 @@ public class LoginDialog extends Dialog {
 
                             // write user to local storage
 
-
                             dismiss();
                             Toast.makeText(app_context, "Successfull login", Toast.LENGTH_SHORT).show();
 

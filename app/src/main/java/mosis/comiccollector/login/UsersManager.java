@@ -1,5 +1,6 @@
 package mosis.comiccollector.login;
 
+import android.content.Context;
 import android.content.SharedPreferences;
 
 import mosis.comiccollector.storage.model.User;
@@ -12,8 +13,12 @@ public interface UsersManager {
 
     User getCurrentUser();
 
-    void reloadUser(SharedPreferences prefs);
+    void reloadUser();
 
     void fetchUser(String username);
+
+    boolean hasUser();
+
+    void clearUser();
 
 }

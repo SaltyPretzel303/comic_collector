@@ -1,8 +1,11 @@
 package mosis.comiccollector.activity;
 
+import android.app.Activity;
 import android.content.Intent;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 
@@ -10,15 +13,16 @@ import mosis.comiccollector.R;
 
 public class ProfileActivity extends AppCompatActivity {
 
-    private ImageView profil_pic_iv;
+    static private int LOAD_IMAGE_ACTIVITY = 123;
 
-    private LoadImageDialog dialog;
+    private ImageView profil_pic_iv;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.profile_page);
 
+        this.initView();
 
     }
 
@@ -30,9 +34,11 @@ public class ProfileActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                dialog = new LoadImageDialog(getApplicationContext());
+                Log.e("WorkspaceAct", "Image click ");
 
-                dialog.show();
+                Intent intent = new Intent(ProfileActivity.this, LoadImageActivity.class);
+
+                startActivityForResult(intent, ProfileActivity.LOAD_IMAGE_ACTIVITY);
 
             }
 
@@ -41,4 +47,15 @@ public class ProfileActivity extends AppCompatActivity {
 
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (resultCode == Activity.RESULT_OK) {
+
+            // set new picture in previewImageView
+
+        }
+
+    }
 }

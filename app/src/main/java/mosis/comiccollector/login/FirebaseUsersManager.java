@@ -1,7 +1,9 @@
 package mosis.comiccollector.login;
 
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -9,8 +11,10 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import java.net.UnknownServiceException;
+import java.util.Map;
 
+import mosis.comiccollector.MyApplication;
+import mosis.comiccollector.manager.Constants;
 import mosis.comiccollector.storage.model.User;
 
 public class FirebaseUsersManager implements UsersManager {
@@ -39,16 +43,28 @@ public class FirebaseUsersManager implements UsersManager {
 
                         if (dataSnapshot.exists()) {
 
-                            // user exits, check password match
-                            if (dataSnapshot.child("password").equals(password)) {
+                            // first (and the only in this case) entry from the map
+                            User user = User.parseMap(((Map<String, Map<String, String>>) dataSnapshot.getValue()).entrySet()
+                                                              .iterator()
+                                                              .next()
+                                                              .getValue());
 
+
+                            if (user != null) {
+                                Log.e("FirebaseLogin", user.toString());
+                            }
+
+                            // user exits, check password match
+                            if (user.getPassword().equals(password)) {
                                 // correct password
+
+                                setCurrenUser(user);
 
                                 response_callback.execute(LoginResponseType.Success);
 
                             } else {
-
                                 // wrong password
+
                                 response_callback.execute(LoginResponseType.InvalidPassword);
 
                             }
@@ -90,7 +106,7 @@ public class FirebaseUsersManager implements UsersManager {
                             // create account
 
                             String new_key = database.push().getKey();
-                            User new_user = new User(username, password);
+                            User new_user = new User(new_key, username, password);
                             database.child(new_key).setValue(new_user);
 
                             response_callback.execute(LoginResponseType.Success);
@@ -112,13 +128,36 @@ public class FirebaseUsersManager implements UsersManager {
         return this.current_user;
     }
 
+    private void setCurrenUser(User user) {
+
+        this.current_user = user;
+
+        // save user data to te local storage
+        Context app_context = MyApplication.getAppContext();
+        SharedPreferences prefs = app_context.getSharedPreferences(Constants.APP_SHARED_PREFS, Context.MODE_PRIVATE);
+
+        SharedPreferences.Editor prefs_edit = prefs.edit();
+
+        prefs_edit.putString(User.data_id_prefs_path, user.getData_id());
+        prefs_edit.putString(User.username_prefs_path, user.getUsername());
+        prefs_edit.putString(User.password_prefs_path, user.getPassword());
+
+        prefs_edit.apply();
+
+    }
+
     @Override
-    public void reloadUser(SharedPreferences prefs) {
+    public void reloadUser() {
 
-        String username = prefs.getString("user_username", "UnknownUsername");
-        String password = prefs.getString("user_password", "UnknownPassword");
+        Context app_context = MyApplication.getAppContext();
+        SharedPreferences prefs = app_context.getSharedPreferences(Constants.APP_SHARED_PREFS
+                , Context.MODE_PRIVATE);
 
-        this.current_user = new User(username, password);
+        String data_id = prefs.getString(User.data_id_prefs_path, "unknown");
+        String username = prefs.getString(User.username_prefs_path, "UnknownUsername");
+        String password = prefs.getString(User.password_prefs_path, "UnknownPassword");
+
+        this.current_user = new User(data_id, username, password);
 
     }
 
@@ -128,6 +167,7 @@ public class FirebaseUsersManager implements UsersManager {
         this.database.orderByChild("username")
                 .equalTo(username)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
+
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
 
@@ -140,6 +180,36 @@ public class FirebaseUsersManager implements UsersManager {
 
                     }
                 });
+
+    }
+
+    @Override
+    public boolean hasUser() {
+
+        Context app_context = MyApplication.getAppContext();
+
+        SharedPreferences prefs = app_context.getSharedPreferences(Constants.APP_SHARED_PREFS, Context.MODE_PRIVATE);
+        return prefs.contains(User.username_prefs_path);
+
+    }
+
+    @Override
+    public void clearUser() {
+
+        // delete shared prefs
+        Context app_context = MyApplication.getAppContext();
+        SharedPreferences prefs = app_context.getSharedPreferences(Constants.APP_SHARED_PREFS, Context.MODE_PRIVATE);
+
+        SharedPreferences.Editor prefs_edit = prefs.edit();
+
+        prefs_edit.remove(User.data_id_prefs_path);
+        prefs_edit.remove(User.username_prefs_path);
+        prefs_edit.remove(User.password_prefs_path);
+
+        prefs_edit.apply();
+
+        // remove user reference
+        this.current_user = null;
 
     }
 

@@ -12,7 +12,8 @@
         android:layout_width="match_parent"
         android:layout_height="30dp"
         android:layout_marginBottom="20dp"
-        android:background="@android:color/holo_green_dark" />
+        android:background="@android:color/holo_green_dark"
+        android:textAlignment="center" />
 
     <TextView
         android:layout_width="match_parent"

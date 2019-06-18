@@ -1,8 +1,6 @@
 package mosis.comiccollector.activity;
 
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -14,6 +12,8 @@ import mosis.comiccollector.login.LoginDialog;
 import mosis.comiccollector.manager.AppManager;
 
 public class MainPageActivity extends AppCompatActivity {
+
+    private Button logout_button;
 
     private Button read_button;
     private Button collect_button;
@@ -32,7 +32,11 @@ public class MainPageActivity extends AppCompatActivity {
 
         this.initButtons();
 
-        if (!this.hasUser()) {
+        if (AppManager.getInstance().getUsersManager().hasUser()) {
+
+            AppManager.getInstance().getUsersManager().reloadUser();
+
+        } else {
 
             this.showLoginDialog(true);
 
@@ -41,6 +45,21 @@ public class MainPageActivity extends AppCompatActivity {
     }
 
     private void initButtons() {
+
+        this.logout_button = (Button) this.findViewById(R.id.logout_btn);
+        this.logout_button.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+
+                AppManager.getInstance().getUsersManager().clearUser();
+
+                // forced login dialog
+                showLoginDialog(true);
+
+            }
+
+        });
 
         this.read_button = (Button) this.findViewById(R.id.read_btn);
         this.read_button.setOnClickListener(new View.OnClickListener() {
@@ -96,23 +115,6 @@ public class MainPageActivity extends AppCompatActivity {
 
             }
         });
-
-    }
-
-    private boolean hasUser() {
-
-        Context context = getApplicationContext();
-
-        SharedPreferences prefs = context.getSharedPreferences("comic_collector", MODE_PRIVATE);
-        if (prefs.contains("user_username")) {
-
-            AppManager.getInstance().getUsersManager().reloadUser(prefs);
-
-            return true;
-        } else {
-
-            return false;
-        }
 
     }
 
