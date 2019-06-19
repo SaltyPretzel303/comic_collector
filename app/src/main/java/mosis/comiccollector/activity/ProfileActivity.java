@@ -2,6 +2,11 @@ package mosis.comiccollector.activity;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
+import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -51,10 +56,28 @@ public class ProfileActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
+        Log.e("ProfilePic", "Result ");
+
         if (resultCode == Activity.RESULT_OK) {
 
-            // set new picture in previewImageView
+            Log.e("ProfilePic", "Ok result ");
 
+            Uri selected_image = data.getData();
+            String[] filePathColumn = {MediaStore.Images.Media.DATA};
+
+            Cursor cursor = getContentResolver().query(selected_image, filePathColumn, null, null, null);
+            ((Cursor) cursor).moveToFirst();
+
+            int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+            String picturePath = cursor.getString(columnIndex);
+
+            cursor.close();
+
+
+            Bitmap b_map = BitmapFactory.decodeFile(picturePath);
+            this.profil_pic_iv.setImageBitmap(b_map);
+        }else{
+            Log.e("ProfilePic", "Not ok result ... ");
         }
 
     }

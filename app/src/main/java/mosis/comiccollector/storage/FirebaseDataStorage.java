@@ -1,5 +1,7 @@
 package mosis.comiccollector.storage;
 
+import android.net.Uri;
+
 import java.util.List;
 
 import mosis.comiccollector.comic.Comic;
@@ -47,6 +49,11 @@ public class FirebaseDataStorage implements DataStorage {
 
     @Override
     public void downloadCollectedPaged(int index) {
+
+    }
+
+    @Override
+    public void saveProfilePic(Uri image_uri) {
 
     }
 }

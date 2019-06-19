@@ -21,10 +21,7 @@ import mosis.comiccollector.storage.DataRetrievedHandler;
 
 public class ComicListActivity extends AppCompatActivity {
 
-    // jsut comment
-    // another comment
     private static int SORT_RESULT_CODE = 10;
-    private int some;
 
     private List<Comic> comics;
     private ComicListAdapter adapter;

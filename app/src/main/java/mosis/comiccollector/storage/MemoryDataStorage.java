@@ -1,7 +1,11 @@
 package mosis.comiccollector.storage;
 
+import android.net.Uri;
+
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +28,8 @@ public class MemoryDataStorage implements DataStorage {
 
     private DataRetrievedHandler data_handler;
 
+    private StorageReference storage_ref;
+
     public MemoryDataStorage() {
 
         // TODO don't left it hardcoded
@@ -33,6 +39,8 @@ public class MemoryDataStorage implements DataStorage {
         // TODO same as above...
         this.discover_part_size = 5;
         this.discover_cache = new ArrayList<Comic>();
+
+        this.storage_ref = FirebaseStorage.getInstance().getReference();
 
     }
 
@@ -134,6 +142,13 @@ public class MemoryDataStorage implements DataStorage {
     // TODO implement
     @Override
     public void downloadCollectedPaged(int index) {
+
+    }
+
+    @Override
+    public void saveProfilePic(Uri image_uri) {
+
+
 
     }
 

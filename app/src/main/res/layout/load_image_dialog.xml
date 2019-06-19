@@ -7,7 +7,7 @@
     android:padding="20dp">
 
     <ImageView
-        android:id="@+id/image_previw_iv"
+        android:id="@+id/image_preview_iv"
         android:layout_width="match_parent"
         android:layout_height="300dp" />
 

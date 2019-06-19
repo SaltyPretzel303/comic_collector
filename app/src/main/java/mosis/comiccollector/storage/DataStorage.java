@@ -1,5 +1,7 @@
 package mosis.comiccollector.storage;
 
+import android.net.Uri;
+
 import java.util.List;
 
 import mosis.comiccollector.comic.Comic;
@@ -23,5 +25,7 @@ public interface DataStorage {
     Comic getComic(String name, String author);
 
     void downloadCollectedPaged(int index);
+
+    void saveProfilePic(Uri image_uri);
 
 }
