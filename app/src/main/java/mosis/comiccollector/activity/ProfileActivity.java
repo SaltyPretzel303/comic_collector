@@ -15,6 +15,7 @@ import android.view.View;
 import android.widget.ImageView;
 
 import mosis.comiccollector.R;
+import mosis.comiccollector.manager.AppManager;
 
 public class ProfileActivity extends AppCompatActivity {
 
@@ -39,8 +40,6 @@ public class ProfileActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                Log.e("WorkspaceAct", "Image click ");
-
                 Intent intent = new Intent(ProfileActivity.this, LoadImageActivity.class);
 
                 startActivityForResult(intent, ProfileActivity.LOAD_IMAGE_ACTIVITY);
@@ -49,6 +48,7 @@ public class ProfileActivity extends AppCompatActivity {
 
         });
 
+        this.profil_pic_iv.setImageBitmap(AppManager.getInstance().getUsersManager().getCurrentUser().getProfPicBitmap());
 
     }
 
@@ -56,28 +56,17 @@ public class ProfileActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        Log.e("ProfilePic", "Result ");
-
         if (resultCode == Activity.RESULT_OK) {
 
-            Log.e("ProfilePic", "Ok result ");
+            Log.e("ProfilePic", "Result ok ... ");
 
-            Uri selected_image = data.getData();
-            String[] filePathColumn = {MediaStore.Images.Media.DATA};
+            Bitmap pic = AppManager.getInstance().getUsersManager().getCurrentUser().getProfPicBitmap();
+            this.profil_pic_iv.setImageBitmap(pic);
 
-            Cursor cursor = getContentResolver().query(selected_image, filePathColumn, null, null, null);
-            ((Cursor) cursor).moveToFirst();
+        } else {
 
-            int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-            String picturePath = cursor.getString(columnIndex);
-
-            cursor.close();
-
-
-            Bitmap b_map = BitmapFactory.decodeFile(picturePath);
-            this.profil_pic_iv.setImageBitmap(b_map);
-        }else{
             Log.e("ProfilePic", "Not ok result ... ");
+
         }
 
     }

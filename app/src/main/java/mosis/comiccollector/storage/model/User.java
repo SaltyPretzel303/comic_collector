@@ -10,22 +10,23 @@ import java.util.Map;
 
 public class User {
 
-    static public String data_id_prefs_path = "data_id";
+    static public String data_id_prefs_path = "userId";
     static public String username_prefs_path = "user_username";
     static public String password_prefs_path = "user_password";
     static public String prof_pic_prefs_path = "user_prof_pic";
 
-    private String data_id;
+    private String userId;
 
     private String username;
     private String password;
 
-    private String prof_picture_ref;
-    @Exclude
-    private Bitmap prof_pic;
+    // TODO can be formed using usernamem maybe remove this field
+    private String profPictureRef;
+    @Exclude // profile pic cache
+    private Bitmap profPicBitmap;
 
-    private List<String> my_commics;
-    private List<String> collected_commics;
+    private List<String> myCommics;
+    private List<String> collectedCommics;
 
 
     // constructors
@@ -34,15 +35,15 @@ public class User {
 
     }
 
-    public User(String data_id, String username, String password) {
+    public User(String dataId, String username, String password) {
 
-        this.data_id = data_id;
+        this.userId = dataId;
         this.username = username;
         this.password = password;
 
-        this.prof_picture_ref = "undefined";
-        this.my_commics = new ArrayList<String>();
-        this.collected_commics = new ArrayList<String>();
+        this.profPictureRef = "undefined";
+        this.myCommics = new ArrayList<String>();
+        this.collectedCommics = new ArrayList<String>();
 
     }
 
@@ -56,20 +57,20 @@ public class User {
         return password;
     }
 
-    public List<String> getMy_commics() {
-        return my_commics;
+    public List<String> getMyCommics() {
+        return myCommics;
     }
 
-    public List<String> getCollected_commics() {
-        return collected_commics;
+    public List<String> getCollectedCommics() {
+        return collectedCommics;
     }
 
-    public String getProf_picture_ref() {
-        return prof_picture_ref;
+    public String getProfPictureRef() {
+        return profPictureRef;
     }
 
-    public void setProf_picture_ref(String prof_picture_ref) {
-        this.prof_picture_ref = prof_picture_ref;
+    public void setProfPictureRef(String profPictureRef) {
+        this.profPictureRef = profPictureRef;
     }
 
     public void setUsername(String username) {
@@ -80,34 +81,34 @@ public class User {
         this.password = password;
     }
 
-    public void setProf_pic(Bitmap prof_pic) {
-        this.prof_pic = prof_pic;
+    public void setProfPicBitmap(Bitmap profPicBitmap) {
+        this.profPicBitmap = profPicBitmap;
     }
 
-    public void setMy_commics(List<String> my_commics) {
-        this.my_commics = my_commics;
+    public void setMyCommics(List<String> myCommics) {
+        this.myCommics = myCommics;
     }
 
-    public void setCollected_commics(List<String> collected_commics) {
-        this.collected_commics = collected_commics;
+    public void setCollectedCommics(List<String> collectedCommics) {
+        this.collectedCommics = collectedCommics;
     }
 
-    public String getData_id() {
-        return data_id;
+    public String getUserId() {
+        return userId;
     }
 
-    public void setData_id(String data_id) {
-        this.data_id = data_id;
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
     static public User parseMap(Map<String, String> map_sample) {
 
         User new_user = new User();
 
-        new_user.setData_id(map_sample.get("data_id"));
+        new_user.setUserId(map_sample.get("userId"));
         new_user.setUsername(map_sample.get("username"));
         new_user.setPassword(map_sample.get("password"));
-        new_user.setProf_picture_ref(map_sample.get("prof_picture_ref"));
+        new_user.setProfPictureRef(map_sample.get("profPictureRef"));
 
         return new_user;
 
@@ -115,6 +116,23 @@ public class User {
 
     @Override
     public String toString() {
-        return "\nData_id: " + this.data_id + "\nUsername: " + this.username + "\nPassword: " + this.password;
+        return "\nData_id: " + this.userId + "\nUsername: " + this.username + "\nPassword: " + this.password;
     }
+
+    public String getLocalProfilePicName() {
+
+        // every picture is 'translated' to png format after load from gallery
+        return this.getProfilePicName() + ".png";
+
+    }
+
+    public String getProfilePicName() {
+        return this.username + "-profile_pic";
+    }
+
+
+    public Bitmap getProfPicBitmap() {
+        return profPicBitmap;
+    }
+
 }

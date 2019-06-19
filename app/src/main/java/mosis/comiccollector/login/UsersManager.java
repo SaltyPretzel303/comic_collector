@@ -2,6 +2,8 @@ package mosis.comiccollector.login;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.net.Uri;
 
 import mosis.comiccollector.storage.model.User;
 
@@ -20,5 +22,9 @@ public interface UsersManager {
     boolean hasUser();
 
     void clearUser();
+
+    void saveUserProfilePic(Bitmap bitmap);
+
+    boolean uploadProfilePic(Uri pic_uri,OnResponseAction responseAction);
 
 }

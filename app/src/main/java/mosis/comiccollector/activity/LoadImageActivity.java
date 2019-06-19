@@ -12,21 +12,28 @@ import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
-import java.lang.reflect.Array;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.channels.FileChannel;
 
+import mosis.comiccollector.MyApplication;
 import mosis.comiccollector.R;
+import mosis.comiccollector.login.LoginResponseType;
+import mosis.comiccollector.login.OnResponseAction;
 import mosis.comiccollector.manager.AppManager;
-import mosis.comiccollector.storage.DataStorage;
 
 public class LoadImageActivity extends Activity {
 
@@ -42,6 +49,7 @@ public class LoadImageActivity extends Activity {
     private Button choose_btn;
 
     private Uri image_uri;
+    private Bitmap picCache;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +63,7 @@ public class LoadImageActivity extends Activity {
     private void initView() {
 
         this.image_preview = (ImageView) this.findViewById(R.id.image_preview_iv);
+        this.image_preview.setImageBitmap(AppManager.getInstance().getUsersManager().getCurrentUser().getProfPicBitmap());
 
         this.browse_btn = (Button) this.findViewById(R.id.load_image_browse_btn);
         this.choose_btn = (Button) this.findViewById(R.id.load_image_choose_btn);
@@ -62,7 +71,9 @@ public class LoadImageActivity extends Activity {
         this.browse_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 showImagePicker();
+
             }
         });
 
@@ -70,7 +81,13 @@ public class LoadImageActivity extends Activity {
         this.choose_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+//                testWrite();
+
+//                testShow();
+
                 chooseImage();
+
             }
         });
         this.choose_btn.setEnabled(false);
@@ -85,14 +102,15 @@ public class LoadImageActivity extends Activity {
                                                                         Manifest.permission.READ_EXTERNAL_STORAGE);
 
         if (permission_result != PackageManager.PERMISSION_GRANTED) {
+            // need permission
 
+            Log.e("ProfilePic", "NeedPermission");
             ActivityCompat.requestPermissions(LoadImageActivity.this,
                                               new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
                                               LoadImageActivity.READ_EXTERNAL_STORAGE_REQ);
 
         } else {
             // has permission
-
 
             Intent picker_intent = new Intent(Intent.ACTION_PICK);
             picker_intent.setType("image/*");
@@ -117,6 +135,7 @@ public class LoadImageActivity extends Activity {
 
             } else {
 
+                Toast.makeText(MyApplication.getAppContext(), "Permission not granted ... ", Toast.LENGTH_SHORT).show();
                 // permission not granted
                 // close change image dialog
                 finish();
@@ -135,29 +154,16 @@ public class LoadImageActivity extends Activity {
         super.onActivityResult(requestCode, resultCode, data);
 
 
-        // change image preview
-        Log.e("ProfilePic", "Result ");
-
         if (resultCode == Activity.RESULT_OK) {
 
             Log.e("ProfilePic", "Ok result ");
 
-            Uri selected_image = data.getData();
-            this.image_uri = selected_image;
+            this.image_uri = data.getData();
+            String picPath = this.getPicRealPath(this.image_uri);
 
-            String[] filePathColumn = {MediaStore.Images.Media.DATA};
+            this.picCache = BitmapFactory.decodeFile(picPath);
 
-            Cursor cursor = getContentResolver().query(selected_image, filePathColumn, null, null, null);
-            ((Cursor) cursor).moveToFirst();
-
-            int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-            String picturePath = cursor.getString(columnIndex);
-
-            cursor.close();
-
-
-            Bitmap b_map = BitmapFactory.decodeFile(picturePath);
-            this.image_preview.setImageBitmap(b_map);
+            this.image_preview.setImageBitmap(this.picCache);
 
             this.choose_btn.setEnabled(true);
 
@@ -167,20 +173,46 @@ public class LoadImageActivity extends Activity {
 
     }
 
+    private String getPicRealPath(Uri selected_image) {
+
+        this.image_uri = selected_image;
+
+        String[] filePathColumn = {MediaStore.Images.Media.DATA};
+
+        Cursor cursor = getContentResolver().query(selected_image, filePathColumn, null, null, null);
+        ((Cursor) cursor).moveToFirst();
+
+        int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+        String picturePath = cursor.getString(columnIndex);
+
+        return picturePath;
+
+    }
+
     private void chooseImage() {
 
-        // upload image in to the firebase
-        StorageReference storage = FirebaseStorage.getInstance().getReference("profile_pics");
-
-        String username = AppManager.getInstance().getUsersManager().getCurrentUser().getUsername();
-        String name = username + "-profile_pic";
-
-        StorageReference child_ref = storage.child(name);
-        child_ref.putFile(image_uri);
-
+        // TODO show some kind of loading screen would be great
 
         // save this image to the local storage
+        AppManager.getInstance().getUsersManager().saveUserProfilePic(this.picCache);
+
         // update image reference in user class
+        AppManager.getInstance().getUsersManager().getCurrentUser().setProfPicBitmap(this.picCache);
+
+        // TODO MOVE THIS METHOD TO THE DATA STORAGE
+        // upload image in to the firebase
+        AppManager.getInstance().getUsersManager().uploadProfilePic(this.image_uri, new OnResponseAction() {
+            @Override
+            public void execute(LoginResponseType response) {
+
+                Toast.makeText(MyApplication.getAppContext(), "Profile picture uploaded ", Toast.LENGTH_SHORT).show();
+
+                // TODO stop loading screen and finish this activity with ok result
+                setResult(Activity.RESULT_OK);
+                finish();
+
+            }
+        });
 
     }
 
