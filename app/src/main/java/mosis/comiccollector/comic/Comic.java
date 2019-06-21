@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import mosis.comiccollector.MyApplication;
 import mosis.comiccollector.R;
 import mosis.comiccollector.manager.AppManager;
 
@@ -43,7 +44,7 @@ public class Comic {
     public Comic() {
 
         this.title = "TESTING TITLE ";
-        this.icon = BitmapFactory.decodeResource(AppManager.getInstance().context.getResources(), R.drawable.main_back);
+        this.icon = BitmapFactory.decodeResource(MyApplication.getAppContext().getResources(), R.drawable.main_back);
         this.author = "TEST Author";
         Random gen = new Random();
         this.progress = gen.nextInt(100);

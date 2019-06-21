@@ -1,7 +1,5 @@
 package mosis.comiccollector.login;
 
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.net.Uri;
 
@@ -15,7 +13,7 @@ public interface UsersManager {
 
     User getCurrentUser();
 
-    void reloadUser();
+    void reloadUser() throws InvalidUserInfoLoaded;
 
     void fetchUser(String username);
 

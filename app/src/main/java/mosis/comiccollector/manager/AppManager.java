@@ -13,10 +13,6 @@ import mosis.comiccollector.storage.model.User;
 // ATTENTION SINGLETON
 public class AppManager {
 
-    // TODO REMOVE; just for testing
-    // used in no-argument Comic constructor
-    public Context context;
-
     private static AppManager instance;
 
     private DataStorage comic_storage;

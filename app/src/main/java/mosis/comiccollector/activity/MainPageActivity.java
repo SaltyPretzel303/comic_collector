@@ -3,11 +3,14 @@ package mosis.comiccollector.activity;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 import mosis.comiccollector.R;
 import mosis.comiccollector.login.BackPressHandler;
+import mosis.comiccollector.login.InvalidUserInfoLoaded;
 import mosis.comiccollector.login.LoginDialog;
 import mosis.comiccollector.manager.AppManager;
 
@@ -27,17 +30,28 @@ public class MainPageActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_page);
 
-        // TODO REMOVE; used just for testing
-        AppManager.getInstance().context = getApplicationContext();
-
         this.initButtons();
 
         if (AppManager.getInstance().getUsersManager().hasUser()) {
 
-            AppManager.getInstance().getUsersManager().reloadUser();
+            Log.e("MainActivity", "onCreate: app has user");
+            try {
+
+                AppManager.getInstance().getUsersManager().reloadUser();
+
+            } catch (InvalidUserInfoLoaded invalidUserInfoReload) {
+
+                Toast.makeText(getApplicationContext(),
+                               "Something happened with your local storage, please login again",
+                               Toast.LENGTH_SHORT).show();
+
+                this.showLoginDialog(true);
+
+            }
 
         } else {
 
+            Log.e("MainActivity", "onCreate: app does not have user");
             this.showLoginDialog(true);
 
         }

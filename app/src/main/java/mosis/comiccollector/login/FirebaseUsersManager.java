@@ -19,15 +19,11 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
-import org.osmdroid.views.overlay.simplefastpoint.LabelledGeoPoint;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Map;
-
-import javax.security.auth.login.LoginException;
 
 import mosis.comiccollector.MyApplication;
 import mosis.comiccollector.manager.AppManager;
@@ -151,7 +147,8 @@ public class FirebaseUsersManager implements UsersManager {
 
         // save user data to te local storage
         Context app_context = MyApplication.getAppContext();
-        SharedPreferences prefs = app_context.getSharedPreferences(Constants.APP_SHARED_PREFS, Context.MODE_PRIVATE);
+        SharedPreferences prefs = app_context.getSharedPreferences(Constants.APP_SHARED_PREFS_PATH,
+                                                                   Context.MODE_PRIVATE);
 
         SharedPreferences.Editor prefs_edit = prefs.edit();
 
@@ -164,29 +161,43 @@ public class FirebaseUsersManager implements UsersManager {
     }
 
     @Override
-    public void reloadUser() {
+    public void reloadUser() throws InvalidUserInfoLoaded {
 
         // TODO show loading screen
         // TODO extract this in separate thread
 
         Context app_context = MyApplication.getAppContext();
-        SharedPreferences prefs = app_context.getSharedPreferences(Constants.APP_SHARED_PREFS
+        SharedPreferences prefs = app_context.getSharedPreferences(Constants.APP_SHARED_PREFS_PATH
                 , Context.MODE_PRIVATE);
 
         User tempUser = new User();
 
-        // TODO check every single value after load from prefs
+        final String unknown_value = "unknown";
 
-        String dataId = prefs.getString(User.data_id_prefs_path, "UnknownDataId");
+        // dataId
+        String dataId = prefs.getString(User.data_id_prefs_path, "unknown");
+        if (dataId.equals(unknown_value))
+            throw new InvalidUserInfoLoaded("Invalid dataId (userId)");
+
         tempUser.setUserId(dataId);
 
-        String username = prefs.getString(User.username_prefs_path, "neca");
+        // username
+        String username = prefs.getString(User.username_prefs_path, "unknown");
+        if (username.equals(unknown_value))
+            throw new InvalidUserInfoLoaded("Invalid username ... ");
+
         tempUser.setUsername(username);
 
-        String password = prefs.getString(User.password_prefs_path, "UnknownPassword");
+
+        // password
+        String password = prefs.getString(User.password_prefs_path, "unknown");
+        if (password.equals(unknown_value))
+            throw new InvalidUserInfoLoaded("Unknown password ... ");
+
         tempUser.setPassword(password);
 
         // TODO picture load should be the last task
+
         Bitmap profilePic = this.loadLocalProfilePic(tempUser.getLocalProfilePicName());
         if (profilePic != null) {
 
@@ -195,7 +206,12 @@ public class FirebaseUsersManager implements UsersManager {
             tempUser.setProfPicBitmap(profilePic);
 
             this.current_user = tempUser;
+
         } else {
+
+            // Basically this cant't happen (but still, let it live)
+            // this branch means that user has local data, but doesn't have picture locally
+            // when the user is registered or logged-in for the first time, default image is saved locally
 
             Log.e("FirebaseUserManager", "Profile pic NOT found locally ... ");
 
@@ -211,18 +227,19 @@ public class FirebaseUsersManager implements UsersManager {
             try {
 
                 final File temp_file = File.createTempFile("prof_pic", "png");
-                reference.getFile(temp_file).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-                    @Override
-                    public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                reference.getFile(temp_file)
+                        .addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+                            @Override
+                            public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
 
-                        Log.e("FirebaseUserManager", "onSuccess: FETCHING DONE ");
-                        Bitmap pic = BitmapFactory.decodeFile(temp_file.getPath());
-                        Log.e("FirebaseUserManager", "onSuccess: Translated to bitmap ");
+                                Log.e("FirebaseUserManager", "onSuccess: FETCHING DONE ");
+                                Bitmap pic = BitmapFactory.decodeFile(temp_file.getPath());
+                                Log.e("FirebaseUserManager", "onSuccess: Translated to bitmap ");
 
-                        current_user.setProfPicBitmap(pic);
+                                current_user.setProfPicBitmap(pic);
 
-                    }
-                });
+                            }
+                        });
 
 
             } catch (IOException e) {
@@ -284,7 +301,8 @@ public class FirebaseUsersManager implements UsersManager {
 
         Context app_context = MyApplication.getAppContext();
 
-        SharedPreferences prefs = app_context.getSharedPreferences(Constants.APP_SHARED_PREFS, Context.MODE_PRIVATE);
+        SharedPreferences prefs = app_context.getSharedPreferences(Constants.APP_SHARED_PREFS_PATH,
+                                                                   Context.MODE_PRIVATE);
         return prefs.contains(User.username_prefs_path);
 
     }
@@ -294,7 +312,8 @@ public class FirebaseUsersManager implements UsersManager {
 
         // delete shared prefs
         Context app_context = MyApplication.getAppContext();
-        SharedPreferences prefs = app_context.getSharedPreferences(Constants.APP_SHARED_PREFS, Context.MODE_PRIVATE);
+        SharedPreferences prefs = app_context.getSharedPreferences(Constants.APP_SHARED_PREFS_PATH,
+                                                                   Context.MODE_PRIVATE);
 
         SharedPreferences.Editor prefs_edit = prefs.edit();
 
