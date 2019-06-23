@@ -7,6 +7,9 @@ import com.google.firebase.database.Exclude;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+
+import mosis.comiccollector.comic.Comic;
 
 public class User {
 
@@ -23,10 +26,16 @@ public class User {
     @Exclude // profile pic cache
     private Bitmap profPicBitmap;
 
+    private int rating;
 
-    // TODO comics are not saved locally
-    private List<String> myCommics;
-    private List<String> collectedCommics;
+    // TODO save them to the local storage
+    private List<String> myComics;
+    private List<String> collectedComics;
+
+    @Exclude
+    private List<Comic> myComicsCache;
+    @Exclude
+    private List<Comic> collectedComicsCache;
 
 
     // constructors
@@ -41,8 +50,11 @@ public class User {
         this.username = username;
         this.password = password;
 
-        this.myCommics = new ArrayList<String>();
-        this.collectedCommics = new ArrayList<String>();
+        this.myComics = new ArrayList<String>();
+        this.collectedComics = new ArrayList<String>();
+
+        Random gen = new Random();
+        this.rating = gen.nextInt(100);
 
     }
 
@@ -57,11 +69,11 @@ public class User {
     }
 
     public List<String> getMyCommics() {
-        return myCommics;
+        return myComics;
     }
 
     public List<String> getCollectedCommics() {
-        return collectedCommics;
+        return collectedComics;
     }
 
     public void setUsername(String username) {
@@ -77,11 +89,11 @@ public class User {
     }
 
     public void setMyCommics(List<String> myCommics) {
-        this.myCommics = myCommics;
+        this.myComics = myCommics;
     }
 
     public void setCollectedCommics(List<String> collectedCommics) {
-        this.collectedCommics = collectedCommics;
+        this.collectedComics = collectedCommics;
     }
 
     public String getUserId() {
@@ -131,4 +143,11 @@ public class User {
         return profPicBitmap;
     }
 
+    public int getRating() {
+        return rating;
+    }
+
+    public void setRating(int rating) {
+        this.rating = rating;
+    }
 }

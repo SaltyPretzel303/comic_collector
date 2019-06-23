@@ -60,6 +60,7 @@
         android:layout_marginTop="10dp"
         android:layout_weight="7"
         android:max="100"
+        android:progress="65"
         android:progressBackgroundTint="@android:color/holo_orange_dark"
         android:progressTint="@android:color/holo_green_dark" />
 

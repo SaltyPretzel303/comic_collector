@@ -1,6 +1,8 @@
 package mosis.comiccollector.activity;
 
 import android.content.Intent;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -27,12 +29,16 @@ public class MainPageActivity extends AppCompatActivity {
 
     private LoginDialog login_dialog;
 
+    private Handler handler;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_page);
 
         MyApplication.getInstance().registerActivityContext(MainPageActivity.this);
+
+        this.handler = new Handler(Looper.getMainLooper());
 
         this.initButtons();
 
@@ -44,7 +50,6 @@ public class MainPageActivity extends AppCompatActivity {
         super.onStart();
 
         MyApplication.getInstance().registerActivityContext(MainPageActivity.this);
-
 
     }
 
@@ -70,9 +75,7 @@ public class MainPageActivity extends AppCompatActivity {
 
             } catch (InvalidUserInfoLoaded invalidUserInfoReload) {
 
-                Toast.makeText(getApplicationContext(),
-                               "Something happened with your local storage, please login again",
-                               Toast.LENGTH_SHORT).show();
+                AppManager.getInstance().makeToast("Local data lost, login again");
 
                 AppManager.getInstance().hideLoadingScreen();
 
@@ -81,6 +84,8 @@ public class MainPageActivity extends AppCompatActivity {
             }
 
         } else {
+
+            AppManager.getInstance().makeToast("App does't have user");
 
             Log.e("MainActivity", "onCreate: app does not have user");
 

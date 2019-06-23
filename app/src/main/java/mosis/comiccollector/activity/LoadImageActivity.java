@@ -63,6 +63,7 @@ public class LoadImageActivity extends Activity {
 
         this.image_preview = (ImageView) this.findViewById(R.id.image_preview_iv);
         User user = AppManager.getInstance().getUsersManager().getCurrentUser();
+
         if (user.hasProfilePic()) {
             this.image_preview.setImageBitmap(user.getProfPicBitmap());
         }
@@ -197,7 +198,7 @@ public class LoadImageActivity extends Activity {
 
                 AppManager.getInstance().hideLoadingScreen();
 
-                Toast.makeText(MyApplication.getInstance().getActivityContext(), "Profile pic updated", Toast.LENGTH_SHORT).show();
+                AppManager.getInstance().makeToast("Profile pic updated");
 
                 setResult(Activity.RESULT_OK);
 
@@ -207,6 +208,5 @@ public class LoadImageActivity extends Activity {
         });
 
     }
-
 
 }

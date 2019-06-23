@@ -4,11 +4,13 @@ import android.app.Dialog;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
+import android.widget.Toast;
 
 import mosis.comiccollector.ActivityChangeListener;
 import mosis.comiccollector.MyApplication;
 import mosis.comiccollector.activity.LoadingScreen;
 import mosis.comiccollector.manager.data.FirebaseDataManager;
+import mosis.comiccollector.manager.data.MemoryDataManager;
 import mosis.comiccollector.manager.user.FirebaseUsersManager;
 import mosis.comiccollector.manager.user.UsersManager;
 import mosis.comiccollector.manager.data.DataManager;
@@ -41,6 +43,7 @@ public class AppManager {
         // TODO replace with FirebaseDataManager, this one is just for testing
 //        this.comic_storage = new MemoryDataManager();
         this.comic_storage = new FirebaseDataManager();
+//            this.comic_storage=new MemoryDataManager();
 
         this.login_manager = new FirebaseUsersManager();
 
@@ -98,6 +101,19 @@ public class AppManager {
             public void run() {
 
                 loadingScreen.hide();
+
+            }
+        });
+
+    }
+
+    public void makeToast(final String message) {
+
+        this.handler.post(new Runnable() {
+            @Override
+            public void run() {
+
+                Toast.makeText(MyApplication.getInstance().getActivityContext(), message, Toast.LENGTH_SHORT).show();
 
             }
         });

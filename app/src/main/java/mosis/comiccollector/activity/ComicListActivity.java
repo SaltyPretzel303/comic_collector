@@ -32,15 +32,11 @@ public class ComicListActivity extends AppCompatActivity {
     private int selected;
 
     private ComicListContext list_context;
-    // remove
-    private Map<ComicListContext, ViewInitializer> view_initializers;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.comic_list);
-
-//        this.populateInitializersMap();
 
         Intent intent = this.getIntent();
         this.list_context = ComicListContext.valueOf(intent.getStringExtra("list_context"));
@@ -56,12 +52,6 @@ public class ComicListActivity extends AppCompatActivity {
         this.sort_button = (Button) this.findViewById(R.id.sort_list_button);
 
         this.loadComics();
-//        this.adapter = new ComicListAdapter(getApplicationContext(), R.layout.small_preview, this.comics);
-
-//        this.list_view.setAdapter(this.adapter);
-
-//        ViewInitializer initializer = this.view_initializers.get(list_context);
-//        initializer.execute();
 
     }
 
@@ -89,99 +79,6 @@ public class ComicListActivity extends AppCompatActivity {
 
                 break;
         }
-
-    }
-
-    // TODO overengineering, remove this method
-    private void populateInitializersMap() {
-
-        this.view_initializers = new HashMap<ComicListContext, ViewInitializer>();
-
-        this.view_initializers.put(ComicListContext.CollectedComics, new ViewInitializer() {
-            @Override
-            public void execute() {
-
-                sort_button = (Button) findViewById(R.id.sort_list_button);
-                sort_button.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-
-                        Intent sort_intent = new Intent(ComicListActivity.this, SortActivity.class);
-                        startActivityForResult(sort_intent, ComicListActivity.SORT_RESULT_CODE);
-
-                    }
-                });
-
-                list_view.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
-                        Intent preview_intent = new Intent(ComicListActivity.this, FullPreviewActivity.class);
-
-                        preview_intent.putExtra("comic_index", position);
-
-                        startActivity(preview_intent);
-
-                    }
-                });
-
-                loadCollectedCommics();
-
-            }
-        });
-
-        // ----------------------------------
-
-        this.view_initializers.put(ComicListContext.DiscoverComics, new ViewInitializer() {
-            @Override
-            public void execute() {
-
-                sort_button = (Button) findViewById(R.id.sort_list_button);
-                sort_button.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-
-                        Intent sort_intent = new Intent(ComicListActivity.this, SortActivity.class);
-                        startActivityForResult(sort_intent, ComicListActivity.SORT_RESULT_CODE);
-
-                    }
-                });
-
-                list_view.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
-                        Intent preview_intent = new Intent(ComicListActivity.this, FullPreviewActivity.class);
-
-                        preview_intent.putExtra("comic_index", position);
-
-                        startActivity(preview_intent);
-
-                    }
-                });
-
-                loadDiscoverComics();
-            }
-        });
-
-        this.view_initializers.put(ComicListContext.QueuedComics, new ViewInitializer() {
-            @Override
-            public void execute() {
-
-                sort_button = (Button) findViewById(R.id.sort_list_button);
-                sort_button.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-
-                        Intent sort_intent = new Intent(ComicListActivity.this, SortActivity.class);
-                        startActivityForResult(sort_intent, ComicListActivity.SORT_RESULT_CODE);
-
-                    }
-                });
-
-
-            }
-        });
 
     }
 
