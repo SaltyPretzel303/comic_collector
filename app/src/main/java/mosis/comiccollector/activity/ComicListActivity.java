@@ -17,7 +17,7 @@ import mosis.comiccollector.R;
 import mosis.comiccollector.comic.Comic;
 import mosis.comiccollector.comic.ComicListAdapter;
 import mosis.comiccollector.manager.AppManager;
-import mosis.comiccollector.storage.DataRetrievedHandler;
+import mosis.comiccollector.manager.data.handler.DataRetrievedHandler;
 
 public class ComicListActivity extends AppCompatActivity {
 

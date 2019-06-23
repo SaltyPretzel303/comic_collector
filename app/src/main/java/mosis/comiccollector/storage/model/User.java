@@ -10,21 +10,21 @@ import java.util.Map;
 
 public class User {
 
-    static public String data_id_prefs_path = "userId";
-    static public String username_prefs_path = "user_username";
-    static public String password_prefs_path = "user_password";
-    static public String prof_pic_prefs_path = "user_prof_pic";
+    static public final String data_id_prefs_path = "userId";
+    static public final String username_prefs_path = "user_username";
+    static public final String password_prefs_path = "user_password";
+    static public final String prof_pic_prefs_path = "user_prof_pic";
 
     private String userId;
 
     private String username;
     private String password;
 
-    // TODO can be formed using usernamem maybe remove this field
-    private String profPictureRef;
     @Exclude // profile pic cache
     private Bitmap profPicBitmap;
 
+
+    // TODO comics are not saved locally
     private List<String> myCommics;
     private List<String> collectedCommics;
 
@@ -41,7 +41,6 @@ public class User {
         this.username = username;
         this.password = password;
 
-        this.profPictureRef = "undefined";
         this.myCommics = new ArrayList<String>();
         this.collectedCommics = new ArrayList<String>();
 
@@ -63,14 +62,6 @@ public class User {
 
     public List<String> getCollectedCommics() {
         return collectedCommics;
-    }
-
-    public String getProfPictureRef() {
-        return profPictureRef;
-    }
-
-    public void setProfPictureRef(String profPictureRef) {
-        this.profPictureRef = profPictureRef;
     }
 
     public void setUsername(String username) {
@@ -108,7 +99,6 @@ public class User {
         new_user.setUserId(map_sample.get("userId"));
         new_user.setUsername(map_sample.get("username"));
         new_user.setPassword(map_sample.get("password"));
-        new_user.setProfPictureRef(map_sample.get("profPictureRef"));
 
         return new_user;
 
@@ -119,17 +109,23 @@ public class User {
         return "\nData_id: " + this.userId + "\nUsername: " + this.username + "\nPassword: " + this.password;
     }
 
+    @Exclude
     public String getLocalProfilePicName() {
 
-        // every picture is 'translated' to png format after load from gallery
-        return this.getProfilePicName() + ".png";
+        // every picture is 'translated' to jpeg format after load from gallery
+        return this.getProfilePicName() + ".jpeg";
 
     }
 
+    @Exclude
     public String getProfilePicName() {
         return this.username + "-profile_pic";
     }
 
+    @Exclude
+    public boolean hasProfilePic() {
+        return this.profPicBitmap != null;
+    }
 
     public Bitmap getProfPicBitmap() {
         return profPicBitmap;

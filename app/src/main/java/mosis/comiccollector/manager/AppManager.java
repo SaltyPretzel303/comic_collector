@@ -1,23 +1,31 @@
 package mosis.comiccollector.manager;
 
+import android.app.Dialog;
 import android.content.Context;
-import android.content.SharedPreferences;
+import android.os.Handler;
+import android.os.Looper;
 
-import mosis.comiccollector.login.FirebaseUsersManager;
-import mosis.comiccollector.login.UsersManager;
-import mosis.comiccollector.storage.DataStorage;
-import mosis.comiccollector.storage.MemoryDataStorage;
-
-import mosis.comiccollector.storage.model.User;
+import mosis.comiccollector.ActivityChangeListener;
+import mosis.comiccollector.MyApplication;
+import mosis.comiccollector.activity.LoadingScreen;
+import mosis.comiccollector.manager.data.FirebaseDataManager;
+import mosis.comiccollector.manager.user.FirebaseUsersManager;
+import mosis.comiccollector.manager.user.UsersManager;
+import mosis.comiccollector.manager.data.DataManager;
 
 // ATTENTION SINGLETON
 public class AppManager {
 
     private static AppManager instance;
 
-    private DataStorage comic_storage;
+    private DataManager comic_storage;
     private UsersManager login_manager;
 
+    private Dialog loadingScreen;
+
+    private Handler handler;
+
+    // singleton specific
     public static AppManager getInstance() {
 
         if (AppManager.instance == null) {
@@ -30,19 +38,70 @@ public class AppManager {
 
     private AppManager() {
 
-        // TODO replace with FirebaseDataStorage, this one is just for testing
-        this.comic_storage = new MemoryDataStorage();
+        // TODO replace with FirebaseDataManager, this one is just for testing
+//        this.comic_storage = new MemoryDataManager();
+        this.comic_storage = new FirebaseDataManager();
 
         this.login_manager = new FirebaseUsersManager();
 
+        MyApplication.getInstance().registerActivityChangeListener(this.onActivityChange);
+
+        this.createLoadingScreen();
+
+        this.handler = new Handler(Looper.getMainLooper());
+
     }
 
-    public DataStorage getStorage() {
+    public DataManager getStorage() {
         return this.comic_storage;
     }
 
     public UsersManager getUsersManager() {
         return this.login_manager;
+    }
+
+    private ActivityChangeListener onActivityChange = new ActivityChangeListener() {
+        @Override
+        public void notify(Context current_context) {
+            createLoadingScreen();
+        }
+    };
+
+    private void createLoadingScreen() {
+
+        if (this.loadingScreen != null && this.loadingScreen.isShowing()) {
+            this.loadingScreen.cancel();
+        }
+
+        this.loadingScreen = new LoadingScreen(MyApplication.getInstance().getActivityContext());
+
+    }
+
+    public void showLoadingScreen() {
+
+        this.handler.post(new Runnable() {
+            @Override
+            public void run() {
+
+                loadingScreen.show();
+
+            }
+        });
+
+    }
+
+    public void hideLoadingScreen() {
+
+
+        this.handler.post(new Runnable() {
+            @Override
+            public void run() {
+
+                loadingScreen.hide();
+
+            }
+        });
+
     }
 
     // data storage manager

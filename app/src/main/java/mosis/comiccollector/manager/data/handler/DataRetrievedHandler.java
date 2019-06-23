@@ -1,4 +1,4 @@
-package mosis.comiccollector.storage;
+package mosis.comiccollector.manager.data.handler;
 
 import java.util.List;
 

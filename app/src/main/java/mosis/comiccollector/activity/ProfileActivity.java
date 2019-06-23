@@ -2,11 +2,7 @@ package mosis.comiccollector.activity;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.net.Uri;
-import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -14,8 +10,10 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 
+import mosis.comiccollector.MyApplication;
 import mosis.comiccollector.R;
 import mosis.comiccollector.manager.AppManager;
+import mosis.comiccollector.storage.model.User;
 
 public class ProfileActivity extends AppCompatActivity {
 
@@ -27,6 +25,8 @@ public class ProfileActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.profile_page);
+
+        MyApplication.getInstance().registerActivityContext(ProfileActivity.this);
 
         this.initView();
 
@@ -48,7 +48,12 @@ public class ProfileActivity extends AppCompatActivity {
 
         });
 
-        this.profil_pic_iv.setImageBitmap(AppManager.getInstance().getUsersManager().getCurrentUser().getProfPicBitmap());
+        User user = AppManager.getInstance().getUsersManager().getCurrentUser();
+
+        if (user.hasProfilePic()) {
+            this.profil_pic_iv.setImageBitmap(user.getProfPicBitmap());
+        }
+        // else default pic
 
     }
 

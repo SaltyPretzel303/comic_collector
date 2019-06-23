@@ -8,11 +8,13 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import mosis.comiccollector.MyApplication;
 import mosis.comiccollector.R;
 import mosis.comiccollector.login.BackPressHandler;
 import mosis.comiccollector.login.InvalidUserInfoLoaded;
 import mosis.comiccollector.login.LoginDialog;
 import mosis.comiccollector.manager.AppManager;
+import mosis.comiccollector.manager.handler.JobDoneHandler;
 
 public class MainPageActivity extends AppCompatActivity {
 
@@ -30,20 +32,49 @@ public class MainPageActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_page);
 
+        MyApplication.getInstance().registerActivityContext(MainPageActivity.this);
+
         this.initButtons();
+
+        this.resolveUser();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        MyApplication.getInstance().registerActivityContext(MainPageActivity.this);
+
+
+    }
+
+    private void resolveUser() {
 
         if (AppManager.getInstance().getUsersManager().hasUser()) {
 
-            Log.e("MainActivity", "onCreate: app has user");
+            Log.w("MainActivity", "onCreate: app has user");
             try {
 
-                AppManager.getInstance().getUsersManager().reloadUser();
+                AppManager.getInstance().showLoadingScreen();
+
+                AppManager.getInstance().getUsersManager().reloadUser(new JobDoneHandler() {
+                    @Override
+                    public void execute(String message) {
+
+                        Log.w("MainActivity", "execute: reload user done");
+
+                        AppManager.getInstance().hideLoadingScreen();
+
+                    }
+                });
 
             } catch (InvalidUserInfoLoaded invalidUserInfoReload) {
 
                 Toast.makeText(getApplicationContext(),
                                "Something happened with your local storage, please login again",
                                Toast.LENGTH_SHORT).show();
+
+                AppManager.getInstance().hideLoadingScreen();
 
                 this.showLoginDialog(true);
 
@@ -52,6 +83,7 @@ public class MainPageActivity extends AppCompatActivity {
         } else {
 
             Log.e("MainActivity", "onCreate: app does not have user");
+
             this.showLoginDialog(true);
 
         }
@@ -66,8 +98,10 @@ public class MainPageActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                AppManager.getInstance().getUsersManager().clearUser();
+                // TODO show dialog with warning message
+                // all comic will be deleted after this operation
 
+                AppManager.getInstance().getUsersManager().clearUser();
                 // forced login dialog
                 showLoginDialog(true);
 

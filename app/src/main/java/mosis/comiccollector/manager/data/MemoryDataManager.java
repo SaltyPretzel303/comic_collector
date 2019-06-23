@@ -1,9 +1,8 @@
-package mosis.comiccollector.storage;
+package mosis.comiccollector.manager.data;
 
+import android.graphics.Bitmap;
 import android.net.Uri;
 
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
@@ -11,8 +10,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import mosis.comiccollector.comic.Comic;
+import mosis.comiccollector.manager.data.handler.DataRetrievedHandler;
+import mosis.comiccollector.manager.handler.JobDoneHandler;
+import mosis.comiccollector.manager.user.handler.PictureReadyHandler;
 
-public class MemoryDataStorage implements DataStorage {
+public class MemoryDataManager implements DataManager {
 
     private List<Comic> collected_cache;
     private int collected_part_size; // how many items to load with one 'load more' request
@@ -30,7 +32,7 @@ public class MemoryDataStorage implements DataStorage {
 
     private StorageReference storage_ref;
 
-    public MemoryDataStorage() {
+    public MemoryDataManager() {
 
         // TODO don't left it hardcoded
         this.collected_part_size = 5;
@@ -146,9 +148,22 @@ public class MemoryDataStorage implements DataStorage {
     }
 
     @Override
-    public void saveProfilePic(Uri image_uri) {
+    public void saveUserProfilePic(Bitmap pic, JobDoneHandler onJobDone) {
 
+    }
 
+    @Override
+    public void loadLocalProfilePic(String pic_path, PictureReadyHandler onPicReady) {
+
+    }
+
+    @Override
+    public void uploadProfilePic(Uri pic_uri, JobDoneHandler onJobDone) {
+
+    }
+
+    @Override
+    public void downloadProfilePic(String pic_path, PictureReadyHandler onPicReady) {
 
     }
 

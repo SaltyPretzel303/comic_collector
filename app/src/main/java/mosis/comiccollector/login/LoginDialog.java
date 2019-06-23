@@ -11,6 +11,7 @@ import android.widget.Toast;
 
 import mosis.comiccollector.R;
 import mosis.comiccollector.manager.AppManager;
+import mosis.comiccollector.manager.user.handler.LoginResponseHandler;
 
 public class LoginDialog extends Dialog {
 
@@ -31,14 +32,10 @@ public class LoginDialog extends Dialog {
 
     private Button context_switch;
 
-    private View.OnClickListener login_action;
-    private View.OnClickListener register_action;
-    private View.OnClickListener to_login;
-    private View.OnClickListener to_register;
-
     private BackPressHandler back_press_handler;
 
     public LoginDialog(Context context, boolean forced, BackPressHandler back_handler) {
+
         super(context);
         this.setContentView(R.layout.login_layout);
 
@@ -54,124 +51,8 @@ public class LoginDialog extends Dialog {
 
         this.back_press_handler = back_handler;
 
-        this.initClickActions();
 
         this.initView();
-
-    }
-
-    private void initClickActions() {
-
-        this.login_action = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                // TODO check inputs (empty strings, null, ... )
-
-                final String username = username_et.getText().toString();
-                final String password = password_et.getText().toString();
-
-
-                AppManager.getInstance().getUsersManager().login(username, password, new OnResponseAction() {
-                    @Override
-                    public void execute(LoginResponseType response) {
-
-                        if (response == LoginResponseType.Success) {
-
-                            // write user to local storage
-
-                            dismiss();
-                            Toast.makeText(app_context, "Successfull login", Toast.LENGTH_SHORT).show();
-
-                        } else {
-
-                            handleError(response);
-
-                            Toast.makeText(app_context, "Login error ... ", Toast.LENGTH_SHORT).show();
-
-                        }
-
-                    }
-                });
-
-
-            }
-        };
-
-        this.register_action = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                final String username = username_et.getText().toString();
-                final String password = password_et.getText().toString();
-
-                // TODO check inputs
-
-                AppManager.getInstance().getUsersManager().register(username, password, new OnResponseAction() {
-                    @Override
-                    public void execute(LoginResponseType response) {
-
-                        if (response == LoginResponseType.Success) {
-
-                            showMessage("Successful registration ... ");
-                            context_switch.performClick();
-                            // switch form to loginForm
-
-
-                        } else {
-
-                            handleError(response);
-
-                            Toast.makeText(app_context, "Registration error ... ", Toast.LENGTH_SHORT).show();
-
-                        }
-
-
-                    }
-                });
-
-
-            }
-        };
-
-        this.to_login = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                // TODO adjust text watchers
-                // clear text inputs
-
-                rep_password_et.setVisibility(View.GONE);
-                rep_password_tw.setVisibility(View.GONE);
-
-                pos_button.setOnClickListener(login_action);
-                pos_button.setText("Login");
-
-
-                context_switch.setText("Register");
-                context_switch.setOnClickListener(to_register);
-
-            }
-        };
-
-        this.to_register = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                // TODO adjust text watchers
-                // clear text inputs
-
-                rep_password_et.setVisibility(View.VISIBLE);
-                rep_password_tw.setVisibility(View.VISIBLE);
-
-                pos_button.setOnClickListener(register_action);
-                pos_button.setText("Register");
-
-                context_switch.setText("Login");
-                context_switch.setOnClickListener(to_login);
-
-            }
-        };
 
     }
 
@@ -236,6 +117,125 @@ public class LoginDialog extends Dialog {
         this.login_status_tv.setText(message);
 
     }
+
+    private View.OnClickListener login_action = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+
+            // TODO check inputs (empty strings, null, ... )
+
+            final String username = username_et.getText().toString();
+            final String password = password_et.getText().toString();
+
+
+            AppManager.getInstance().showLoadingScreen();
+
+            AppManager.getInstance().getUsersManager().login(username, password, new LoginResponseHandler() {
+                @Override
+                public void execute(LoginResponseType response) {
+
+                    if (response == LoginResponseType.Success) {
+
+//                        Toast.makeText(app_context, "Successful login", Toast.LENGTH_SHORT).show();
+                        dismiss();
+
+                    } else {
+
+                        handleError(response);
+
+                        Toast.makeText(app_context, "Login error ... ", Toast.LENGTH_SHORT).show();
+
+                    }
+
+                    AppManager.getInstance().hideLoadingScreen();
+
+                }
+            });
+
+
+        }
+    };
+
+    private View.OnClickListener register_action = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+
+            final String username = username_et.getText().toString();
+            final String password = password_et.getText().toString();
+
+            // TODO check inputs
+
+            AppManager.getInstance().showLoadingScreen();
+            AppManager.getInstance().getUsersManager().register(username, password, new LoginResponseHandler() {
+                @Override
+                public void execute(LoginResponseType response) {
+
+                    if (response == LoginResponseType.Success) {
+
+                        Log.w("LoginDialog", "execute: successful registration ");
+
+                        showMessage("You are logged in ... ");
+
+                        dismiss();
+
+
+                    } else {
+
+                        Log.w("LoginDialog", "Registration error ... ");
+
+                        handleError(response);
+
+                        Toast.makeText(app_context, "Registration error ... ", Toast.LENGTH_SHORT).show();
+
+                    }
+
+                    AppManager.getInstance().hideLoadingScreen();
+
+                }
+            });
+
+
+        }
+    };
+
+    private View.OnClickListener to_login = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+
+            // TODO adjust text watchers
+            // clear text inputs
+
+            rep_password_et.setVisibility(View.GONE);
+            rep_password_tw.setVisibility(View.GONE);
+
+            pos_button.setOnClickListener(login_action);
+            pos_button.setText("Login");
+
+
+            context_switch.setText("Register");
+            context_switch.setOnClickListener(to_register);
+
+        }
+    };
+
+    private View.OnClickListener to_register = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+
+            // TODO adjust text watchers
+            // clear text inputs
+
+            rep_password_et.setVisibility(View.VISIBLE);
+            rep_password_tw.setVisibility(View.VISIBLE);
+
+            pos_button.setOnClickListener(register_action);
+            pos_button.setText("Register");
+
+            context_switch.setText("Login");
+            context_switch.setOnClickListener(to_login);
+
+        }
+    };
 
 }
 

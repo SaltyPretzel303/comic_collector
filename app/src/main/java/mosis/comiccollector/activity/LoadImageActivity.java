@@ -19,21 +19,12 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.channels.FileChannel;
-
 import mosis.comiccollector.MyApplication;
 import mosis.comiccollector.R;
-import mosis.comiccollector.login.LoginResponseType;
-import mosis.comiccollector.login.OnResponseAction;
+import mosis.comiccollector.manager.handler.JobDoneHandler;
 import mosis.comiccollector.manager.AppManager;
+
+import mosis.comiccollector.storage.model.User;
 
 public class LoadImageActivity extends Activity {
 
@@ -60,10 +51,22 @@ public class LoadImageActivity extends Activity {
 
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        MyApplication.getInstance().registerActivityContext(LoadImageActivity.this);
+
+    }
+
     private void initView() {
 
         this.image_preview = (ImageView) this.findViewById(R.id.image_preview_iv);
-        this.image_preview.setImageBitmap(AppManager.getInstance().getUsersManager().getCurrentUser().getProfPicBitmap());
+        User user = AppManager.getInstance().getUsersManager().getCurrentUser();
+        if (user.hasProfilePic()) {
+            this.image_preview.setImageBitmap(user.getProfPicBitmap());
+        }
+        // else default pic
 
         this.browse_btn = (Button) this.findViewById(R.id.load_image_browse_btn);
         this.choose_btn = (Button) this.findViewById(R.id.load_image_choose_btn);
@@ -81,10 +84,6 @@ public class LoadImageActivity extends Activity {
         this.choose_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-//                testWrite();
-
-//                testShow();
 
                 chooseImage();
 
@@ -135,7 +134,7 @@ public class LoadImageActivity extends Activity {
 
             } else {
 
-                Toast.makeText(MyApplication.getAppContext(), "Permission not granted ... ", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MyApplication.getInstance().getActivityContext(), "Permission not granted ... ", Toast.LENGTH_SHORT).show();
                 // permission not granted
                 // close change image dialog
                 finish();
@@ -153,10 +152,9 @@ public class LoadImageActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-
         if (resultCode == Activity.RESULT_OK) {
 
-            Log.e("ProfilePic", "Ok result ");
+            Log.w("ProfilePic", "Ok result ");
 
             this.image_uri = data.getData();
             String picPath = this.getPicRealPath(this.image_uri);
@@ -191,24 +189,18 @@ public class LoadImageActivity extends Activity {
 
     private void chooseImage() {
 
-        // TODO show some kind of loading screen would be great
+        AppManager.getInstance().showLoadingScreen();
 
-        // save this image to the local storage
-        AppManager.getInstance().getUsersManager().saveUserProfilePic(this.picCache);
-
-        // update image reference in user class
-        AppManager.getInstance().getUsersManager().getCurrentUser().setProfPicBitmap(this.picCache);
-
-        // TODO MOVE THIS METHOD TO THE DATA STORAGE
-        // upload image in to the firebase
-        AppManager.getInstance().getUsersManager().uploadProfilePic(this.image_uri, new OnResponseAction() {
+        AppManager.getInstance().getUsersManager().updateUserProfilePic(this.image_uri, this.picCache, new JobDoneHandler() {
             @Override
-            public void execute(LoginResponseType response) {
+            public void execute(String message) {
 
-                Toast.makeText(MyApplication.getAppContext(), "Profile picture uploaded ", Toast.LENGTH_SHORT).show();
+                AppManager.getInstance().hideLoadingScreen();
 
-                // TODO stop loading screen and finish this activity with ok result
+                Toast.makeText(MyApplication.getInstance().getActivityContext(), "Profile pic updated", Toast.LENGTH_SHORT).show();
+
                 setResult(Activity.RESULT_OK);
+
                 finish();
 
             }
