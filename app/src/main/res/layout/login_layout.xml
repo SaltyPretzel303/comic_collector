@@ -17,72 +17,101 @@
         android:gravity="center"
         android:textAlignment="center" />
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:text="Username"
-        android:textAlignment="center" />
-
-    <EditText
-        android:id="@+id/login_username_et"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="neca" />
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:text="Password"
-        android:textAlignment="center" />
-
-    <EditText
-        android:id="@+id/login_password_et"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="pereca" />
-
-    <TextView
-        android:id="@+id/login_rep_password_tw"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:text="Repeat password"
-        android:textAlignment="center" />
-
-    <EditText
-        android:id="@+id/login_rep_password_et"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+    <!--    <Button-->
+    <!--        android:id="@+id/username_login_btn"-->
+    <!--        android:layout_width="200dp"-->
+    <!--        android:layout_height="wrap_content"-->
+    <!--        android:text="Username login" />-->
 
     <LinearLayout
+        android:id="@+id/username_login_form"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="10dp"
-        android:orientation="horizontal"
-        android:weightSum="2">
+        android:gravity="center"
+        android:orientation="vertical">
 
-        <Button
-            android:id="@+id/login_neg_btn"
+        <TextView
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:text="cancel" />
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="Username"
+            android:textAlignment="center" />
 
-        <Button
-            android:id="@+id/login_pos_btn"
+        <EditText
+            android:id="@+id/login_username_et"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:text="Login" />
+            android:layout_height="wrap_content"
+            android:text="neca" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="Password"
+            android:textAlignment="center" />
+
+        <EditText
+            android:id="@+id/login_password_et"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="pereca" />
+
+        <TextView
+            android:id="@+id/login_rep_password_tw"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="Repeat password"
+            android:textAlignment="center" />
+
+        <EditText
+            android:id="@+id/login_rep_password_et"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:orientation="horizontal"
+            android:weightSum="2">
+
+            <Button
+                android:id="@+id/register_btn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Register" />
+
+            <!--            <Button-->
+            <!--                android:id="@+id/login_neg_btn"-->
+            <!--                android:layout_width="match_parent"-->
+            <!--                android:layout_height="match_parent"-->
+            <!--                android:layout_weight="1"-->
+            <!--                android:text="cancel" />-->
+
+            <Button
+                android:id="@+id/login_pos_btn"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="Login" />
+
+        </LinearLayout>
+
 
     </LinearLayout>
 
-    <Button
-        android:id="@+id/login_context_switch"
+    <!--    <Button-->
+    <!--        android:id="@+id/username_register_btn"-->
+    <!--        android:layout_width="200dp"-->
+    <!--        android:layout_height="wrap_content"-->
+    <!--        android:text="Username register" />-->
+
+    <com.google.android.gms.common.SignInButton
+        android:id="@+id/google_sign_in_btn"
         android:layout_width="200dp"
         android:layout_height="wrap_content"
-        android:text="Register" />
+        android:layout_marginTop="20dp" />
 
 </LinearLayout>

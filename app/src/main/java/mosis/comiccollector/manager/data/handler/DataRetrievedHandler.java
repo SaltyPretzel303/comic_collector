@@ -2,7 +2,7 @@ package mosis.comiccollector.manager.data.handler;
 
 import java.util.List;
 
-import mosis.comiccollector.comic.Comic;
+import mosis.comiccollector.ui.comic.Comic;
 
 public interface DataRetrievedHandler {
 

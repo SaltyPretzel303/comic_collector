@@ -5,6 +5,7 @@
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
 
@@ -17,24 +18,30 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:ignore="AllowBackup,GoogleAppIndexingWarning">
-        <activity android:name=".activity.CreateComicActivity"></activity>
         <activity
-            android:name=".activity.LoadImageActivity"
+            android:name=".ui.MapActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.LoginActivity"
+            android:exported="false" />
+        <activity android:name=".ui.CreateComicActivity" />
+        <activity
+            android:name=".ui.LoadImageActivity"
             android:theme="@style/NoTitleDialog" />
-        <activity android:name=".activity.ProfileActivity" />
+        <activity android:name=".ui.ProfileActivity" />
         <activity
-            android:name=".activity.ReadActivity"
+            android:name=".ui.ReadActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_read"
             android:theme="@style/FullscreenTheme" />
         <activity
-            android:name=".activity.FullPreviewActivity"
+            android:name=".ui.FullPreviewActivity"
             android:theme="@style/NoTitleDialog" />
         <activity
-            android:name=".activity.SortActivity"
+            android:name=".ui.SortActivity"
             android:theme="@style/NoTitleDialog" />
-        <activity android:name=".activity.ComicListActivity" />
-        <activity android:name=".activity.MainPageActivity">
+        <activity android:name=".ui.ComicListActivity" />
+        <activity android:name=".ui.MainPageActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
