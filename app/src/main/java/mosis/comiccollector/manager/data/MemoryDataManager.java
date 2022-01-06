@@ -6,23 +6,23 @@ import com.google.firebase.storage.StorageReference;
 import java.util.ArrayList;
 import java.util.List;
 
-import mosis.comiccollector.ui.comic.Comic;
+import mosis.comiccollector.ui.comic.ViewComic;
 import mosis.comiccollector.repository.ComicRepository;
 import mosis.comiccollector.manager.data.handler.DataRetrievedHandler;
 
 public class MemoryDataManager implements ComicRepository {
 
-    private List<Comic> collected_cache;
+    private List<ViewComic> collected_cache;
     private int collected_part_size; // how many items to load with one 'load more' request
 
-    private List<Comic> discover_cache;
+    private List<ViewComic> discover_cache;
     private int discover_part_size; // how many items to load with one 'load more' request
 
     // lazy load from local storage
-    private List<Comic> queued_cache;
+    private List<ViewComic> queued_cache;
 
     // lazy load from local storage
-    private List<Comic> my_comics;
+    private List<ViewComic> my_comics;
 
     private DataRetrievedHandler data_handler;
 
@@ -32,28 +32,28 @@ public class MemoryDataManager implements ComicRepository {
 
         // TODO don't left it hardcoded
         this.collected_part_size = 5;
-        this.collected_cache = new ArrayList<Comic>();
+        this.collected_cache = new ArrayList<ViewComic>();
 
         // TODO same as above...
         this.discover_part_size = 5;
-        this.discover_cache = new ArrayList<Comic>();
+        this.discover_cache = new ArrayList<ViewComic>();
 
         this.storage_ref = FirebaseStorage.getInstance().getReference();
 
     }
 
     @Override
-    public List<Comic> getCollectedComics() {
+    public List<ViewComic> getCollectedComics() {
         return this.collected_cache;
     }
 
     @Override
-    public List<Comic> getDiscoverComics() {
+    public List<ViewComic> getDiscoverComics() {
         return this.discover_cache;
     }
 
     @Override
-    public List<Comic> getQueuedComics() {
+    public List<ViewComic> getQueuedComics() {
 
         if (this.queued_cache == null) {
             this.loadQueuedComics();
@@ -68,7 +68,7 @@ public class MemoryDataManager implements ComicRepository {
     }
 
     @Override
-    public List<Comic> getMyComics() {
+    public List<ViewComic> getMyComics() {
 
         if (this.my_comics == null) {
             this.loadMyComics();
@@ -114,21 +114,21 @@ public class MemoryDataManager implements ComicRepository {
 
         for (int i = 0; i < count; i++) {
 
-            this.collected_cache.add(new Comic());
+            this.collected_cache.add(new ViewComic());
 
         }
 
     }
 
     @Override
-    public Comic getComicAt(int index) {
+    public ViewComic getComicAt(int index) {
         return this.collected_cache.get(index);
     }
 
     @Override
-    public Comic getComic(String title, String author) {
+    public ViewComic getComic(String title, String author) {
 
-        for (Comic selected : this.collected_cache) {
+        for (ViewComic selected : this.collected_cache) {
             if (selected.title.equals(title) && selected.author.equals(author)) {
                 return selected;
             }

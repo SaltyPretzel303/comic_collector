@@ -1,10 +1,11 @@
-package mosis.comiccollector.repository;
+package mosis.comiccollector.repository.impl;
 
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-import mosis.comiccollector.ui.comic.Comic;
+import mosis.comiccollector.repository.ComicRepository;
+import mosis.comiccollector.ui.comic.ViewComic;
 import mosis.comiccollector.manager.data.handler.DataRetrievedHandler;
 
 public class FirebaseComicRepository implements ComicRepository {
@@ -20,22 +21,22 @@ public class FirebaseComicRepository implements ComicRepository {
     // comics specific
 
     @Override
-    public List<Comic> getCollectedComics() {
+    public List<ViewComic> getCollectedComics() {
         return null;
     }
 
     @Override
-    public List<Comic> getDiscoverComics() {
+    public List<ViewComic> getDiscoverComics() {
         return null;
     }
 
     @Override
-    public List<Comic> getQueuedComics() {
+    public List<ViewComic> getQueuedComics() {
         return null;
     }
 
     @Override
-    public List<Comic> getMyComics() {
+    public List<ViewComic> getMyComics() {
         return null;
     }
 
@@ -50,12 +51,12 @@ public class FirebaseComicRepository implements ComicRepository {
     }
 
     @Override
-    public Comic getComicAt(int index) {
+    public ViewComic getComicAt(int index) {
         return null;
     }
 
     @Override
-    public Comic getComic(String name, String author) {
+    public ViewComic getComic(String name, String author) {
         return null;
     }
 

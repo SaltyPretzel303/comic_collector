@@ -14,12 +14,12 @@ import android.widget.ImageView;
 import androidx.appcompat.app.AppCompatActivity;
 
 import mosis.comiccollector.R;
-import mosis.comiccollector.ui.comic.Comic;
+import mosis.comiccollector.ui.comic.ViewComic;
 import mosis.comiccollector.util.DepProvider;
 
 public class ReadActivity extends AppCompatActivity {
 
-    private Comic comic;
+    private ViewComic comic;
 
     private ImageView image_view;
     private View options_container;

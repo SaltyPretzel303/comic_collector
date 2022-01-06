@@ -1,5 +1,7 @@
 package mosis.comiccollector.repository;
 
-public interface DataMapper<InputType, OutputType>{
-    InputType someMethod(OutputType t);
+// TODO this should be moved out of repository
+// it should be in ViewModel I guess ...
+public interface DataMapper<InputType, OutputType> {
+    OutputType mapToViewModel(InputType input);
 }

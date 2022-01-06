@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import mosis.comiccollector.R;
-import mosis.comiccollector.ui.comic.Comic;
+import mosis.comiccollector.ui.comic.ViewComic;
 import mosis.comiccollector.ui.comic.PreviewListAdapter;
 import mosis.comiccollector.util.DepProvider;
 
@@ -26,7 +26,7 @@ public class FullPreviewActivity extends AppCompatActivity {
     private RecyclerView preview_list;
     private PreviewListAdapter adapter;
 
-    private Comic comic;
+    private ViewComic comic;
     private int comic_index;
 
     private ComicListContext preview_context;

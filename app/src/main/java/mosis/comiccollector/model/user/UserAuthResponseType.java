@@ -1,6 +1,6 @@
 package mosis.comiccollector.model.user;
 
-public enum UserResponseType {
+public enum UserAuthResponseType {
 
     Success,
     InvalidPassword,

@@ -3,10 +3,18 @@ package mosis.comiccollector.util;
 import android.os.Handler;
 import android.os.Looper;
 
-import mosis.comiccollector.repository.FirebaseComicRepository;
-import mosis.comiccollector.repository.FirebaseUserRepository;
+import mosis.comiccollector.model.user.User;
+import mosis.comiccollector.model.user.UserAuthResponse;
+import mosis.comiccollector.repository.DataMapper;
+import mosis.comiccollector.repository.PeopleRepository;
+import mosis.comiccollector.repository.impl.FirebaseComicRepository;
+import mosis.comiccollector.repository.impl.FirebasePeopleRepository;
+import mosis.comiccollector.repository.impl.FirebaseAuthRepository;
 import mosis.comiccollector.repository.ComicRepository;
-import mosis.comiccollector.repository.UserRepository;
+import mosis.comiccollector.repository.AuthRepository;
+import mosis.comiccollector.ui.user.ViewUser;
+import mosis.comiccollector.ui.viewmodel.mapper.AuthUserMapper;
+import mosis.comiccollector.ui.viewmodel.mapper.UserModelMapper;
 
 // singleton
 public class DepProvider {
@@ -42,11 +50,24 @@ public class DepProvider {
 
     }
 
-    public static UserRepository getUserRepository() {
-        return new FirebaseUserRepository();
+    public static AuthRepository getAuthRepository() {
+        return new FirebaseAuthRepository();
     }
 
     public static ComicRepository getComicRepository() {
         return new FirebaseComicRepository();
     }
+
+    public static PeopleRepository getPeopleRepository() {
+        return new FirebasePeopleRepository();
+    }
+
+    public static DataMapper<UserAuthResponse, ViewUser> getAuthUserMapper() {
+        return new AuthUserMapper();
+    }
+
+    public static DataMapper<User, ViewUser> getUserModelMapper() {
+        return new UserModelMapper();
+    }
+
 }

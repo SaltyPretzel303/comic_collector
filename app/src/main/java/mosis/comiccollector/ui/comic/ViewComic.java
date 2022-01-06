@@ -10,7 +10,7 @@ import java.util.Random;
 import mosis.comiccollector.MyApplication;
 import mosis.comiccollector.R;
 
-public class Comic {
+public class ViewComic {
 
     public static class Position {
         public double x;
@@ -44,14 +44,14 @@ public class Comic {
     public List<Bitmap> samplePages;
     private List<Bitmap> pages;
 
-    public Comic(String modelId,
-                 String title,
-                 String description,
-                 String author,
-                 Bitmap icon,
-                 List<Bitmap> samplePages,
-                 Bitmap previewPage,
-                 int progress) {
+    public ViewComic(String modelId,
+                     String title,
+                     String description,
+                     String author,
+                     Bitmap icon,
+                     List<Bitmap> samplePages,
+                     Bitmap previewPage,
+                     int progress) {
 
         this.modelId = modelId;
 
@@ -73,7 +73,7 @@ public class Comic {
 
     // TODO REMOVE
     // default comic
-    public Comic() {
+    public ViewComic() {
 
         this.title = "TESTING TITLE ";
         this.icon = BitmapFactory.decodeResource(

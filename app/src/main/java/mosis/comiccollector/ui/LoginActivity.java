@@ -27,11 +27,8 @@ import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.GoogleAuthProvider;
 
 import mosis.comiccollector.R;
-import mosis.comiccollector.repository.UserRepository;
-import mosis.comiccollector.model.user.UserResponse;
-import mosis.comiccollector.model.user.UserResponseType;
-import mosis.comiccollector.ui.viewmodel.UserViewModel;
-import mosis.comiccollector.util.DepProvider;
+import mosis.comiccollector.ui.user.ViewUser;
+import mosis.comiccollector.ui.viewmodel.AuthUserViewModel;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -52,14 +49,14 @@ public class LoginActivity extends AppCompatActivity {
 
     private ActivityResultLauncher<Intent> googleLoginActivity;
 
-    private UserViewModel userViewModel;
+    private AuthUserViewModel userViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.login_layout);
 
-        this.userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
+        this.userViewModel = new ViewModelProvider(this).get(AuthUserViewModel.class);
 
         this.initGoogleLoginActivity();
         this.findViews();
@@ -85,7 +82,7 @@ public class LoginActivity extends AppCompatActivity {
 
         try {
 
-            // this is jut selected google account I guess ...
+            // this is jut selected google account
             GoogleSignInAccount googleAcc = GoogleSignIn
                     .getSignedInAccountFromIntent(result.getData())
                     .getResult(ApiException.class);
@@ -101,21 +98,22 @@ public class LoginActivity extends AppCompatActivity {
             AuthCredential googleAuthCredential = GoogleAuthProvider
                     .getCredential(googleIdToken, null);
 
-            UserRepository userRepo = DepProvider.getUserRepository();
-
             Log.e("LOGIN ACT", "Gonna sign in with google ... all good");
-            this.userViewModel.loginWithGoogle(googleAuthCredential)
-                    .observe(this, (UserResponse response) ->
+            this.userViewModel
+                    .loginWithGoogle(googleAuthCredential)
+                    .observe(this, (ViewUser response) ->
                     {
-                        if (response.responseType != UserResponseType.Success) {
-                            Log.e("Google login result", "You failed to login with google ... ");
+                        if (response == null || response.errorMessage != null) {
+                            Log.e("Google login result", "You failed to login with google ... "
+                                    + response.errorMessage);
 
                             return;
                         }
 
                         showMessage("YOU DID IT");
-                        Log.e("Google login result", "You did it with google ... ");
+                        Log.e("Google login result", "You loggedIn with google ... ");
 
+                        finish();
                         return;
                     });
 
@@ -155,6 +153,7 @@ public class LoginActivity extends AppCompatActivity {
         this.googleLoginBtn.setOnClickListener(this::googleSignInClick);
     }
 
+    // TODO this method/action should be removed ...
     private void showMessage(String message) {
 
         new Handler(Looper.getMainLooper()).post(() -> {
@@ -186,15 +185,17 @@ public class LoginActivity extends AppCompatActivity {
 
 
         this.userViewModel.loginWithEmail(username, password)
-                .observe(this, (UserResponse response) -> {
+                .observe(this, (ViewUser response) -> {
 
-                    if (response.responseType != UserResponseType.Success) {
+                    if (response == null || response.errorMessage != null) {
                         Log.e("login screen", "Failed to login with username and password");
 
                         return;
                     }
 
                     showMessage("YOU DID IT ... ");
+
+                    finish();
 
                     return;
                 });
@@ -227,11 +228,11 @@ public class LoginActivity extends AppCompatActivity {
         }
 
         this.userViewModel.registerWithEmail(username, password)
-                .observe(this, (UserResponse response) -> {
+                .observe(this, (ViewUser response) -> {
 
-                    if (response.responseType != UserResponseType.Success) {
+                    if (response == null || response.errorMessage != null) {
                         showMessage("You did something wrong ... ");
-                        Log.e("register result", "You FAILED to registered ... ");
+                        Log.e("register result", "You FAILED to registered ... " + response.errorMessage);
 
                         return;
                     }
@@ -256,8 +257,7 @@ public class LoginActivity extends AppCompatActivity {
                 .build();
 
         GoogleSignInClient googleSignInClient = GoogleSignIn.getClient(
-                getApplicationContext(),
-                googleSignInOptions);
+                this, googleSignInOptions);
 
         this.googleLoginActivity.launch(googleSignInClient.getSignInIntent());
     }
@@ -265,7 +265,7 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
 
-        // TODO i guess nothing ... you have to login first ...
+        // do nothing ... you have to login first ...
         // maybe show some message that you have to login first
 
     }

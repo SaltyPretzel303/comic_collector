@@ -2,29 +2,28 @@ package mosis.comiccollector.ui;
 
 import android.graphics.drawable.Drawable;
 
-import org.osmdroid.api.IGeoPoint;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.overlay.OverlayItem;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import mosis.comiccollector.ui.comic.Comic;
+import mosis.comiccollector.ui.comic.ViewComic;
 
 public class MapComicMarker extends OverlayItem {
 
-    private List<Comic> comics;
+    private List<ViewComic> comics;
 
     private Drawable unknownMarker;
     private Drawable knownMarker;
 
-    public MapComicMarker(Comic comic,
+    public MapComicMarker(ViewComic comic,
                           Drawable knownMarker,
                           Drawable unknownMarker) {
         super("title", "description",
                 new GeoPoint(comic.position.x, comic.position.y));
 
-        this.comics = new ArrayList<Comic>();
+        this.comics = new ArrayList<ViewComic>();
 
         this.comics.add(comic);
 
@@ -36,7 +35,7 @@ public class MapComicMarker extends OverlayItem {
 
     }
 
-    public void addComic(Comic newComic) {
+    public void addComic(ViewComic newComic) {
         this.comics.add(newComic);
 
         if (newComic.discovered) {

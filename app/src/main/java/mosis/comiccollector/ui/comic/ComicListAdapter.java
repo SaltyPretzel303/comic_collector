@@ -13,13 +13,13 @@ import java.util.List;
 
 import mosis.comiccollector.R;
 
-public class ComicListAdapter extends ArrayAdapter<Comic> {
+public class ComicListAdapter extends ArrayAdapter<ViewComic> {
 
     private Context context;
     private int itemTemplate;
-    private List<Comic> comics;
+    private List<ViewComic> comics;
 
-    public ComicListAdapter(Context context, int itemTemplate, List<Comic> comics) {
+    public ComicListAdapter(Context context, int itemTemplate, List<ViewComic> comics) {
         super(context, itemTemplate, comics);
 
         this.context = context;
@@ -36,7 +36,7 @@ public class ComicListAdapter extends ArrayAdapter<Comic> {
         }
 
         // get comic sample from data source
-        Comic comic = comics.get(pos);
+        ViewComic comic = comics.get(pos);
 
         // populate view with model data
 

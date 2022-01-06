@@ -41,7 +41,7 @@
             android:id="@+id/login_username_et"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="neca" />
+            android:text="user_1@gmail.com" />
 
         <TextView
             android:layout_width="match_parent"
@@ -54,7 +54,7 @@
             android:id="@+id/login_password_et"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="pereca" />
+            android:text="user123" />
 
         <TextView
             android:id="@+id/login_rep_password_tw"

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical">
+    <!--    TODO adjust bckColor ... just not white-->
+
+    <ImageView
+        android:id="@+id/profile_pic_people_map"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="20dp"
+        android:adjustViewBounds="true"
+        android:maxWidth="200dp"
+        android:maxHeight="200dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_margin="20dp"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Username"
+            android:textSize="20dp" />
+
+        <TextView
+            android:id="@+id/username_people_map"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="PlaceholderText" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Rating" />
+
+        <ProgressBar
+            android:id="@+id/rating_people_map_pb"
+            style="@android:style/Widget.ProgressBar.Horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="10dp"
+            android:layout_marginHorizontal="20dp"
+            android:max="100"
+            android:progress="65"
+            android:progressBackgroundTint="@android:color/holo_red_dark"
+            android:progressTint="@android:color/holo_green_light" />
+
+        <TextView
+            android:id="@+id/rating_people_map_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="61/100" />
+
+        <Button
+            android:id="@+id/open_profile_people_map"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="View profile" />
+
+
+    </LinearLayout>
+
+</LinearLayout>

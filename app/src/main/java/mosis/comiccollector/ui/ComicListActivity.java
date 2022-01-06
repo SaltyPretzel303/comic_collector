@@ -14,7 +14,7 @@ import android.widget.ListView;
 import java.util.List;
 
 import mosis.comiccollector.R;
-import mosis.comiccollector.ui.comic.Comic;
+import mosis.comiccollector.ui.comic.ViewComic;
 import mosis.comiccollector.ui.comic.ComicListAdapter;
 import mosis.comiccollector.util.DepProvider;
 import mosis.comiccollector.manager.data.handler.DataRetrievedHandler;
@@ -23,7 +23,7 @@ public class ComicListActivity extends AppCompatActivity {
 
     private static int SORT_RESULT_CODE = 10;
 
-    private List<Comic> comics;
+    private List<ViewComic> comics;
     private ComicListAdapter adapter;
     private ListView list_view;
 
@@ -86,7 +86,7 @@ public class ComicListActivity extends AppCompatActivity {
 
         DataRetrievedHandler handler = new DataRetrievedHandler() {
             @Override
-            public void onListRetrieved(List<Comic> retrieved_data) {
+            public void onListRetrieved(List<ViewComic> retrieved_data) {
 
                 comics = retrieved_data;
                 adapter = new ComicListAdapter(getApplicationContext(), R.layout.small_preview, comics);
@@ -99,7 +99,7 @@ public class ComicListActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onComicRetrieved(int index, Comic comic) {
+            public void onComicRetrieved(int index, ViewComic comic) {
 
             }
 
@@ -123,7 +123,7 @@ public class ComicListActivity extends AppCompatActivity {
 
         DataRetrievedHandler handler = new DataRetrievedHandler() {
             @Override
-            public void onListRetrieved(List<Comic> retrieved_data) {
+            public void onListRetrieved(List<ViewComic> retrieved_data) {
 
                 comics = retrieved_data;
                 adapter = new ComicListAdapter(getApplicationContext(), R.layout.small_preview, comics);
@@ -134,7 +134,7 @@ public class ComicListActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onComicRetrieved(int index, Comic comic) {
+            public void onComicRetrieved(int index, ViewComic comic) {
 
             }
 
