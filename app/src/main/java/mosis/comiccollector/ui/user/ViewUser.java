@@ -1,15 +1,11 @@
 package mosis.comiccollector.ui.user;
 
-import android.net.Uri;
-
 import androidx.lifecycle.MutableLiveData;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 
 import mosis.comiccollector.ui.comic.ViewComic;
-import mosis.comiccollector.ui.comic.ComicsLoader;
 
 public class ViewUser implements Serializable {
 
@@ -53,5 +49,34 @@ public class ViewUser implements Serializable {
         this.liveLocalPicUri = livePicUri;
     }
 
+    public static ViewUser fromProfileData(ProfileData pData) {
+        ViewUser vData = new ViewUser(
+                pData.userId,
+                pData.email,
+                "notImplemented",
+                pData.rating,
+                "");
 
+        MutableLiveData<String> livePic = new MutableLiveData<>();
+        livePic.postValue(pData.picUri);
+        vData.setLivePicUri(livePic);
+
+        return vData;
+    }
+
+    public MutableLiveData<List<ViewComic>> getCreatedComics() {
+        return createdComics;
+    }
+
+    public void setCreatedComics(MutableLiveData<List<ViewComic>> createdComics) {
+        this.createdComics = createdComics;
+    }
+
+    public MutableLiveData<List<ViewComic>> getCollectedComics() {
+        return collectedComics;
+    }
+
+    public void setCollectedComics(MutableLiveData<List<ViewComic>> collectedComics) {
+        this.collectedComics = collectedComics;
+    }
 }

@@ -3,6 +3,7 @@ package mosis.comiccollector.util;
 import android.os.Handler;
 import android.os.Looper;
 
+import mosis.comiccollector.model.comic.Comic;
 import mosis.comiccollector.model.user.User;
 import mosis.comiccollector.model.user.UserAuthResponse;
 import mosis.comiccollector.repository.DataMapper;
@@ -12,8 +13,10 @@ import mosis.comiccollector.repository.impl.FirebasePeopleRepository;
 import mosis.comiccollector.repository.impl.FirebaseAuthRepository;
 import mosis.comiccollector.repository.ComicRepository;
 import mosis.comiccollector.repository.AuthRepository;
+import mosis.comiccollector.ui.comic.ViewComic;
 import mosis.comiccollector.ui.user.ViewUser;
 import mosis.comiccollector.ui.viewmodel.mapper.AuthUserMapper;
+import mosis.comiccollector.ui.viewmodel.mapper.ComicModelMapper;
 import mosis.comiccollector.ui.viewmodel.mapper.UserModelMapper;
 
 // singleton
@@ -68,6 +71,10 @@ public class DepProvider {
 
     public static DataMapper<User, ViewUser> getUserModelMapper() {
         return new UserModelMapper();
+    }
+
+    public static DataMapper<Comic, ViewComic> getComicModelMapper() {
+        return new ComicModelMapper();
     }
 
 }

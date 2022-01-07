@@ -11,7 +11,7 @@
         android:id="@+id/basic_preview"
         layout="@layout/small_preview" />
 
-    <android.support.v7.widget.RecyclerView
+    <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/preview_pages_list"
         android:layout_width="match_parent"
         android:layout_height="200dp"
@@ -19,9 +19,9 @@
         android:layout_marginTop="5dp"
         android:layout_marginEnd="10dp"
         android:orientation="horizontal"
-        app:layoutManager="android.support.v7.widget.LinearLayoutManager">
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager">
 
-    </android.support.v7.widget.RecyclerView>
+    </androidx.recyclerview.widget.RecyclerView>
 
     <LinearLayout
         android:id="@+id/full_preview_controls_container"

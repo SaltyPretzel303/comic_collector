@@ -2,31 +2,25 @@ package mosis.comiccollector.repository;
 
 import java.util.List;
 
+import mosis.comiccollector.model.comic.Comic;
 import mosis.comiccollector.ui.comic.ViewComic;
-import mosis.comiccollector.manager.data.handler.DataRetrievedHandler;
 
 public interface ComicRepository {
 
-    // comics specific
+    interface ComicsHandler {
+        void handleComics(List<Comic> newComics);
+    }
 
-    List<ViewComic> getCollectedComics();
+    interface PagesHandler {
+        void handlePages(List<String> newPages);
+    }
 
-    List<ViewComic> getDiscoverComics();
+    void getCreatedComics(String userId, ComicsHandler handler);
 
-    List<ViewComic> getQueuedComics();
+    void getCollectedComics(String userId, ComicsHandler handler);
 
-    List<ViewComic> getMyComics();
+    void loadTitlePage(String comicId, PagesHandler handler);
 
-    boolean fetchCollectedComics(int index, DataRetrievedHandler handler);
-
-    boolean fetchDiscoverComics(int index, DataRetrievedHandler handler);
-
-    ViewComic getComicAt(int index);
-
-    ViewComic getComic(String name, String author);
-
-    void downloadCollectedPaged(int index);
-
-    void clearComicsCache();
+    void loadPage(String comicId, int pageInd, PagesHandler handler);
 
 }

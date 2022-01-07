@@ -3,7 +3,9 @@ package mosis.comiccollector.ui;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Intent;
 import android.database.Cursor;
@@ -18,52 +20,50 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import mosis.comiccollector.R;
+import mosis.comiccollector.ui.comic.PreviewListAdapter;
+import mosis.comiccollector.ui.user.ProfileData;
 import mosis.comiccollector.ui.user.ViewUser;
 import mosis.comiccollector.ui.viewmodel.UserProfileViewModel;
 import mosis.comiccollector.util.DepProvider;
 
 public class ProfileActivity extends AppCompatActivity {
 
-    public static final String USER_ID_EXTRA = "user_id";
+    public static final String USER_DATA_EXTRA = "user_data";
 
-    private String myId;
-    private String userId;
+    private PreviewListAdapter createdAdapter;
+    private RecyclerView createdComicsRv;
 
-    private ImageView profilePicIv;
+    private PreviewListAdapter collectedAdapter;
+    private RecyclerView collectedComicsRv;
 
-    private TextView usernameTv;
-
-    private ProgressBar userRatingPb;
-    private TextView userRatingTv;
-
-    // these should be horizontal lists
-    private Button myComicsBtn;
-    private Button friendsBtn;
-    private Button newUploadBtn;
+    private PreviewListAdapter friendsAdapter;
+    private RecyclerView friendsRv;
 
     private ActivityResultLauncher<String> loadPicActivityLauncher;
 
-    private UserProfileViewModel profileViewModel;
+    private UserProfileViewModel viewModel;
+    private String myId;
+
+    private MutableLiveData<ViewUser> liveUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.profile_page);
 
-        this.myId = this.userId = DepProvider
-                .getAuthRepository()
-                .getCurrentUser()
-                .user.getUserId();
-
-        this.profileViewModel = new ViewModelProvider(this).get(UserProfileViewModel.class);
+        this.viewModel = new ViewModelProvider(this).get(UserProfileViewModel.class);
+        this.myId = this.viewModel.getMyId();
 
         this.initLoadPictureActivityLauncher();
 
         Intent intent = getIntent();
-        if (intent.hasExtra(USER_ID_EXTRA)) {
-            this.userId = intent.getExtras().getString(USER_ID_EXTRA);
+        if (intent.hasExtra(USER_DATA_EXTRA)) {
+            ProfileData pData = (ProfileData) intent.getSerializableExtra(USER_DATA_EXTRA);
+            ViewUser vData = ViewUser.fromProfileData(pData);
+            this.liveUser = new MutableLiveData<>();
+            this.liveUser.postValue(vData);
         } else {
-            this.userId = myId;
+            this.liveUser = viewModel.loadUser(this.myId);
         }
 
         this.initView();
@@ -78,46 +78,56 @@ public class ProfileActivity extends AppCompatActivity {
 
                     ((ImageView) findViewById(R.id.profil_pic_iv)).setImageURI(uri);
 
-                    profileViewModel.saveProfilePic(uri.toString());
+                    viewModel.saveProfilePic(uri.toString());
 
                 }
         );
     }
 
     private void initView() {
+        this.liveUser.observe(this, (ViewUser user) -> {
 
-        profileViewModel.loadUser(this.userId)
-                .observe(this, (ViewUser user) -> {
+            ((TextView) this.findViewById(R.id.profile_username_tv))
+                    .setText(user.email);
+            ((ProgressBar) this.findViewById(R.id.user_rating_pb))
+                    .setProgress(user.rating);
+            ((TextView) this.findViewById(R.id.user_rating_tv))
+                    .setText(String.valueOf(user.rating) + "/100");
 
-                    ((TextView) this.findViewById(R.id.profile_username_tv))
-                            .setText(user.email);
-                    ((ProgressBar) this.findViewById(R.id.user_rating_pb))
-                            .setProgress(user.rating);
-                    ((TextView) this.findViewById(R.id.user_rating_tv))
-                            .setText(String.valueOf(user.rating) + "/100");
+            user.liveLocalPicUri.observe(this, (String sUri) -> {
+                if (sUri != null) {
+                    ((ImageView) this.findViewById(R.id.profil_pic_iv))
+                            .setImageURI(Uri.parse(sUri));
+                } else {
+                    Log.e("imageView", "Image uri is null ... ");
+                }
+            });
 
-                    user.liveLocalPicUri.observe(this, (String sUri) -> {
-                        if (sUri != null) {
-                            ((ImageView) this.findViewById(R.id.profil_pic_iv))
-                                    .setImageURI(Uri.parse(sUri));
-                        } else {
-                            Log.e("imageView", "Image uri is null ... ");
-                        }
-                    });
+            if (user.userId.equals(myId)) {
+                // if displaying my acc
 
+                this.findViewById(R.id.profil_pic_iv).setOnClickListener(v -> {
+                    this.loadPicActivityLauncher.launch("image/*");
                 });
 
-        this.findViewById(R.id.profil_pic_iv).setOnClickListener(v -> {
-            this.loadPicActivityLauncher.launch("image/*");
-        });
+            }
 
-
-        this.newUploadBtn = (Button) this.findViewById(R.id.new_upload_btn);
-        this.newUploadBtn.setOnClickListener((v) -> {
-
-            Toast.makeText(this, "Not implemented yed ... ", Toast.LENGTH_SHORT).show();
+            // start loading comics
 
         });
+
+
+    }
+
+    private void loadCreatedComics() {
+
+    }
+
+    private void loadCollectedComics() {
+
+    }
+
+    private void loadFriends() {
 
     }
 

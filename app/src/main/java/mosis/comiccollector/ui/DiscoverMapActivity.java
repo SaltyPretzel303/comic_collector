@@ -357,7 +357,7 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
                     // triggered whenever list of friends get updated
 
                     if (nearbyFriends == null) {
-                        Log.e("friends", "Friends updated with  NO nearby friends ... ");
+                        Log.e("friends", "Failed to update friends ... ");
                         return;
                     }
 

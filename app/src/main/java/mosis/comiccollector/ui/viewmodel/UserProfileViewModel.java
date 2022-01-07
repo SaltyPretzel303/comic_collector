@@ -1,19 +1,24 @@
 package mosis.comiccollector.ui.viewmodel;
 
 import android.app.Application;
-import android.net.Uri;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.MutableLiveData;
 
-import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import mosis.comiccollector.model.comic.Comic;
 import mosis.comiccollector.model.user.User;
+import mosis.comiccollector.repository.AuthRepository;
 import mosis.comiccollector.repository.ComicRepository;
 import mosis.comiccollector.repository.DataMapper;
-import mosis.comiccollector.repository.AuthRepository;
 import mosis.comiccollector.repository.PeopleRepository;
+import mosis.comiccollector.ui.comic.ViewComic;
 import mosis.comiccollector.ui.user.ViewUser;
 import mosis.comiccollector.util.DepProvider;
 
@@ -27,14 +32,22 @@ public class UserProfileViewModel extends AndroidViewModel {
     private MutableLiveData<String> liveProfilePic;
 
     private DataMapper<User, ViewUser> userMapper;
+    private DataMapper<Comic, ViewComic> comicMapper;
 
     public UserProfileViewModel(@NonNull Application application) {
         super(application);
 
         this.authRepo = DepProvider.getAuthRepository();
         this.comicRepo = DepProvider.getComicRepository();
-        this.userMapper = DepProvider.getUserModelMapper();
         this.peopleRepo = DepProvider.getPeopleRepository();
+
+        this.userMapper = DepProvider.getUserModelMapper();
+        this.comicMapper = DepProvider.getComicModelMapper();
+
+    }
+
+    public String getMyId() {
+        return authRepo.getCurrentUser().user.getUserId();
     }
 
     public MutableLiveData<ViewUser> loadUser(String userId) {
@@ -94,6 +107,68 @@ public class UserProfileViewModel extends AndroidViewModel {
         });
 
         return this.liveProfilePic;
+    }
+
+    public MutableLiveData<List<ViewComic>> loadCreatedComics(String userId) {
+        MutableLiveData<List<ViewComic>> liveComics = new MutableLiveData<>();
+
+        this.comicRepo.getCreatedComics(userId, (List<Comic> newComics) -> {
+            if (newComics == null) {
+                Log.e("viewModelProfile", "Failed to load created comics for: " + userId);
+                liveComics.postValue(null);
+                return;
+            }
+
+            List<ViewComic> vComicL = new ArrayList<>();
+            for (Comic comic : newComics) {
+                ViewComic vComic = comicMapper.mapToViewModel(comic);
+                vComic.titlePageUri = loadTitlePage(comic.getId());
+
+                vComicL.add(vComic);
+            }
+
+            liveComics.postValue(vComicL);
+        });
+
+        return liveComics;
+    }
+
+    public MutableLiveData<String> loadTitlePage(String comicId) {
+        MutableLiveData<String> liveUri = new MutableLiveData<>();
+
+        comicRepo.loadTitlePage(comicId, (List<String> newPages) -> {
+            if (newPages == null) {
+                Log.e("viewModelProfile", "Failed to load titlePage for: " + comicId);
+                liveUri.postValue(null);
+
+                return;
+            }
+
+            liveUri.postValue(newPages.get(0));
+
+        });
+
+        return liveUri;
+    }
+
+    public void loadCollectedComics(String userId) {
+
+    }
+
+    public MutableLiveData<List<ViewUser>> loadFriends(String userId) {
+        MutableLiveData<List<ViewUser>> liveFriends = new MutableLiveData<>();
+
+        peopleRepo.getFriends(userId, (List<User> people) -> {
+            List<ViewUser> vPeople = new ArrayList<>();
+            for (User uPeople : people) {
+                ViewUser vUser = userMapper.mapToViewModel(uPeople);
+                vUser.setLivePicUri(this.loadProfilePic(userId));
+                vPeople.add(vUser);
+            }
+            liveFriends.postValue(vPeople);
+        });
+
+        return liveFriends;
     }
 
 }

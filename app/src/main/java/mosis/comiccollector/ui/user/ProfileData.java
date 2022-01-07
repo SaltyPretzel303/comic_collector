@@ -1,6 +1,8 @@
 package mosis.comiccollector.ui.user;
 
-public class ProfileData {
+import java.io.Serializable;
+
+public class ProfileData implements Serializable {
     public String userId;
 
     public String email;
@@ -10,6 +12,21 @@ public class ProfileData {
 
     public String picUri;
 
-    public List<>
+    public ProfileData() {
+
+    }
+
+    public ProfileData(String id,
+                       String email,
+                       String name,
+                       int rating,
+                       String picUri) {
+
+        this.userId = id;
+        this.email = email;
+        this.name = name;
+        this.rating = rating;
+        this.picUri = picUri;
+    }
 
 }

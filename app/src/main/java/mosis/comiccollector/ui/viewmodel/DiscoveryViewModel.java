@@ -2,6 +2,7 @@ package mosis.comiccollector.ui.viewmodel;
 
 import android.accounts.NetworkErrorException;
 import android.app.Application;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
@@ -57,6 +58,12 @@ public class DiscoveryViewModel extends AndroidViewModel {
 
         this.peopleRepo.getNearbyFriendsLocations(userId, lat, lgt, range,
                 (List<UserLocation> friendLocks) -> {
+
+                    if (friendLocks == null) {
+                        Log.e("mapViewmodel", "Failed to retrieved friends for: " + userId);
+                        nearbyFriends.postValue(null);
+                        return;
+                    }
 
                     List<LocationWithPicture> viewPeople = new ArrayList<>();
 

@@ -14,10 +14,10 @@ import android.widget.ListView;
 import java.util.List;
 
 import mosis.comiccollector.R;
+import mosis.comiccollector.repository.ComicRepository;
 import mosis.comiccollector.ui.comic.ViewComic;
 import mosis.comiccollector.ui.comic.ComicListAdapter;
 import mosis.comiccollector.util.DepProvider;
-import mosis.comiccollector.manager.data.handler.DataRetrievedHandler;
 
 public class ComicListActivity extends AppCompatActivity {
 
@@ -84,72 +84,69 @@ public class ComicListActivity extends AppCompatActivity {
 
     private void loadCollectedCommics() {
 
-        DataRetrievedHandler handler = new DataRetrievedHandler() {
-            @Override
-            public void onListRetrieved(List<ViewComic> retrieved_data) {
-
-                comics = retrieved_data;
-                adapter = new ComicListAdapter(getApplicationContext(), R.layout.small_preview, comics);
-                list_view.setAdapter(adapter);
-
-                adapter.notifyDataSetChanged();
-
-                // cancel loading screen
-
-            }
-
-            @Override
-            public void onComicRetrieved(int index, ViewComic comic) {
-
-            }
-
-        };
-
-        boolean fetch_result = DepProvider
-                .getComicRepository()
-                .fetchCollectedComics(0, handler);
-
-        if (fetch_result == true) {
-            // service available
-
-            // TODO display some please wait message
-
-        }
+//        ComicRepository.ComicsHandler handler = new ComicRepository.ComicsHandler() {
+//            @Override
+//            public void handleComics(List<Comic> retrieved_data) {
+//
+//                comics = retrieved_data;
+//                adapter = new ComicListAdapter(getApplicationContext(), R.layout.small_preview, comics);
+//                list_view.setAdapter(adapter);
+//
+//                adapter.notifyDataSetChanged();
+//
+//                // cancel loading screen
+//
+//            }
+//
+//        };
+//
+//        boolean fetch_result = DepProvider
+//                .getComicRepository()
+//                .fetchCollectedComics(0, handler);
+//
+//        if (fetch_result == true) {
+//            // service available
+//
+//            // TODO display some please wait message
+//
+//        }
 
 
     }
 
     private void loadDiscoverComics() {
 
-        DataRetrievedHandler handler = new DataRetrievedHandler() {
-            @Override
-            public void onListRetrieved(List<ViewComic> retrieved_data) {
+        // replace with ComicRepository.ComicsHandler
 
-                comics = retrieved_data;
-                adapter = new ComicListAdapter(getApplicationContext(), R.layout.small_preview, comics);
-                list_view.setAdapter(adapter);
-
-                adapter.notifyDataSetChanged();
-
-            }
-
-            @Override
-            public void onComicRetrieved(int index, ViewComic comic) {
-
-            }
-
-        };
-
-        boolean fetch_result = DepProvider
-                .getComicRepository()
-                .fetchDiscoverComics(0, handler);
-
-        if (fetch_result == true) {
-            // service available
-
-            // TODO display some please wait message
-
-        }
+//        DataRetrievedHandler handler = new DataRetrievedHandler() {
+//            @Override
+//            public void onListRetrieved(List<ViewComic> retrieved_data) {
+//
+//                comics = retrieved_data;
+//                adapter = new ComicListAdapter(getApplicationContext(), R.layout.small_preview, comics);
+//                list_view.setAdapter(adapter);
+//
+//                adapter.notifyDataSetChanged();
+//
+//            }
+//
+//            @Override
+//            public void onComicRetrieved(int index, ViewComic comic) {
+//
+//            }
+//
+//        };
+//
+//        boolean fetch_result = DepProvider
+//                .getComicRepository()
+//                .fetchDiscoverComics(0, handler);
+//
+//        if (fetch_result == true) {
+//            // service available
+//
+//            // TODO display some please wait message
+//
+//        }
 
     }
 

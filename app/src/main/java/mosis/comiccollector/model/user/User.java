@@ -6,7 +6,11 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import mosis.comiccollector.model.comic.Comic;
+
 public class User implements Serializable {
+
+    public static final String USER_ID_FIELD = "userId";
 
     private String userId;
 
@@ -19,9 +23,7 @@ public class User implements Serializable {
 
     private int rating;
 
-    private List<String> friendIds;
-
-    // required for serialization ...
+    // required for serialization
     public User() {
 
     }
@@ -41,7 +43,6 @@ public class User implements Serializable {
 
         this.rating = rating;
 
-        this.friendIds = new ArrayList<String>();
     }
 
     public String getEmail() {
@@ -68,11 +69,4 @@ public class User implements Serializable {
         this.profilePicUri = newUri;
     }
 
-    public List<String> getFriendIds() {
-        return friendIds;
-    }
-
-    public void setFriendIds(List<String> friendIds) {
-        this.friendIds = friendIds;
-    }
 }

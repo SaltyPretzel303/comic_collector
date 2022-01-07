@@ -15,6 +15,7 @@ import java.util.List;
 
 import mosis.comiccollector.R;
 
+// used with recycler view
 public class PreviewListAdapter extends RecyclerView.Adapter<PreviewListAdapter.PreviewHolder> {
 
     public static class PreviewHolder extends RecyclerView.ViewHolder {
@@ -34,6 +35,7 @@ public class PreviewListAdapter extends RecyclerView.Adapter<PreviewListAdapter.
     private List<Bitmap> pages;
     private int resource;
 
+    // TODO instead passing list of bitmaps pass list of URIs
     public PreviewListAdapter(Context context, int resource, List<Bitmap> pages_source) {
 
         this.context = context;

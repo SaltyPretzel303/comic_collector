@@ -1,36 +1,71 @@
 package mosis.comiccollector.model.comic;
 
-import android.net.Uri;
+import android.location.Location;
 
-import java.util.List;
+import java.io.Serializable;
 
-public class Comic {
+public class Comic implements Serializable {
+
+    public static final String AUTHOR_ID_FIELD = "authorId";
+    public static final String COMIC_ID_FIELD = "id";
 
     private String authorId;
 
+    private String id;
     private String comicTitle;
-
     private String description;
 
     private int rating;
 
-    private Uri previewPage;
+    private int pagesCount;
 
-    private List<Uri> pages;
+    private Location location;
+
+    public Comic() {
+
+    }
 
     public Comic(String authorId,
-            String comicTitle,
-            String description,
-            int rating,
-            Uri previewPage,
-            List<Uri> pages) {
-                
+                 String comicTitle,
+                 String description,
+                 int rating,
+                 int pagesCount,
+                 Location location) {
+
         this.authorId = authorId;
         this.comicTitle = comicTitle;
         this.description = description;
         this.rating = rating;
-        this.previewPage = previewPage;
-        this.pages = pages;
+        this.pagesCount = pagesCount;
+        this.location = location;
     }
 
+    public String getAuthorId() {
+        return authorId;
+    }
+
+
+    public String getId() {
+        return id;
+    }
+
+    public String getComicTitle() {
+        return comicTitle;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public int getRating() {
+        return rating;
+    }
+
+    public int getPagesCount() {
+        return pagesCount;
+    }
+
+    public Location getLocation() {
+        return location;
+    }
 }

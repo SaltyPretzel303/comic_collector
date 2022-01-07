@@ -16,6 +16,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
@@ -28,6 +29,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import mosis.comiccollector.model.UserFriendsList;
 import mosis.comiccollector.model.user.User;
 import mosis.comiccollector.model.user.UserLocation;
 import mosis.comiccollector.repository.PeopleRepository;
@@ -41,6 +43,8 @@ public class FirebasePeopleRepository implements PeopleRepository {
 
     private static final String USER_INFO_PATH = "user_info";
     private static final String PROFILE_PIC_PATH = "profile_pics";
+
+    private static final String USER_FRIENDS_PATH = "user_friends";
 
     private static final String USER_LOCATIONS_PATH = "user_locations";
 
@@ -74,24 +78,25 @@ public class FirebasePeopleRepository implements PeopleRepository {
                                           @NotNull LocationsReady locationHandler) {
 
         FirebaseFirestore.getInstance()
-                .collection(USER_INFO_PATH)
+                .collection(USER_FRIENDS_PATH)
                 .document(userId)
                 .get()
                 .addOnCompleteListener((docSnapshotTask) -> {
 
                     if (!docSnapshotTask.isSuccessful()) {
                         // TODO handle failure
-                        locationHandler.handleLocations(new ArrayList<>());
-
+                        locationHandler.handleLocations(null);
                         return;
                     }
 
-                    User user = docSnapshotTask.getResult().toObject(User.class);
-                    Log.e("peopleRepo", "He got: " + user.getFriendIds().size() + " friends ... ");
+                    UserFriendsList friendsObj = docSnapshotTask
+                            .getResult()
+                            .toObject(UserFriendsList.class);
+                    Log.e("peopleRepo", "He got: " + friendsObj.friendsIds.size() + " friends ... ");
 
                     FirebaseFirestore.getInstance()
                             .collection(USER_LOCATIONS_PATH)
-                            .whereIn(UserLocation.USER_ID_FIELD, user.getFriendIds())
+                            .whereIn(UserLocation.USER_ID_FIELD, friendsObj.friendsIds)
                             .get()
                             .addOnCompleteListener((querySnapshotTask) -> {
 
@@ -112,6 +117,43 @@ public class FirebasePeopleRepository implements PeopleRepository {
                                         .toObjects(UserLocation.class);
 
                                 locationHandler.handleLocations(userLocations);
+                            });
+
+                });
+
+    }
+
+    @Override
+    public void getFriends(String userId, @NonNull PeopleReady peopleHandler) {
+
+        FirebaseFirestore.getInstance()
+                .collection(USER_FRIENDS_PATH)
+                .document(userId)
+                .get()
+                .addOnCompleteListener((Task<DocumentSnapshot> task) -> {
+
+                    if (!task.isSuccessful()) {
+
+                        Log.e("peopleRepo", "Failed to get friendsIds for: " + userId);
+                        peopleHandler.handlePeople(null);
+
+                        return;
+                    }
+
+                    UserFriendsList friendsObj = task
+                            .getResult()
+                            .toObject(UserFriendsList.class);
+
+                    FirebaseFirestore.getInstance()
+                            .collection(USER_INFO_PATH)
+                            .whereIn(User.USER_ID_FIELD, friendsObj.friendsIds)
+                            .get()
+                            .addOnCompleteListener((Task<QuerySnapshot> friendsTask) -> {
+                                if (!friendsTask.isSuccessful()) {
+                                    Log.e("peopleRepo", "Failed to retrieve friends for: " + userId);
+                                    peopleHandler.handlePeople(null);
+                                    return;
+                                }
                             });
 
                 });
@@ -182,16 +224,11 @@ public class FirebasePeopleRepository implements PeopleRepository {
     @Override
     public void loadProfilePic(String userId, @NotNull PicReady onPicReady) {
 
+        // .child is notNull
         StorageReference reference = FirebaseStorage
                 .getInstance()
                 .getReference(PROFILE_PIC_PATH)
                 .child(userId);
-
-        if (reference == null) {
-            Log.e("loadPic", "Storage reference is null ... ");
-            onPicReady.handlePic(null);
-            return;
-        }
 
         try {
 
@@ -199,7 +236,7 @@ public class FirebasePeopleRepository implements PeopleRepository {
                     LOCAL_PIC_CACHE_PREFIX,
                     LOCAL_PIC_CACHE_SUFFIX + userId);
             Log.e("loadPic", "Created temp file: " + tempFile.getName());
-            tempFile.deleteOnExit(); // TODO questionable ...
+            tempFile.deleteOnExit();
 
             reference.getFile(tempFile).addOnCompleteListener(
                     (Task<FileDownloadTask.TaskSnapshot> task) -> {

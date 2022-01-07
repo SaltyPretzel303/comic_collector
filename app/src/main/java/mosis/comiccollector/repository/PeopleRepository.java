@@ -25,11 +25,13 @@ public interface PeopleRepository {
         void handleLocations(List<UserLocation> locations);
     }
 
-    void getLastLocation(String userId,@NotNull LocationsReady handleLocation);
+    void getLastLocation(String userId, @NotNull LocationsReady handleLocation);
 
     void getNearbyFriendsLocations(String userId,
                                    double lat, double lgt, double range,
                                    @NotNull LocationsReady handleLocations);
+
+    void getFriends(String userId, @NotNull PeopleReady peopleHandler);
 
     void updateLocation(String userId, UserLocation newLocation);
 

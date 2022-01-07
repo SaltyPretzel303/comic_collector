@@ -35,7 +35,7 @@ public class FullPreviewActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.full_preview);
+        setContentView(R.layout.comic_full_preview);
 
         this.initControlsInitializers();
 
@@ -180,12 +180,12 @@ public class FullPreviewActivity extends AppCompatActivity {
 
     private void initPreviewPages() {
 
-        this.adapter = new PreviewListAdapter(getApplicationContext(),
-                                              R.layout.comic_preview_list_item,
-                                              this.comic.samplePages);
-
-        this.preview_list = (RecyclerView) this.findViewById(R.id.preview_pages_list);
-        this.preview_list.setAdapter(this.adapter);
+//        this.adapter = new PreviewListAdapter(getApplicationContext(),
+//                                              R.layout.comic_preview_list_item,
+//                                              this.comic.samplePages);
+//
+//        this.preview_list = (RecyclerView) this.findViewById(R.id.preview_pages_list);
+//        this.preview_list.setAdapter(this.adapter);
 
     }
 
