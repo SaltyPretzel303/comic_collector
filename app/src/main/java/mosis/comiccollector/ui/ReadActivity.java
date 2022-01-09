@@ -58,7 +58,7 @@ public class ReadActivity extends AppCompatActivity {
         Intent data_intent = this.getIntent();
         int comic_index = Integer.parseInt(data_intent.getExtras().get("comic_index").toString());
 
-        this.comic = DepProvider.getComicRepository().getComicAt(comic_index);
+//        this.comic = DepProvider.getComicRepository().getComicAt(comic_index);
 
     }
 

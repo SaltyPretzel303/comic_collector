@@ -77,7 +77,7 @@ public class FullPreviewActivity extends AppCompatActivity {
                     @Override
                     public void onClick(View v) {
 
-                        DepProvider.getComicRepository().downloadCollectedPaged(comic_index);
+//                        DepProvider.getComicRepository().downloadCollectedPaged(comic_index);
 
                     }
                 });
@@ -160,10 +160,10 @@ public class FullPreviewActivity extends AppCompatActivity {
 
         View layout = (View) this.findViewById(R.id.basic_preview);
 
-        ((ImageView) layout.findViewById(R.id.comic_list_item_icon)).setImageBitmap(this.comic.icon);
-        ((TextView) layout.findViewById(R.id.comic_list_item_title)).setText(this.comic.title);
-        ((TextView) layout.findViewById(R.id.comic_list_item_author)).setText(this.comic.author);
-        ((ProgressBar) layout.findViewById(R.id.comic_list_item_progress)).setProgress(this.comic.progress);
+//        ((ImageView) layout.findViewById(R.id.comic_list_item_icon)).setImageBitmap(this.comic.icon);
+//        ((TextView) layout.findViewById(R.id.comic_list_item_title)).setText(this.comic.title);
+//        ((TextView) layout.findViewById(R.id.comic_list_item_author)).setText(this.comic.author);
+//        ((ProgressBar) layout.findViewById(R.id.comic_list_item_progress)).setProgress(this.comic.progress);
 
     }
 
@@ -173,7 +173,7 @@ public class FullPreviewActivity extends AppCompatActivity {
 
         this.comic_index = Integer.parseInt(intent.getExtras().get("comic_index").toString());
 
-        this.comic = DepProvider.getComicRepository().getComicAt(this.comic_index);
+//        this.comic = DepProvider.getComicRepository().getComicAt(this.comic_index);
 
 
     }

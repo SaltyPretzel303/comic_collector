@@ -1,7 +1,7 @@
 package mosis.comiccollector.ui.viewmodel;
 
-import android.accounts.NetworkErrorException;
 import android.app.Application;
+import android.graphics.Bitmap;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -23,6 +23,20 @@ import mosis.comiccollector.ui.user.ViewUser;
 import mosis.comiccollector.util.DepProvider;
 
 public class DiscoveryViewModel extends AndroidViewModel {
+
+    private class BitmapWithId {
+        private String id;
+        private Bitmap bitmap;
+
+        private BitmapWithId() {
+
+        }
+
+        private BitmapWithId(String id, Bitmap bitmap) {
+            this.id = id;
+            this.bitmap = bitmap;
+        }
+    }
 
     private AuthRepository authRepo;
     private PeopleRepository peopleRepo;
@@ -70,7 +84,7 @@ public class DiscoveryViewModel extends AndroidViewModel {
                     for (UserLocation userLoc : friendLocks) {
 
                         LocationWithPicture locWithPic = new LocationWithPicture(userLoc);
-                        locWithPic.setLivePicUri(this.loadUserPic(userLoc.getUserId()));
+                        locWithPic.setLivePic(this.loadUserPic(userLoc.getUserId()));
 
                         viewPeople.add(locWithPic);
                     }
@@ -84,11 +98,11 @@ public class DiscoveryViewModel extends AndroidViewModel {
         return nearbyFriends;
     }
 
-    public MutableLiveData<String> loadUserPic(String userId) {
-        MutableLiveData<String> livePicUri = new MutableLiveData<>();
+    private MutableLiveData<Bitmap> loadUserPic(String userId) {
+        MutableLiveData<Bitmap> livePicUri = new MutableLiveData<>();
 
-        peopleRepo.loadProfilePic(userId, (String picUri) -> {
-            livePicUri.postValue(picUri);
+        peopleRepo.loadProfilePic(userId, (Bitmap pic) -> {
+            livePicUri.postValue(pic);
         });
 
         return livePicUri;
@@ -120,7 +134,7 @@ public class DiscoveryViewModel extends AndroidViewModel {
             if (people != null && people.size() > 0) {
 
                 ViewUser viewUser = this.viewUserMapper.mapToViewModel(people.get(0));
-                viewUser.setLivePicUri(getLiveLocalPic(userId));
+                viewUser.setLiveProfilePic(getLiveLocalPic(userId));
 
                 shortUser.postValue(viewUser);
             }
@@ -129,14 +143,14 @@ public class DiscoveryViewModel extends AndroidViewModel {
         return shortUser;
     }
 
-    private MutableLiveData<String> getLiveLocalPic(String userId) {
+    private MutableLiveData<Bitmap> getLiveLocalPic(String userId) {
 
         // it has to be there ... you can't request data for user that has not been displayed
 
         if (nearbyFriends != null && nearbyFriends.getValue() != null) {
             for (LocationWithPicture locWithPicture : nearbyFriends.getValue()) {
                 if (locWithPicture.getUserId().equals(userId)) {
-                    return locWithPicture.getLivePicUri();
+                    return locWithPicture.getLivePic();
                 }
             }
         }
@@ -150,15 +164,15 @@ public class DiscoveryViewModel extends AndroidViewModel {
     public MutableLiveData<LocationWithPicture> getMyLastLocation() {
         MutableLiveData<LocationWithPicture> liveData = new MutableLiveData<>();
 
-        String myId = this.authRepo.getCurrentUser().user.getUserId();
+        String myId = authRepo.getCurrentUser().user.getUserId();
 
         this.peopleRepo.getLastLocation(myId, (List<UserLocation> locations) -> {
             if (locations != null && locations.size() > 0) {
-                MutableLiveData<String> livePic = new MutableLiveData<>();
+                MutableLiveData<Bitmap> livePic = new MutableLiveData<>();
                 livePic.postValue(null); // there is no need to display my pic on map
 
                 LocationWithPicture location = new LocationWithPicture(locations.get(0));
-                location.setLivePicUri(livePic);
+                location.setLivePic(livePic);
 
                 liveData.postValue(location);
             }

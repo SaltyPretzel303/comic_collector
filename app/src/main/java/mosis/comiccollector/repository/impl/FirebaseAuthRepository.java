@@ -3,22 +3,16 @@ package mosis.comiccollector.repository.impl;
 import android.net.Uri;
 import android.util.Log;
 
-import androidx.annotation.NonNull;
-
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
-import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -31,15 +25,8 @@ import mosis.comiccollector.util.FirebaseTypesMapper;
 
 public class FirebaseAuthRepository implements AuthRepository {
 
-    private static final String PROFILE_PIC_PATH = "profile_pics";
-    private static final String FIREBASE_PATTERN = "firebasestorage.googleapis.com";
-
-    private Executor taskExecutor;
-
     public FirebaseAuthRepository() {
-        this.taskExecutor = Executors.newCachedThreadPool();
     }
-
 
     @Override
     public UserAuthResponse getCurrentUser() {
@@ -107,7 +94,7 @@ public class FirebaseAuthRepository implements AuthRepository {
 
                         DepProvider
                                 .getPeopleRepository()
-                                .addUser(response.user, (user) -> {
+                                .createUser(response.user, (user) -> {
                                     // TODO do something ...
                                 });
 
@@ -162,43 +149,6 @@ public class FirebaseAuthRepository implements AuthRepository {
         reqBuilder.setPhotoUri(Uri.parse(newUri));
         cUser.updateProfile(reqBuilder.build());
     }
-
-    public void uploadProfilePic(Uri picUri, PicResultHandler onJobDone) {
-        Log.w("FirebaseUserManager", "uploadProfilePic: UPLOADING IMAGE ");
-
-        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-
-        StorageReference storage = FirebaseStorage.getInstance()
-                .getReference(PROFILE_PIC_PATH)
-                .child(userId);
-
-        storage.putFile(picUri).addOnCompleteListener(
-                (Task<UploadTask.TaskSnapshot> task) -> {
-                    if (task.isSuccessful()) {
-
-                        Log.e("pic upload", "Pic uploaded successfully ... ");
-
-                        FirebaseUser cUser = FirebaseAuth.getInstance().getCurrentUser();
-                        UserProfileChangeRequest.Builder reqBuilder = new UserProfileChangeRequest.Builder();
-                        reqBuilder.setPhotoUri(task.getResult().getUploadSessionUri());
-                        cUser.updateProfile(reqBuilder.build());
-
-                        storage.getDownloadUrl().addOnCompleteListener((uriTask) -> {
-                            if (uriTask.isSuccessful()) {
-                                onJobDone.handlePic(uriTask.getResult());
-                            } else {
-                                onJobDone.handlePic(null);
-                            }
-                        });
-
-                    } else {
-
-                        Log.e("pic upload", "Failed to upload pic... ");
-                        onJobDone.handlePic(null);
-                    }
-                });
-    }
-
 
     public User mapToUser(FirebaseUser user) {
         if (user != null) {

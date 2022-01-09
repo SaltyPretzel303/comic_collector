@@ -1,5 +1,7 @@
 package mosis.comiccollector.ui.map;
 
+import android.graphics.Bitmap;
+
 import androidx.lifecycle.MutableLiveData;
 
 import mosis.comiccollector.model.user.UserLocation;
@@ -9,7 +11,7 @@ public class LocationWithPicture {
     private String userId;
 
     private UserLocation location;
-    private MutableLiveData<String> livePicUri;
+    private MutableLiveData<Bitmap> livePic;
 
     public LocationWithPicture(UserLocation location) {
         this.userId = location.getUserId();
@@ -28,11 +30,11 @@ public class LocationWithPicture {
         this.location = newLocation;
     }
 
-    public MutableLiveData<String> getLivePicUri() {
-        return livePicUri;
+    public MutableLiveData<Bitmap> getLivePic() {
+        return livePic;
     }
 
-    public void setLivePicUri(MutableLiveData<String> livePicUri) {
-        this.livePicUri = livePicUri;
+    public void setLivePic(MutableLiveData<Bitmap> livePic) {
+        this.livePic = livePic;
     }
 }

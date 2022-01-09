@@ -1,6 +1,7 @@
 package mosis.comiccollector.ui.map;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
 
@@ -67,9 +68,9 @@ public class MovingItemsOverlay {
             // this "overlayAdapter" is created in initOverlays method
             // on each location update this method is called
             LocationWithPicture newLocation = new LocationWithPicture(newItem);
-            MutableLiveData<String> fakeLivePic = new MutableLiveData<>();
+            MutableLiveData<Bitmap> fakeLivePic = new MutableLiveData<>();
             fakeLivePic.postValue(null);
-            newLocation.setLivePicUri(fakeLivePic);
+            newLocation.setLivePic(fakeLivePic);
 
             this.addItem(new LocationWithPicture(newItem));
         }
@@ -91,9 +92,9 @@ public class MovingItemsOverlay {
     private void generateOverlay() {
 
         for (LocationWithPicture item : this.locations) {
-            if (!item.getLivePicUri().hasObservers()) {
+            if (!item.getLivePic().hasObservers()) {
                 Log.e("Moving overlay", "Adding pic observer ... ");
-                item.getLivePicUri().observe((LifecycleOwner) context, (String uri) -> {
+                item.getLivePic().observe((LifecycleOwner) context, (Bitmap uri) -> {
                     if (uri == null) {
                         // if uri is null there is nothing to be updated
                         return;
@@ -112,7 +113,7 @@ public class MovingItemsOverlay {
                     "",
                     getPoint(item.getLocation()));
 
-            if (item.getLivePicUri().getValue() == null) {
+            if (item.getLivePic().getValue() == null) {
                 // set default marker
                 // newItem.setMarker(this.icon);
             } else {

@@ -1,13 +1,12 @@
 package mosis.comiccollector.ui.viewmodel;
 
 import android.app.Application;
+import android.graphics.Bitmap;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.MutableLiveData;
-
-import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +28,11 @@ public class UserProfileViewModel extends AndroidViewModel {
     private PeopleRepository peopleRepo;
 
     private MutableLiveData<ViewUser> liveUserData;
-    private MutableLiveData<String> liveProfilePic;
+    private MutableLiveData<Bitmap> liveProfilePic;
+
+    private MutableLiveData<List<ViewComic>> liveCreatedComics;
+    private MutableLiveData<List<ViewComic>> liveCollectedComics;
+    private MutableLiveData<List<ViewUser>> liveFriends;
 
     private DataMapper<User, ViewUser> userMapper;
     private DataMapper<Comic, ViewComic> comicMapper;
@@ -50,17 +53,17 @@ public class UserProfileViewModel extends AndroidViewModel {
         return authRepo.getCurrentUser().user.getUserId();
     }
 
-    public MutableLiveData<ViewUser> loadUser(String userId) {
+    public MutableLiveData<ViewUser> getUser(String userId) {
         if (this.liveUserData == null) {
             this.liveUserData = new MutableLiveData<>();
         }
 
         this.peopleRepo.getUser(userId, (people) -> {
             // I guess people arg can't be null
-            // where did i got id if that user doesn't exists ...
+            // where did I got id if that user doesn't exists ...
             User user = people.get(0);
             ViewUser viewUser = this.userMapper.mapToViewModel(user);
-            viewUser.setLivePicUri(this.loadProfilePic(userId));
+            viewUser.setLiveProfilePic(this.loadProfilePic(userId));
 
             this.liveUserData.postValue(viewUser);
         });
@@ -69,71 +72,67 @@ public class UserProfileViewModel extends AndroidViewModel {
     }
 
     public MutableLiveData<String> saveProfilePic(String picUri) {
-        if (this.liveProfilePic == null) {
-            this.liveProfilePic = new MutableLiveData<>();
-        }
+        MutableLiveData<String> uploadUri = new MutableLiveData<>();
 
         // I can upload picture only for myself
-        String userId = authRepo.getCurrentUser().user.getUserId();
+        String userId = this.getMyId();
 
-        this.peopleRepo.uploadProfilePic(
-                userId,
-                picUri,
-                (String uri) -> {
+        this.peopleRepo.uploadProfilePic(userId, picUri, (String uri) -> {
 
-                    peopleRepo.updatePicUri(userId, uri, (retUri) -> {
-                        // TODO maybe do something ...
-                    });
-                    authRepo.updatePicUri(uri);
+            peopleRepo.updatePicUri(userId, uri, (retUri) -> {
+                // TODO maybe do something ...
+            });
+            authRepo.updatePicUri(uri);
 
-//                    liveProfilePic.postValue(uri);
-                    // this can't be done
-                    // returned uri is firebaseDownlaodUri
-                    // imageView wont't be able to display that
-                    // imageView require local file uri which is crated in repo.LoadProfilePic
-                });
-
-        return this.liveProfilePic;
-    }
-
-    public MutableLiveData<String> loadProfilePic(String userId) {
-
-        if (this.liveProfilePic == null) {
-            this.liveProfilePic = new MutableLiveData<>();
-        }
-
-        this.peopleRepo.loadProfilePic(userId, (String picUri) -> {
-            liveProfilePic.postValue(picUri);
+            uploadUri.postValue(uri);
         });
 
-        return this.liveProfilePic;
+        return uploadUri;
+    }
+
+    private MutableLiveData<Bitmap> loadProfilePic(String userId) {
+
+        MutableLiveData<Bitmap> livePic = new MutableLiveData<>();
+//        if (this.liveProfilePic == null) {
+//            this.liveProfilePic = new MutableLiveData<>();
+//        }
+
+        this.peopleRepo.loadProfilePic(userId, (Bitmap picUri) -> {
+//            liveProfilePic.postValue(picUri);
+            livePic.postValue(picUri);
+        });
+
+//        return this.liveProfilePic;
+        return livePic;
     }
 
     public MutableLiveData<List<ViewComic>> loadCreatedComics(String userId) {
-        MutableLiveData<List<ViewComic>> liveComics = new MutableLiveData<>();
+        if (this.liveCreatedComics == null) {
+            this.liveCreatedComics = new MutableLiveData<>();
+        }
 
         this.comicRepo.getCreatedComics(userId, (List<Comic> newComics) -> {
             if (newComics == null) {
                 Log.e("viewModelProfile", "Failed to load created comics for: " + userId);
-                liveComics.postValue(null);
+                liveCreatedComics.postValue(null);
                 return;
             }
 
             List<ViewComic> vComicL = new ArrayList<>();
             for (Comic comic : newComics) {
                 ViewComic vComic = comicMapper.mapToViewModel(comic);
-                vComic.titlePageUri = loadTitlePage(comic.getId());
+                vComic.liveTitlePageUri = loadTitlePage(comic.getId());
 
                 vComicL.add(vComic);
             }
 
-            liveComics.postValue(vComicL);
+            liveCreatedComics.postValue(vComicL);
         });
 
-        return liveComics;
+        return this.liveCreatedComics;
     }
 
-    public MutableLiveData<String> loadTitlePage(String comicId) {
+    private MutableLiveData<String> loadTitlePage(String comicId) {
         MutableLiveData<String> liveUri = new MutableLiveData<>();
 
         comicRepo.loadTitlePage(comicId, (List<String> newPages) -> {
@@ -151,8 +150,30 @@ public class UserProfileViewModel extends AndroidViewModel {
         return liveUri;
     }
 
-    public void loadCollectedComics(String userId) {
+    public MutableLiveData<List<ViewComic>> loadCollectedComics(String userId) {
+        if (this.liveCollectedComics == null) {
+            this.liveCollectedComics = new MutableLiveData<>();
+        }
 
+        this.comicRepo.getCollectedComics(userId, (List<Comic> newComics) -> {
+            if (newComics == null) {
+                Log.e("viewModelProfile", "Failed to load collected comics ... ");
+                liveCollectedComics.postValue(null);
+                return;
+            }
+
+            List<ViewComic> vComics = new ArrayList<>();
+            for (Comic comic : newComics) {
+                ViewComic vComic = this.comicMapper.mapToViewModel(comic);
+                vComic.liveTitlePageUri = loadTitlePage(userId);
+
+                vComics.add(vComic);
+            }
+
+            this.liveCollectedComics.postValue(vComics);
+        });
+
+        return this.liveCollectedComics;
     }
 
     public MutableLiveData<List<ViewUser>> loadFriends(String userId) {
@@ -162,7 +183,7 @@ public class UserProfileViewModel extends AndroidViewModel {
             List<ViewUser> vPeople = new ArrayList<>();
             for (User uPeople : people) {
                 ViewUser vUser = userMapper.mapToViewModel(uPeople);
-                vUser.setLivePicUri(this.loadProfilePic(userId));
+                vUser.setLiveProfilePic(this.loadProfilePic(userId));
                 vPeople.add(vUser);
             }
             liveFriends.postValue(vPeople);

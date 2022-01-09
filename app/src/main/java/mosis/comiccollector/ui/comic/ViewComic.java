@@ -36,7 +36,7 @@ public class ViewComic {
     public String description;
     public String author;
 
-    public MutableLiveData<String> titlePageUri;
+    public MutableLiveData<String> liveTitlePageUri;
     private MutableLiveData<List<String>> pagesUris;
 
     public Position location;

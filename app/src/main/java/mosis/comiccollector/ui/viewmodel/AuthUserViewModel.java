@@ -58,7 +58,7 @@ public class AuthUserViewModel extends AndroidViewModel {
         UserAuthResponse response = this.authRepo.clearUser();
         // TODO next line might not be the best option
         // mixing user and comic repository ...
-        this.comicRepo.clearComicsCache();
+//        this.comicRepo.clearComicsCache();
 
         this.liveUser.postValue(this.userMapper.mapToViewModel(response));
 

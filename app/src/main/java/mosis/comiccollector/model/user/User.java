@@ -11,14 +11,13 @@ import mosis.comiccollector.model.comic.Comic;
 public class User implements Serializable {
 
     public static final String USER_ID_FIELD = "userId";
+    public static final String PROFILE_PIC_FIELD = "profilePicUri";
 
     private String userId;
 
     private String email;
     private String name;
 
-    // this is actually useless
-    // it points to firebaseDownloadUri which imageView can't display ...
     private String profilePicUri;
 
     private int rating;

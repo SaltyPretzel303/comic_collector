@@ -13,6 +13,11 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.nostra13.universalimageloader.core.DisplayImageOptions;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
+import com.nostra13.universalimageloader.core.assist.ImageScaleType;
+
 import mosis.comiccollector.R;
 import mosis.comiccollector.ui.user.ViewUser;
 import mosis.comiccollector.ui.viewmodel.AuthUserViewModel;
@@ -43,6 +48,8 @@ public class MainPageActivity extends AppCompatActivity {
         this.initButtons();
 
         this.resolveUser();
+
+        this.initImageLoader();
 
     }
 
@@ -138,7 +145,6 @@ public class MainPageActivity extends AppCompatActivity {
 
     private void initLoginActivity() {
 
-
         this.loginActivityLauncher = this.registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 (ActivityResult result) -> {
@@ -155,5 +161,23 @@ public class MainPageActivity extends AppCompatActivity {
                 }
         );
     }
+
+    private void initImageLoader() {
+
+        DisplayImageOptions options = new DisplayImageOptions.Builder()
+//                .showImageOnLoading()
+//                .showImageOnFail()
+                .cacheOnDisk(true)
+                .imageScaleType(ImageScaleType.IN_SAMPLE_POWER_OF_2)
+                .build();
+
+        ImageLoaderConfiguration config = new ImageLoaderConfiguration.Builder(this)
+                .defaultDisplayImageOptions(options)
+                .build();
+
+        ImageLoader.getInstance().init(config);
+
+    }
+
 
 }

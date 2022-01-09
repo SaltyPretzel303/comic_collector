@@ -8,24 +8,19 @@ import androidx.annotation.Nullable;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QuerySnapshot;
-import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+import com.nostra13.universalimageloader.core.ImageLoader;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -175,7 +170,7 @@ public class FirebasePeopleRepository implements PeopleRepository {
     }
 
     @Override
-    public void addUser(User newUser, @NotNull PeopleReady doneHandler) {
+    public void createUser(User newUser, @NotNull PeopleReady doneHandler) {
         FirebaseFirestore
                 .getInstance()
                 .collection(USER_INFO_PATH)
@@ -225,50 +220,68 @@ public class FirebasePeopleRepository implements PeopleRepository {
     public void loadProfilePic(String userId, @NotNull PicReady onPicReady) {
 
         // .child is notNull
-        StorageReference reference = FirebaseStorage
-                .getInstance()
-                .getReference(PROFILE_PIC_PATH)
-                .child(userId);
+//        StorageReference reference = FirebaseStorage
+//                .getInstance()
+//                .getReference(PROFILE_PIC_PATH)
+//                .child(userId);
 
-        try {
+        this.getUser(userId, (List<User> people) -> {
 
-            final File tempFile = File.createTempFile(
-                    LOCAL_PIC_CACHE_PREFIX,
-                    LOCAL_PIC_CACHE_SUFFIX + userId);
-            Log.e("loadPic", "Created temp file: " + tempFile.getName());
-            tempFile.deleteOnExit();
+            if (people == null) {
+                Log.e("peopleRepo", "Failed to load profile pic ... ");
+                onPicReady.handlePic(null);
+                return;
+            }
 
-            reference.getFile(tempFile).addOnCompleteListener(
-                    (Task<FileDownloadTask.TaskSnapshot> task) -> {
+            String uri = people.get(0).getProfilePicUri();
 
-                        if (task.isSuccessful()) {
-                            Log.e("FirebaseUserManager", "onSuccess: FETCHING DONE ");
+            // TODO maybe encapsulate imageLoader in custom interface
+            // so it can be provided with depProvider
+            ImageLoader.getInstance().loadImage(uri, new MyImageListener(onPicReady));
 
-                            onPicReady.handlePic(Uri.fromFile(tempFile).toString());
-                        } else {
-                            Log.e("FirebaseUserManager", "failed to load profile pic ... "
-                                    + task.getException().toString());
+        });
 
-                            tempFile.delete();
-                            onPicReady.handlePic(null);
-                        }
-                    });
+        return;
 
-
-        } catch (IOException e) {
-            Log.e("picLoad", "IOExc while loading pic: " + e.getMessage());
-
-            onPicReady.handlePic(null);
-        } catch (Exception e) {
-            Log.e("picLoad", "Exc while loading pic: " + e.getMessage());
-
-            onPicReady.handlePic(null);
-        }
+//        try {
+//
+//            final File tempFile = File.createTempFile(
+//                    LOCAL_PIC_CACHE_PREFIX,
+//                    LOCAL_PIC_CACHE_SUFFIX + userId);
+//            Log.e("loadPic", "Created temp file: " + tempFile.getName());
+//            tempFile.deleteOnExit();
+//
+//            reference.getFile(tempFile).addOnCompleteListener(
+//                    (Task<FileDownloadTask.TaskSnapshot> task) -> {
+//
+//                        if (task.isSuccessful()) {
+//                            Log.e("FirebaseUserManager", "onSuccess: FETCHING DONE ");
+//
+////                            onPicReady.handlePic(Uri.fromFile(tempFile).toString());
+//                        } else {
+//                            Log.e("FirebaseUserManager", "failed to load profile pic ... "
+//                                    + task.getException().toString());
+//
+//                            tempFile.delete();
+//                            onPicReady.handlePic(null);
+//                        }
+//                    });
+//
+//
+//        } catch (IOException e) {
+//            Log.e("picLoad", "IOExc while loading pic: " + e.getMessage());
+//
+//            onPicReady.handlePic(null);
+//        } catch (Exception e) {
+//            Log.e("picLoad", "Exc while loading pic: " + e.getMessage());
+//
+//            onPicReady.handlePic(null);
+//        }
 
     }
 
     @Override
-    public void uploadProfilePic(String userId, String picUri, @NonNull PicReady picHandler) {
+    public void uploadProfilePic(String userId, String picUri, @NonNull UriReady uriHandler) {
         Log.w("FirebaseUserManager", "uploadProfilePic: UPLOADING IMAGE ");
 
         Uri uri = Uri.parse(picUri);
@@ -279,33 +292,30 @@ public class FirebasePeopleRepository implements PeopleRepository {
 
         storage.putFile(uri).addOnCompleteListener(
                 (Task<UploadTask.TaskSnapshot> task) -> {
-                    if (task.isSuccessful()) {
-
-                        Log.e("pic upload", "Pic uploaded successfully ... ");
-
-                        FirebaseUser cUser = FirebaseAuth.getInstance().getCurrentUser();
-                        UserProfileChangeRequest.Builder reqBuilder = new UserProfileChangeRequest.Builder();
-                        reqBuilder.setPhotoUri(task.getResult().getUploadSessionUri());
-                        cUser.updateProfile(reqBuilder.build());
-
-                        storage.getDownloadUrl().addOnCompleteListener((uriTask) -> {
-                            if (uriTask.isSuccessful()) {
-                                picHandler.handlePic(uriTask.getResult().toString());
-                            } else {
-                                picHandler.handlePic(null);
-                            }
-                        });
-
-                    } else {
-
+                    if (!task.isSuccessful()) {
                         Log.e("pic upload", "Failed to upload pic... ");
-                        picHandler.handlePic(null);
+                        uriHandler.handleUri(null);
+                        return;
                     }
+
+                    Log.e("pic upload", "Pic uploaded successfully ... ");
+
+                    storage.getDownloadUrl().addOnCompleteListener((@NonNull Task<Uri> task1) -> {
+                        if (!task1.isSuccessful()) {
+                            Log.e("PeopleRepo", "Failed to get profile pic download uri ... ");
+                            uriHandler.handleUri(null);
+                            return;
+                        }
+
+                        uriHandler.handleUri(task1.getResult().toString());
+
+                    });
+
                 });
     }
 
     @Override
-    public void updatePicUri(String userId, String picUri, @NonNull PicReady picHandler) {
+    public void updatePicUri(String userId, String picUri, @NonNull UriReady uriHandler) {
 
         CollectionReference userCollection = FirebaseFirestore
                 .getInstance()
@@ -314,26 +324,16 @@ public class FirebasePeopleRepository implements PeopleRepository {
 
         userCollection
                 .document(userId)
-                .get()
-                .addOnCompleteListener(docSnapshotTask -> {
+                .update(User.PROFILE_PIC_FIELD, picUri)
+                .addOnCompleteListener((@NonNull Task<Void> task) -> {
+                    if (!task.isSuccessful()) {
+                        Log.e("PeopleRepo", "Failed to update poc uri in user info ... ");
+                        uriHandler.handleUri(null);
+                        return;
+                    }
 
-                    User user = docSnapshotTask.getResult().toObject(User.class);
-                    user.setProfilePicUri(picUri);
-
-                    userCollection
-                            .document(userId)
-                            .set(user)
-                            .addOnCompleteListener((voidTask) -> {
-                                if (voidTask.isSuccessful()) {
-                                    picHandler.handlePic(picUri);
-                                } else {
-                                    picHandler.handlePic(null);
-                                }
-                            });
-
-
+                    uriHandler.handleUri(picUri);
                 });
-
     }
 
     @Override

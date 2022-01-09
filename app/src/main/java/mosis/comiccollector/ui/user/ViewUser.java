@@ -1,5 +1,7 @@
 package mosis.comiccollector.ui.user;
 
+import android.graphics.Bitmap;
+
 import androidx.lifecycle.MutableLiveData;
 
 import java.io.Serializable;
@@ -14,7 +16,7 @@ public class ViewUser implements Serializable {
     public String email;
     public String name;
 
-    public MutableLiveData<String> liveLocalPicUri;
+    public MutableLiveData<Bitmap> liveProfilePic;
 
     public int rating;
 
@@ -45,8 +47,8 @@ public class ViewUser implements Serializable {
         this.errorMessage = errorMessage;
     }
 
-    public void setLivePicUri(MutableLiveData<String> livePicUri) {
-        this.liveLocalPicUri = livePicUri;
+    public void setLiveProfilePic(MutableLiveData<Bitmap> livePicUri) {
+        this.liveProfilePic = livePicUri;
     }
 
     public static ViewUser fromProfileData(ProfileData pData) {
@@ -57,9 +59,9 @@ public class ViewUser implements Serializable {
                 pData.rating,
                 "");
 
-        MutableLiveData<String> livePic = new MutableLiveData<>();
-        livePic.postValue(pData.picUri);
-        vData.setLivePicUri(livePic);
+        MutableLiveData<Bitmap> livePic = new MutableLiveData<>();
+        livePic.postValue(pData.profilePic);
+        vData.setLiveProfilePic(livePic);
 
         return vData;
     }

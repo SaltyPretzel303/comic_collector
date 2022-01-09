@@ -6,9 +6,12 @@
         <entry key="../../../../layout/custom_preview.xml" value="0.24814814814814815" />
         <entry key="app/src/main/res/drawable/ic_launcher_background.xml" value="0.18518518518518517" />
         <entry key="app/src/main/res/drawable/small_preview_background.xml" value="0.18518518518518517" />
+        <entry key="app/src/main/res/layout/activity_add_comic.xml" value="0.25" />
+        <entry key="app/src/main/res/layout/activity_add_update_comic.xml" value="0.41458333333333336" />
         <entry key="app/src/main/res/layout/activity_login.xml" value="0.41510416666666666" />
         <entry key="app/src/main/res/layout/activity_map.xml" value="0.22" />
         <entry key="app/src/main/res/layout/collected_preview_controls.xml" value="0.307518115942029" />
+        <entry key="app/src/main/res/layout/comic_full_preview.xml" value="0.425" />
         <entry key="app/src/main/res/layout/comic_list.xml" value="0.2246376811594203" />
         <entry key="app/src/main/res/layout/comic_preview_list_item.xml" value="0.41510416666666666" />
         <entry key="app/src/main/res/layout/follow_note_dialog.xml" value="0.41510416666666666" />

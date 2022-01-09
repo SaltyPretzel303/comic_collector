@@ -3,8 +3,7 @@ package mosis.comiccollector.ui;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -65,7 +64,7 @@ public class PeopleMapDialog extends Dialog {
     private void initViews(ViewUser user) {
         this.loadStages.add(LoadStages.DataLoaded);
 
-        user.liveLocalPicUri.observe((LifecycleOwner) context, this::setupProfilePic);
+        user.liveProfilePic.observe((LifecycleOwner) context, this::setupProfilePic);
 
         ((TextView) findViewById(R.id.username_people_map)).setText(user.email);
 
@@ -80,11 +79,11 @@ public class PeopleMapDialog extends Dialog {
 
     }
 
-    private void setupProfilePic(String uri) {
+    private void setupProfilePic(Bitmap pic) {
         this.loadStages.add(LoadStages.ImageLoaded);
 
-        if (uri != null) {
-            ((ImageView) findViewById(R.id.profile_pic_people_map)).setImageURI(Uri.parse(uri));
+        if (pic != null) {
+            ((ImageView) findViewById(R.id.profile_pic_people_map)).setImageBitmap(pic);
         }
 
         if (this.loadStages.contains(LoadStages.DataLoaded)
@@ -101,7 +100,7 @@ public class PeopleMapDialog extends Dialog {
         pData.userId = vUser.userId;
         pData.email = vUser.email;
         pData.rating = vUser.rating;
-        pData.picUri = vUser.liveLocalPicUri.getValue();
+        pData.profilePic = vUser.liveProfilePic.getValue();
 
         Intent profileIntent = new Intent(context, ProfileActivity.class);
         profileIntent.putExtra(ProfileActivity.USER_DATA_EXTRA, pData);

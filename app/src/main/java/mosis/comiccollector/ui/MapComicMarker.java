@@ -21,26 +21,27 @@ public class MapComicMarker extends OverlayItem {
                           Drawable knownMarker,
                           Drawable unknownMarker) {
         super("title", "description",
-                new GeoPoint(comic.position.x, comic.position.y));
+//                new GeoPoint(comic.position.x, comic.position.y));
+                new GeoPoint(0,1));
 
         this.comics = new ArrayList<ViewComic>();
 
         this.comics.add(comic);
 
-        if (comic.discovered) {
-            this.showAsKnown();
-        } else {
-            this.showAsUnknown();
-        }
+//        if (comic.discovered) {
+//            this.showAsKnown();
+//        } else {
+//            this.showAsUnknown();
+//        }
 
     }
 
     public void addComic(ViewComic newComic) {
         this.comics.add(newComic);
 
-        if (newComic.discovered) {
-            this.showAsKnown();
-        }
+//        if (newComic.discovered) {
+//            this.showAsKnown();
+//        }
 
     }
 

@@ -1,5 +1,7 @@
 package mosis.comiccollector.ui.user;
 
+import android.graphics.Bitmap;
+
 import java.io.Serializable;
 
 public class ProfileData implements Serializable {
@@ -10,7 +12,7 @@ public class ProfileData implements Serializable {
 
     public int rating;
 
-    public String picUri;
+    public Bitmap profilePic;
 
     public ProfileData() {
 
@@ -20,13 +22,13 @@ public class ProfileData implements Serializable {
                        String email,
                        String name,
                        int rating,
-                       String picUri) {
+                       Bitmap picUri) {
 
         this.userId = id;
         this.email = email;
         this.name = name;
         this.rating = rating;
-        this.picUri = picUri;
+        this.profilePic = picUri;
     }
 
 }
