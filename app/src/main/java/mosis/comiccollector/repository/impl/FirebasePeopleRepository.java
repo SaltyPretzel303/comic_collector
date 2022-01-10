@@ -33,9 +33,6 @@ import mosis.comiccollector.repository.PeopleLocationConsumer;
 
 public class FirebasePeopleRepository implements PeopleRepository {
 
-    private static final String LOCAL_PIC_CACHE_PREFIX = "prof_pic_";
-    private static final String LOCAL_PIC_CACHE_SUFFIX = "_user_";
-
     private static final String USER_INFO_PATH = "user_info";
     private static final String PROFILE_PIC_PATH = "profile_pics";
 

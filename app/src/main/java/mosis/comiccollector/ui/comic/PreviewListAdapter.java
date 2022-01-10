@@ -5,6 +5,7 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import mosis.comiccollector.R;
-import mosis.comiccollector.ui.UriWithId;
+import mosis.comiccollector.ui.ImageWithId;
 
 // used with recycler view
 // TODO should be moved outside comic package
@@ -35,19 +36,21 @@ public class PreviewListAdapter extends RecyclerView.Adapter<PreviewListAdapter.
             super(itemView);
 
             this.page = (ImageView) itemView.findViewById(R.id.comic_preview_list_item_image);
+            this.page.setMaxHeight(120);
+            this.page.setMaxWidth(80);
         }
 
     }
 
     private Context context;
     private LayoutInflater inflater;
-    private List<UriWithId> pages;
+    private List<ImageWithId> pages;
     private int resource;
     private PreviewClickHandler clickHandler;
 
     public PreviewListAdapter(Context context,
                               int resource,
-                              List<UriWithId> pages,
+                              List<ImageWithId> pages,
                               @NotNull PreviewClickHandler clickHandler) {
 
         this.context = context;
@@ -75,8 +78,14 @@ public class PreviewListAdapter extends RecyclerView.Adapter<PreviewListAdapter.
     @Override
     public void onBindViewHolder(@NonNull PreviewHolder previewHolder, int i) {
 
-        previewHolder.page.setImageURI(Uri.parse(this.pages.get(i).uri));
-        previewHolder.id = this.pages.get(i).id;
+        ImageWithId img = pages.get(i);
+        if (img.hasBitmap()) {
+            previewHolder.page.setImageBitmap(pages.get(i).getBitmap());
+        } else {
+            previewHolder.page.setImageURI(Uri.parse(pages.get(i).getUri()));
+        }
+
+        previewHolder.id = this.pages.get(i).getId();
 
         previewHolder.page.setOnClickListener((View v) -> {
             clickHandler.handleClick(previewHolder.id);
@@ -89,10 +98,14 @@ public class PreviewListAdapter extends RecyclerView.Adapter<PreviewListAdapter.
         return this.pages.size();
     }
 
-    public void addItem(String id, String newUri) {
-        this.pages.add(new UriWithId(id, newUri));
+    public void addItem(String id, Bitmap newBitmap) {
+        this.pages.add(new ImageWithId(id, newBitmap));
         this.notifyItemInserted(pages.size() - 1);
     }
 
-
+    public void addItem(String id, String uri) {
+        this.pages.add(new ImageWithId(id, uri));
+        this.notifyItemInserted(pages.size() - 1);
+    }
 }
+

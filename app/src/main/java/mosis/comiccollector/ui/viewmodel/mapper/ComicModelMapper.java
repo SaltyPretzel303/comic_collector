@@ -7,6 +7,11 @@ import mosis.comiccollector.ui.comic.ViewComic;
 public class ComicModelMapper implements DataMapper<Comic, ViewComic> {
     @Override
     public ViewComic mapToViewModel(Comic input) {
-        return null;
+        return new ViewComic(
+                input.getId(),
+                input.getComicTitle(),
+                input.getDescription(),
+                input.getAuthorId(),
+                input.getLocation());
     }
 }

@@ -24,20 +24,6 @@ import mosis.comiccollector.util.DepProvider;
 
 public class DiscoveryViewModel extends AndroidViewModel {
 
-    private class BitmapWithId {
-        private String id;
-        private Bitmap bitmap;
-
-        private BitmapWithId() {
-
-        }
-
-        private BitmapWithId(String id, Bitmap bitmap) {
-            this.id = id;
-            this.bitmap = bitmap;
-        }
-    }
-
     private AuthRepository authRepo;
     private PeopleRepository peopleRepo;
 

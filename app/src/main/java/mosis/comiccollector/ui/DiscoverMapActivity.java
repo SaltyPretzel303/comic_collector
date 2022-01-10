@@ -8,10 +8,13 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
+import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -53,11 +56,7 @@ import mosis.comiccollector.ui.user.ViewUser;
 import mosis.comiccollector.ui.viewmodel.DiscoveryViewModel;
 import mosis.comiccollector.ui.map.LocationWithPicture;
 
-public class DiscoverMapActivity extends AppCompatActivity implements LocationConsumer, IMyLocationProvider {
-
-    interface PermissionRequester {
-        void handlePermissionResult(boolean allGranted);
-    }
+public class DiscoverMapActivity extends AppCompatActivity implements LocationConsumer {
 
     private static final String PREFS_PATH = "map_prefs";
     private static final String FOLLOWING_BOOL = "is_following";
@@ -82,6 +81,10 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
     private ActivityResultLauncher<String[]> permissionsRequesterLauncher;
     private PermissionRequester permissionRequester;
 
+    private CheckBox followMeCb;
+    private CheckBox showFriendsCb;
+    private CheckBox showComicsCb;
+
     private FloatingActionButton followButton;
     private View.OnClickListener startFollowingClick;
     private View.OnClickListener stopFollowingClick;
@@ -102,6 +105,49 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
 
         setContentView(R.layout.activity_map);
 
+        this.initPermissionRequester();
+
+        this.viewModel = new ViewModelProvider(this).get(DiscoveryViewModel.class);
+
+        this.getCheckBoxes();
+        this.setupMapView();
+        this.initOverlays();
+
+        this.loadFriends();
+
+        this.setupFollowButton();
+
+        this.requestPermissions((boolean granted) -> {
+            if (granted) {
+                // TODO setup my location overlay with location provider
+            } else {
+                // TODO add one more icon with my last known location to itemized overlay
+            }
+        });
+
+    }
+
+    private void getCheckBoxes() {
+        followMeCb = findViewById(R.id.follow_me_cb);
+        showFriendsCb = findViewById(R.id.show_friends_cb);
+        showComicsCb = findViewById(R.id.show_comics_cb);
+    }
+
+    private void setupMapView() {
+        this.map = (MapView) this.findViewById(R.id.map);
+        this.map.setTileSource(TileSourceFactory.MAPNIK);
+
+        this.mapController = this.map.getController();
+
+        this.mapController.setZoom(15.0);
+        this.mapController.setCenter(new GeoPoint(43.6845, 21.7966));
+
+    }
+
+
+    // region permissions
+
+    private void initPermissionRequester() {
         this.permissionsRequesterLauncher = registerForActivityResult(
                 new ActivityResultContracts.RequestMultiplePermissions(),
                 (Map<String, Boolean> result) -> {
@@ -127,43 +173,14 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
 
                     return;
                 });
-
-
-        this.viewModel = new ViewModelProvider(this).get(DiscoveryViewModel.class);
-
-        this.map = (MapView) this.findViewById(R.id.map);
-        this.map.setTileSource(TileSourceFactory.MAPNIK);
-
-        this.mapController = this.map.getController();
-
-        this.mapController.setZoom(15.0);
-        this.mapController.setCenter(new GeoPoint(43.6845, 21.7966));
-
-        this.initOverlays();
-
-        // this one doesn't require any permission
-        this.loadFriends();
-
-        this.setupFollowButton();
-
-        this.requestPermissions((boolean granted) -> {
-            if (granted) {
-                // TODO setup my location overlay with location provider
-            } else {
-                // TODO add one more icon with my last known location to itemized overlay
-            }
-        });
-
     }
-
-    // region permissions
 
     private List<String> getRequiredPermissions() {
         ArrayList<String> retList = new ArrayList<>();
 
         for (String permission : POSSIBLE_PERMISSIONS) {
             if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
-                // Permission is not granted
+                // Permission is not already granted
 
                 retList.add(permission);
             }
@@ -189,9 +206,10 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
 
     }
 
-    // endregions
+    // endregion
 
     // region setup following
+
     private void setupFollowButton() {
         this.followButton = findViewById(R.id.follow_button);
 
@@ -324,18 +342,7 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
                             this.map,
                             this.unknownPersonMarker, // TODO replace with 'myselfMarker'
                             item,
-                            new OnItemGestureListener<OverlayItemWithId>() {
-                                // TODO empty click handler
-                                @Override
-                                public boolean onItemSingleTapUp(int index, OverlayItemWithId item) {
-                                    return false;
-                                }
-
-                                @Override
-                                public boolean onItemLongPress(int index, OverlayItemWithId item) {
-                                    return false;
-                                }
-                            });
+                            this.getEmptyClickHandler());
 
                     // TODO questionable logic
                     // can't turn on following before I read my last location from firebase
@@ -346,7 +353,6 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
 
         // TODO add comics overlay
         // TODO add otherPeople-notFriends overlay
-
     }
 
     private void loadFriends() {
@@ -390,6 +396,22 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
 
                 dialog.show();
 
+                return true;
+            }
+
+            @Override
+            public boolean onItemLongPress(int index, OverlayItemWithId item) {
+                return false;
+            }
+        };
+
+    }
+
+    private OnItemGestureListener<OverlayItemWithId> getEmptyClickHandler() {
+        return new OnItemGestureListener<>() {
+
+            @Override
+            public boolean onItemSingleTapUp(int index, OverlayItemWithId item) {
                 return true;
             }
 
@@ -477,34 +499,6 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
     @Override
     public void updateLocation(UserLocation newLocation) {
         this.myLocationOverlay.updateItem(newLocation);
-    }
-
-    // endregion
-
-    // region IMyLocationProvider implementation
-
-    // attempt to implement custom myLocationOverlay
-    // it think this is safe to be removed
-
-    @Override
-    public boolean startLocationProvider(IMyLocationConsumer myLocationConsumer) {
-        this.myLocationConsumer = myLocationConsumer;
-        return true;
-    }
-
-    @Override
-    public void stopLocationProvider() {
-        this.myLocationConsumer = null;
-    }
-
-    @Override
-    public Location getLastKnownLocation() {
-        return null; // TODO use people repo
-    }
-
-    @Override
-    public void destroy() {
-        this.myLocationConsumer = null;
     }
 
     // endregion

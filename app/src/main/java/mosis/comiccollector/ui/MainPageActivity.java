@@ -41,6 +41,8 @@ public class MainPageActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_page);
 
+        this.initImageLoader();
+
         this.userViewModel = new ViewModelProvider(this).get(AuthUserViewModel.class);
 
 //        this.initLoginActivity();
@@ -48,8 +50,6 @@ public class MainPageActivity extends AppCompatActivity {
         this.initButtons();
 
         this.resolveUser();
-
-        this.initImageLoader();
 
     }
 

@@ -34,24 +34,23 @@ public class ViewComic {
 
     public String title;
     public String description;
-    public String author;
+    public String authorId;
 
-    public MutableLiveData<String> liveTitlePageUri;
-    private MutableLiveData<List<String>> pagesUris;
+    public MutableLiveData<Bitmap> liveTitlePage;
+    private MutableLiveData<List<Bitmap>> pagesUris;
 
     public Position location;
 
     public ViewComic(String modelId,
                      String title,
                      String description,
-                     String author,
-                     Location location,
-                     int progress) {
+                     String authorId,
+                     Location location) {
 
         this.modelId = modelId;
 
         this.title = title;
-        this.author = author;
+        this.authorId = authorId;
 
     }
 

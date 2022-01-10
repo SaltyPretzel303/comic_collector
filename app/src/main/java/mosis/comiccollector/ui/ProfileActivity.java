@@ -145,7 +145,7 @@ public class ProfileActivity extends AppCompatActivity {
 
     private void loadCreatedComics(String id) {
 
-        RecyclerView rView = findViewById(R.id.profil_created_comics_rv);
+        RecyclerView rView = findViewById(R.id.profile_created_comics_rv);
 
         createdAdapter = new PreviewListAdapter(
                 this,
@@ -158,22 +158,20 @@ public class ProfileActivity extends AppCompatActivity {
                 .observe(this, (List<ViewComic> viewComics) -> {
                     if (viewComics == null) {
                         Log.e("createComics", "Got err as created comics ... ");
-
                         return;
                     }
 
                     for (ViewComic vComic : viewComics) {
 
-                        vComic.liveTitlePageUri.observe(this, (String newUri) -> {
+                        vComic.liveTitlePage.observe(this, (Bitmap newBitmap) -> {
 
-                                    if (newUri == null) {
+                                    if (newBitmap == null) {
                                         // i don't know ... do something
                                         // placeholder titlePage ...
-
                                         return;
                                     }
 
-                                    createdAdapter.addItem(vComic.modelId, newUri);
+                                    createdAdapter.addItem(vComic.modelId, newBitmap);
                                 }
                         );
                     }
@@ -211,6 +209,7 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void collectedComicClick(String id) {
+        // TODO implement
     }
 
     private void discoverComicClick(View v) {

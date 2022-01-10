@@ -142,9 +142,9 @@ public class MovingItemsOverlay {
 
     private void addOverlay(Overlay newOverlay) {
         if (existInOverlays()) {
-            this.replaceWith(newOverlay);
+            replaceWith(newOverlay);
         } else {
-            this.map.getOverlays().add(newOverlay);
+            map.getOverlays().add(newOverlay);
         }
     }
 

@@ -121,7 +121,7 @@ public class UserProfileViewModel extends AndroidViewModel {
             List<ViewComic> vComicL = new ArrayList<>();
             for (Comic comic : newComics) {
                 ViewComic vComic = comicMapper.mapToViewModel(comic);
-                vComic.liveTitlePageUri = loadTitlePage(comic.getId());
+                vComic.liveTitlePage = loadTitlePage(comic.getId());
 
                 vComicL.add(vComic);
             }
@@ -132,22 +132,22 @@ public class UserProfileViewModel extends AndroidViewModel {
         return this.liveCreatedComics;
     }
 
-    private MutableLiveData<String> loadTitlePage(String comicId) {
-        MutableLiveData<String> liveUri = new MutableLiveData<>();
+    private MutableLiveData<Bitmap> loadTitlePage(String comicId) {
+        MutableLiveData<Bitmap> livePic = new MutableLiveData<>();
 
-        comicRepo.loadTitlePage(comicId, (List<String> newPages) -> {
+        comicRepo.loadTitlePage(comicId, (List<Bitmap> newPages) -> {
             if (newPages == null) {
                 Log.e("viewModelProfile", "Failed to load titlePage for: " + comicId);
-                liveUri.postValue(null);
+                livePic.postValue(null);
 
                 return;
             }
 
-            liveUri.postValue(newPages.get(0));
+            livePic.postValue(newPages.get(0));
 
         });
 
-        return liveUri;
+        return livePic;
     }
 
     public MutableLiveData<List<ViewComic>> loadCollectedComics(String userId) {
@@ -165,7 +165,7 @@ public class UserProfileViewModel extends AndroidViewModel {
             List<ViewComic> vComics = new ArrayList<>();
             for (Comic comic : newComics) {
                 ViewComic vComic = this.comicMapper.mapToViewModel(comic);
-                vComic.liveTitlePageUri = loadTitlePage(userId);
+                vComic.liveTitlePage = loadTitlePage(userId);
 
                 vComics.add(vComic);
             }

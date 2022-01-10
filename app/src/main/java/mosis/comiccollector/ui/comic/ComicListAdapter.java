@@ -42,7 +42,7 @@ public class ComicListAdapter extends ArrayAdapter<ViewComic> {
 
 //        ((ImageView) old_view.findViewById(R.id.comic_list_item_icon)).setImageBitmap(comic.icon);
         ((TextView) old_view.findViewById(R.id.comic_list_item_title)).setText(comic.title);
-        ((TextView) old_view.findViewById(R.id.comic_list_item_author)).setText(comic.author);
+        ((TextView) old_view.findViewById(R.id.comic_list_item_author)).setText(comic.authorId);
 //        ((ProgressBar) old_view.findViewById(R.id.comic_list_item_progress)).setProgress(comic.progress);
 
         return old_view;
