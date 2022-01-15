@@ -8,22 +8,27 @@
         <entry key="app/src/main/res/drawable/small_preview_background.xml" value="0.18518518518518517" />
         <entry key="app/src/main/res/layout/activity_add_comic.xml" value="0.25" />
         <entry key="app/src/main/res/layout/activity_add_update_comic.xml" value="0.25" />
+        <entry key="app/src/main/res/layout/activity_comic_preview_edit.xml" value="0.33" />
         <entry key="app/src/main/res/layout/activity_login.xml" value="0.41510416666666666" />
         <entry key="app/src/main/res/layout/activity_map.xml" value="0.22" />
         <entry key="app/src/main/res/layout/collected_preview_controls.xml" value="0.307518115942029" />
         <entry key="app/src/main/res/layout/comic_full_preview.xml" value="0.425" />
         <entry key="app/src/main/res/layout/comic_list.xml" value="0.2246376811594203" />
-        <entry key="app/src/main/res/layout/comic_preview_list_item.xml" value="0.41510416666666666" />
+        <entry key="app/src/main/res/layout/comic_preview_list_item.xml" value="0.25" />
+        <entry key="app/src/main/res/layout/create_comic_layout.xml" value="0.4140625" />
         <entry key="app/src/main/res/layout/follow_note_dialog.xml" value="0.41510416666666666" />
         <entry key="app/src/main/res/layout/full_preview.xml" value="0.1601123595505618" />
+        <entry key="app/src/main/res/layout/image_preview_with_actions.xml" value="0.25" />
         <entry key="app/src/main/res/layout/load_image_dialog.xml" value="0.425" />
         <entry key="app/src/main/res/layout/loading_screen.xml" value="0.21559633027522937" />
         <entry key="app/src/main/res/layout/login_layout.xml" value="0.1" />
         <entry key="app/src/main/res/layout/main_page.xml" value="0.33" />
+        <entry key="app/src/main/res/layout/people_from_map_dialog.xml" value="0.4140625" />
         <entry key="app/src/main/res/layout/people_map_dialog.xml" value="0.22" />
         <entry key="app/src/main/res/layout/pick_a_place_dialog.xml" value="0.25" />
         <entry key="app/src/main/res/layout/profile_page.xml" value="0.25" />
         <entry key="app/src/main/res/layout/progress_dialog.xml" value="0.4004474272930649" />
+        <entry key="app/src/main/res/layout/queued_preview_controls.xml" value="0.4140625" />
         <entry key="app/src/main/res/layout/read_page.xml" value="0.41458333333333336" />
         <entry key="app/src/main/res/layout/small_preview.xml" value="0.41510416666666666" />
         <entry key="app/src/main/res/layout/sort_activity_dialog.xml" value="0.37037037037037035" />

@@ -7,42 +7,41 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.app.Dialog;
 import android.content.Intent;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.google.firebase.auth.FirebaseAuth;
-
 import java.util.List;
 
 import mosis.comiccollector.R;
 import mosis.comiccollector.ui.comic.PreviewListAdapter;
-import mosis.comiccollector.ui.comic.UpdateAddComicActivity;
+import mosis.comiccollector.ui.comic.ComicPreviewAndEditActivity;
 import mosis.comiccollector.ui.comic.ViewComic;
-import mosis.comiccollector.ui.user.ProfileData;
 import mosis.comiccollector.ui.user.ViewUser;
 import mosis.comiccollector.ui.viewmodel.UserProfileViewModel;
 
 public class ProfileActivity extends AppCompatActivity {
 
+    // TODO extract next values to resources
+    // and adjust them as well ...
+    public static final int PREVIEW_PAGE_WIDTH = 150;
+    public static final int PREVIEW_PAGE_HEIGHT = 120;
+
+    public static final int PROFILE_PIC_WIDTH = 200;
+    public static final int PROFILE_PIC_HEIGHT = 200;
+
     public static final String USER_DATA_EXTRA = "user_data";
 
     private PreviewListAdapter createdAdapter;
-    private RecyclerView createdComicsRv;
-
     private PreviewListAdapter collectedAdapter;
-    private RecyclerView collectedComicsRv;
-
     private PreviewListAdapter friendsAdapter;
-    private RecyclerView friendsRv;
 
     private ActivityResultLauncher<String> loadPicActivityLauncher;
 
@@ -63,12 +62,21 @@ public class ProfileActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
         if (intent.hasExtra(USER_DATA_EXTRA)) {
-            ProfileData pData = (ProfileData) intent.getSerializableExtra(USER_DATA_EXTRA);
-            ViewUser vData = ViewUser.fromProfileData(pData);
-            this.liveUser = new MutableLiveData<>();
-            this.liveUser.postValue(vData);
+//            ProfileData pData = (ProfileData) intent.getSerializableExtra(USER_DATA_EXTRA);
+//            ViewUser vData = ViewUser.fromProfileData(pData);
+
+            ViewUser vData = (ViewUser) intent.getSerializableExtra(USER_DATA_EXTRA);
+//            this.liveUser = new MutableLiveData<>();
+//            this.liveUser.postValue(vData);
+            this.liveUser = viewModel.getUser(
+                    vData.userId,
+                    PROFILE_PIC_WIDTH,
+                    PROFILE_PIC_HEIGHT);
         } else {
-            this.liveUser = viewModel.getUser(this.myId);
+            this.liveUser = viewModel.getUser(
+                    this.myId,
+                    PROFILE_PIC_WIDTH,
+                    PROFILE_PIC_HEIGHT);
         }
 
         this.initView();
@@ -81,7 +89,7 @@ public class ProfileActivity extends AppCompatActivity {
 
                     Log.e("Pic uri", "We got this pic uri: " + uri.toString());
 
-                    ((ImageView) findViewById(R.id.profil_pic_iv)).setImageURI(uri);
+                    ((ImageView) findViewById(R.id.profile_pic_iv)).setImageURI(uri);
 
                     viewModel.saveProfilePic(uri.toString());
 
@@ -99,13 +107,9 @@ public class ProfileActivity extends AppCompatActivity {
             ((TextView) this.findViewById(R.id.user_rating_tv))
                     .setText(user.rating + "/100");
 
-            Uri picUri = FirebaseAuth.getInstance().getCurrentUser().getPhotoUrl();
-
-            Log.e("imgLoader", "Loading: " + picUri.toString());
-
             user.liveProfilePic.observe(this, (Bitmap bitmap) -> {
                 if (bitmap != null) {
-                    ((ImageView) this.findViewById(R.id.profil_pic_iv))
+                    ((ImageView) this.findViewById(R.id.profile_pic_iv))
                             .setImageBitmap(bitmap);
                 } else {
                     Log.e("imageView", "Image bitmap is null ... ");
@@ -115,7 +119,7 @@ public class ProfileActivity extends AppCompatActivity {
             if (user.userId.equals(myId)) {
                 // if displaying my acc
 
-                this.findViewById(R.id.profil_pic_iv).setOnClickListener(v -> {
+                this.findViewById(R.id.profile_pic_iv).setOnClickListener((View v) -> {
                     this.loadPicActivityLauncher.launch("image/*");
                 });
 
@@ -143,81 +147,219 @@ public class ProfileActivity extends AppCompatActivity {
         });
     }
 
+    // region load images
+
     private void loadCreatedComics(String id) {
 
         RecyclerView rView = findViewById(R.id.profile_created_comics_rv);
 
-        createdAdapter = new PreviewListAdapter(
-                this,
-                R.layout.comic_preview_list_item,
-                this::collectedComicClick);
+        if (createdAdapter == null) {
+
+            createdAdapter = new PreviewListAdapter(
+                    this,
+                    R.layout.comic_preview_list_item,
+                    PREVIEW_PAGE_WIDTH,
+                    PREVIEW_PAGE_HEIGHT,
+                    new PreviewItemProvider() {
+                        @Override
+                        public PreviewItemData getItem(int index) {
+                            ViewComic comic = viewModel.getCreatedComicAt(
+                                    index,
+                                    PREVIEW_PAGE_WIDTH,
+                                    PREVIEW_PAGE_HEIGHT);
+
+                            if (comic != null) {
+                                return new PreviewItemData(
+                                        comic.modelId,
+                                        comic.title,
+                                        comic.description,
+                                        comic.liveTitlePage);
+                            }
+
+                            return null;
+                        }
+
+                        @Override
+                        public int getItemsCount() {
+                            return viewModel.getCreatedCount();
+                        }
+                    },
+                    this::createdComicClick);
+        }
 
         rView.setAdapter(createdAdapter);
 
         viewModel.loadCreatedComics(id)
                 .observe(this, (List<ViewComic> viewComics) -> {
+
                     if (viewComics == null) {
                         Log.e("createComics", "Got err as created comics ... ");
                         return;
                     }
 
-                    for (ViewComic vComic : viewComics) {
-
-                        vComic.liveTitlePage.observe(this, (Bitmap newBitmap) -> {
-
-                                    if (newBitmap == null) {
-                                        // i don't know ... do something
-                                        // placeholder titlePage ...
-                                        return;
-                                    }
-
-                                    createdAdapter.addItem(vComic.modelId, newBitmap);
-                                }
-                        );
-                    }
-
+                    createdAdapter.notifyDataSetChanged();
 
                 });
 
     }
 
     private void loadCollectedComics(String id) {
+        RecyclerView rView = findViewById(R.id.profile_collected_comics_rv);
+
+        if (collectedAdapter == null) {
+            collectedAdapter = new PreviewListAdapter(
+                    this,
+                    R.layout.comic_preview_list_item,
+                    PREVIEW_PAGE_WIDTH,
+                    PREVIEW_PAGE_HEIGHT,
+                    new PreviewItemProvider() {
+                        @Override
+                        public PreviewItemData getItem(int index) {
+                            ViewComic comic = viewModel.getCollectedComicAt(
+                                    index,
+                                    PREVIEW_PAGE_WIDTH,
+                                    PREVIEW_PAGE_HEIGHT);
+
+                            if (comic != null) {
+                                return new PreviewItemData(
+                                        comic.modelId,
+                                        comic.title,
+                                        comic.description,
+                                        comic.liveTitlePage);
+                            }
+
+                            return null;
+                        }
+
+                        @Override
+                        public int getItemsCount() {
+                            return viewModel.getCollectedCount();
+                        }
+                    },
+                    this::collectedComicClick);
+        }
+
+        rView.setAdapter(collectedAdapter);
+        viewModel.loadCollectedComics(id)
+                .observe(this, (List<ViewComic> viewComics) -> {
+                    if (viewComics == null) {
+                        Log.e("collectedComics", "Got err as collected comics ... ");
+                        return;
+                    }
+
+                    collectedAdapter.notifyDataSetChanged();
+                });
 
     }
 
     private void loadFriends(String id) {
+        RecyclerView rView = findViewById(R.id.profile_friends_rv);
 
+        if (friendsAdapter == null) {
+
+            friendsAdapter = new PreviewListAdapter(
+                    this,
+                    R.layout.comic_preview_list_item,
+                    PREVIEW_PAGE_WIDTH,
+                    PREVIEW_PAGE_HEIGHT,
+                    new PreviewItemProvider() {
+                        @Override
+                        public PreviewItemData getItem(int index) {
+                            ViewUser friend = viewModel.getFriendAt(
+                                    index,
+                                    PREVIEW_PAGE_WIDTH,
+                                    PREVIEW_PAGE_HEIGHT);
+
+                            if (friend != null) {
+                                return new PreviewItemData(
+                                        friend.userId,
+                                        friend.email,
+                                        friend.name,
+                                        friend.liveProfilePic);
+                            }
+
+                            return null;
+                        }
+
+                        @Override
+                        public int getItemsCount() {
+                            return viewModel.getFriendsCount();
+                        }
+                    },
+                    this::friendPreviewClick);
+        }
+
+        rView.setAdapter(friendsAdapter);
+
+        viewModel.loadFriends(id)
+                .observe(this, (List<ViewUser> viewComics) -> {
+
+                    if (viewComics == null) {
+                        Log.e("friendsAdapter", "Got err as friends ... ");
+                        return;
+                    }
+
+                    friendsAdapter.notifyDataSetChanged();
+
+                });
     }
 
-    // have no idea ... afraid to remove it ..
-    // just copied from "previous version"
-    private String getPicRealPath(Uri imageUri) {
-        String[] filePathColumn = {MediaStore.Images.Media.DATA};
+    // endregion
 
-        Cursor cursor = getContentResolver().query(imageUri, filePathColumn, null, null, null);
-        ((Cursor) cursor).moveToFirst();
-
-        int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-        String picturePath = cursor.getString(columnIndex);
-
-        return picturePath;
-    }
+    // region click handlers
 
     private void addComicClick(View v) {
-        Intent addIntent = new Intent(this, UpdateAddComicActivity.class);
+        Intent addIntent = new Intent(this, ComicPreviewAndEditActivity.class);
+        addIntent.putExtra(
+                ComicPreviewAndEditActivity.PREVIEW_REASON,
+                ComicPreviewAndEditActivity.PreviewReason.Create);
+
         startActivity(addIntent);
     }
 
-    private void collectedComicClick(String id) {
-        // TODO implement
+    private void createdComicClick(String id) {
+        Intent updateIntent = new Intent(this, ComicPreviewAndEditActivity.class);
+        ViewComic comic = viewModel.getCreatedComic(id);
+        updateIntent.putExtra(
+                ComicPreviewAndEditActivity.COMIC_INFO_EXTRA,
+                comic);
+        updateIntent.putExtra(
+                ComicPreviewAndEditActivity.PREVIEW_REASON,
+                ComicPreviewAndEditActivity.PreviewReason.PreviewAndEdit);
+
+        startActivity(updateIntent);
     }
 
     private void discoverComicClick(View v) {
+        // TODO implement ... I guess open map with comics
+    }
 
+    private void collectedComicClick(String id) {
+        Intent previewIntent = new Intent(this, ComicPreviewAndEditActivity.class);
+        ViewComic comic = viewModel.getCollectedComic(id);
+        previewIntent.putExtra(
+                ComicPreviewAndEditActivity.COMIC_INFO_EXTRA,
+                comic);
+        previewIntent.putExtra(
+                ComicPreviewAndEditActivity.PREVIEW_REASON,
+                ComicPreviewAndEditActivity.PreviewReason.JustPreview);
+
+        startActivity(previewIntent);
     }
 
     private void findFriendsClick(View v) {
 
     }
+
+    private void friendPreviewClick(String id) {
+        ViewUser user = viewModel.getFriend(id);
+        MutableLiveData<ViewUser> liveUser = new MutableLiveData<>();
+        liveUser.postValue(user);
+
+        Dialog shortProfile = new ShortProfileDialog(this, liveUser);
+        shortProfile.show();
+    }
+
+    // endregion
 
 }

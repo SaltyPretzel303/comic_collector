@@ -8,7 +8,7 @@
     android:gravity="top|center"
     android:orientation="vertical"
     android:padding="10dp"
-    tools:context=".ui.comic.UpdateAddComicActivity">
+    tools:context=".ui.comic.ComicPreviewAndEditActivity">
 
     <EditText
         android:id="@+id/new_comic_name_et"
@@ -25,6 +25,22 @@
         android:layout_marginTop="20dp"
         android:gravity="top|center"
         android:hint="Comic Description" />
+
+    <LinearLayout
+        android:id="@+id/preview_comic_author_button_holder"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:gravity="center_vertical|end"
+        android:orientation="vertical"
+        android:padding="2dp">
+
+        <Button
+            android:id="@+id/preview_comic_author_button"
+            android:layout_width="150dp"
+            android:layout_height="match_parent"
+            android:text="Author"
+            android:textAllCaps="false" />
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -52,18 +68,27 @@
 
     </LinearLayout>
 
-    <Button
-        android:id="@+id/pick_a_place_button"
-        android:layout_width="wrap_content"
-        android:layout_height="50dp"
-        android:layout_marginTop="10dp"
-        android:text="Pick a place" />
+    <LinearLayout
+        android:id="@+id/create_comic_finish_buttons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="vertical">
 
-    <Button
-        android:id="@+id/add_comic_finish_button"
-        android:layout_width="wrap_content"
-        android:layout_height="50dp"
-        android:layout_marginTop="10dp"
-        android:text="FINISH" />
+        <Button
+            android:id="@+id/pick_a_place_button"
+            android:layout_width="wrap_content"
+            android:layout_height="50dp"
+            android:layout_marginTop="10dp"
+            android:text="Pick a place" />
+
+        <Button
+            android:id="@+id/add_comic_finish_button"
+            android:layout_width="wrap_content"
+            android:layout_height="50dp"
+            android:layout_marginTop="10dp"
+            android:text="FINISH" />
+
+    </LinearLayout>
 
 </LinearLayout>

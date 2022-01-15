@@ -4,7 +4,6 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -23,7 +22,7 @@ import mosis.comiccollector.R;
 import mosis.comiccollector.ui.user.ProfileData;
 import mosis.comiccollector.ui.user.ViewUser;
 
-public class PeopleMapDialog extends Dialog {
+public class ShortProfileDialog extends Dialog {
 
     private enum LoadStages {
         DataLoaded, ImageLoaded
@@ -37,7 +36,7 @@ public class PeopleMapDialog extends Dialog {
 
     private Button openProfileButton;
 
-    public PeopleMapDialog(@NonNull Context context, LiveData<ViewUser> liveData) {
+    public ShortProfileDialog(@NonNull Context context, LiveData<ViewUser> liveData) {
         super(context);
 
         this.context = context;
@@ -49,12 +48,12 @@ public class PeopleMapDialog extends Dialog {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        this.setContentView(R.layout.people_map_dialog);
+        this.setContentView(R.layout.people_from_map_dialog);
 
 //        getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
 
         this.openProfileButton = findViewById(R.id.open_profile_people_map);
-        this.openProfileButton.setOnClickListener(this::buttonClick);
+        this.openProfileButton.setOnClickListener(this::showProfileCLick);
         this.openProfileButton.setEnabled(false);
 
         this.liveUserData.observe((LifecycleOwner) context, this::initViews);
@@ -94,7 +93,7 @@ public class PeopleMapDialog extends Dialog {
 
     }
 
-    private void buttonClick(View v) {
+    private void showProfileCLick(View v) {
         ProfileData pData = new ProfileData();
         ViewUser vUser = this.liveUserData.getValue();
         pData.userId = vUser.userId;
@@ -103,7 +102,8 @@ public class PeopleMapDialog extends Dialog {
         pData.profilePic = vUser.liveProfilePic.getValue();
 
         Intent profileIntent = new Intent(context, ProfileActivity.class);
-        profileIntent.putExtra(ProfileActivity.USER_DATA_EXTRA, pData);
+//        profileIntent.putExtra(ProfileActivity.USER_DATA_EXTRA, pData);
+        profileIntent.putExtra(ProfileActivity.USER_DATA_EXTRA, vUser);
         context.startActivity(profileIntent);
     }
 

@@ -1,12 +1,10 @@
 package mosis.comiccollector.repository.impl;
 
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
@@ -16,15 +14,16 @@ import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.UploadTask;
 import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.assist.ImageSize;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.ByteArrayOutputStream;
 import java.util.List;
 
 import mosis.comiccollector.model.UserCollectedComicsList;
 import mosis.comiccollector.model.comic.Comic;
 import mosis.comiccollector.repository.ComicRepository;
+import mosis.comiccollector.ui.comic.IndexedUriPage;
 
 public class FirebaseComicRepository implements ComicRepository {
 
@@ -38,6 +37,7 @@ public class FirebaseComicRepository implements ComicRepository {
 
     @Override
     public void getCreatedComics(String userId, ComicsHandler handler) {
+
         FirebaseFirestore.getInstance()
                 .collection(COMICS_INFO_PATH)
                 .whereEqualTo(Comic.AUTHOR_ID_FIELD, userId)
@@ -57,26 +57,26 @@ public class FirebaseComicRepository implements ComicRepository {
 
     @Override
     public void getCollectedComics(String userId, ComicsHandler handler) {
+
         FirebaseFirestore.getInstance()
                 .collection(USER_COLLECTED_COMICS)
                 .document(userId)
                 .get()
                 .addOnCompleteListener((@NonNull Task<DocumentSnapshot> task) -> {
 
-                    if (!task.isSuccessful()) {
+                    if (!task.isSuccessful() || !task.getResult().exists()) {
                         Log.e("comicsRepo", "Failed to load collected comics for: " + userId);
                         handler.handleComics(null);
                         return;
                     }
 
-                    List<String> ids = task
+                    UserCollectedComicsList collectedList = task
                             .getResult()
-                            .toObject(UserCollectedComicsList.class)
-                            .comicsIds;
+                            .toObject(UserCollectedComicsList.class);
 
                     FirebaseFirestore.getInstance()
                             .collection(COMICS_INFO_PATH)
-                            .whereIn(Comic.COMIC_ID_FIELD, ids)
+                            .whereIn(Comic.COMIC_ID_FIELD, collectedList.comicsIds)
                             .get()
                             .addOnCompleteListener((@NonNull Task<QuerySnapshot> comicsTask) -> {
 
@@ -97,12 +97,19 @@ public class FirebaseComicRepository implements ComicRepository {
     }
 
     @Override
-    public void loadTitlePage(String comicId, PagesHandler handler) {
-        loadPage(comicId, 0, handler);
+    public void loadTitlePage(String comicId,
+                              int width,
+                              int height,
+                              PagesHandler handler) {
+        loadPage(comicId, width, height, 0, handler);
     }
 
     @Override
-    public void loadPage(String comicId, int pageInd, PagesHandler handler) {
+    public void loadPage(String comicId,
+                         int width,
+                         int height,
+                         int pageInd,
+                         PagesHandler handler) {
 
         FirebaseStorage.getInstance()
                 .getReference(COMICS_STORAGE)
@@ -111,59 +118,26 @@ public class FirebaseComicRepository implements ComicRepository {
                 .getDownloadUrl()
                 .addOnCompleteListener((@NonNull Task<Uri> task) -> {
                     if (!task.isSuccessful()) {
-                        Log.e("comicRepo", "Failed to get page download uri ... ");
+                        Log.e("comicRepo", "Failed to get page download uri ... page: " + pageInd);
                         handler.handlePages(null);
                         return;
                     }
 
                     String uri = task.getResult().toString();
 
-                    ImageLoader.getInstance()
-                            .loadImage(uri, new MyImageListener(handler));
+                    ImageLoader.getInstance().loadImage(
+                            uri,
+                            new ImageSize(width, height),
+                            new MyImageListener(handler));
 
                 });
 
-//        final File tempFile;
-//        try {
-//            tempFile = File.createTempFile(
-//                    PAGE_CACHE_PREFIX,
-//                    PAGE_CACHE_SUFFIX + comicId);
-//
-//            Log.e("loadPic", "Created temp file: " + tempFile.getName());
-//            tempFile.deleteOnExit();
-//
-//            FirebaseStorage.getInstance()
-//                    .getReference(COMICS_STORAGE)
-//                    .child(comicId)
-//                    .child("" + pageInd)
-//                    .getFile(tempFile)
-//                    .addOnCompleteListener((@NonNull Task<FileDownloadTask.TaskSnapshot> task) -> {
-//                        if (!task.isSuccessful()) {
-//                            Log.e("comicRepo",
-//                                    "Failed to load comic page ... "
-//                                            + task.getException().getMessage());
-//                            handler.handlePages(null);
-//                            return;
-//                        }
-//
-//                        List<String> uris = new ArrayList<>();
-//                        uris.add(Uri.fromFile(tempFile).toString());
-//                        handler.handlePages(uris);
-//
-//                        return;
-//                    });
-//
-//        } catch (Exception e) {
-//            Log.e("comicRepo", "Exc while loading page ... " + e.getMessage());
-//            handler.handlePages(null);
-//            return;
-//        }
     }
 
     @Override
     public void addPages(String comicId,
                          int newCount,
-                         List<String> pageUris,
+                         List<IndexedUriPage> pageUris,
                          @NotNull UploadHandler handler) {
 
         FirebaseFirestore.getInstance()
@@ -171,35 +145,37 @@ public class FirebaseComicRepository implements ComicRepository {
                 .document(comicId)
                 .update(Comic.PAGES_COUNT_FIELD, newCount)
                 .addOnCompleteListener((@NonNull Task<Void> updateTask) -> {
-                    // TODO do something I guess ...
+                    // TODO I guess do something ...
                 });
 
 
-        int index = newCount - pageUris.size();
-        for (String uri : pageUris) {
+        for (IndexedUriPage indexedUri : pageUris) {
             FirebaseStorage.getInstance()
                     .getReference(COMICS_STORAGE)
                     .child(comicId)
-                    .child("" + index)
-                    .putFile(Uri.parse(uri))
+                    .child("" + indexedUri.index)
+                    .putFile(Uri.parse(indexedUri.pageUri))
                     .addOnCompleteListener((@NonNull Task<UploadTask.TaskSnapshot> task) -> {
                         if (!task.isSuccessful()) {
                             Log.e("comicsRepo", "Failed to update comic ... ");
-                            handler.handleResult(-1);
+                            handler.handleSingleUpload(comicId, -1);
                             return;
                         }
 
-                        handler.handleResult(task.getResult().getBytesTransferred());
+                        handler.handleSingleUpload(
+                                comicId,
+                                task.getResult().getBytesTransferred());
 
                     });
 
-            index++;
         }
 
     }
 
     @Override
-    public void createComic(Comic newComic, List<String> pagesUris, @NonNull UploadHandler handler) {
+    public void createComic(Comic newComic,
+                            List<IndexedUriPage> pages,
+                            @NonNull UploadHandler handler) {
         CollectionReference comicCollection = FirebaseFirestore.getInstance()
                 .collection(COMICS_INFO_PATH);
 
@@ -208,39 +184,39 @@ public class FirebaseComicRepository implements ComicRepository {
                 .addOnCompleteListener((@NonNull Task<DocumentReference> createTask) -> {
                     if (!createTask.isSuccessful()) {
                         Log.e("comicRepo", "Failed to create comic info ... ");
-                        handler.handleResult(-1);
+                        handler.handleSingleUpload("", -1);
                         return;
                     }
 
                     String docId = createTask.getResult().getId();
+
                     createTask.getResult()
                             .update(Comic.COMIC_ID_FIELD, docId)
                             .addOnCompleteListener((@NonNull Task<Void> updateTask) -> {
                                 if (!updateTask.isSuccessful()) {
                                     Log.e("comicsRepo", "Failed to update comic id ... ");
-                                    handler.handleResult(-1);
+                                    handler.handleSingleUpload(docId, -1);
                                     return;
                                 }
 
-                                int index = newComic.getPagesCount() - pagesUris.size();
-                                for (String uri : pagesUris) {
+                                for (IndexedUriPage page : pages) {
                                     FirebaseStorage.getInstance()
                                             .getReference(COMICS_STORAGE)
                                             .child(docId)
-                                            .child("" + index)
-                                            .putFile(Uri.parse(uri))
+                                            .child("" + page.index)
+                                            .putFile(Uri.parse(page.pageUri))
                                             .addOnCompleteListener((@NonNull Task<UploadTask.TaskSnapshot> task) -> {
                                                 if (!task.isSuccessful()) {
                                                     Log.e("comicsRepo", "Failed to update comic ... ");
-                                                    handler.handleResult(-1);
+                                                    handler.handleSingleUpload(docId, -1);
                                                     return;
                                                 }
 
-                                                handler.handleResult(task.getResult().getBytesTransferred());
+                                                handler.handleSingleUpload(
+                                                        docId,
+                                                        task.getResult().getBytesTransferred());
 
                                             });
-
-                                    index++;
                                 }
 
                             });

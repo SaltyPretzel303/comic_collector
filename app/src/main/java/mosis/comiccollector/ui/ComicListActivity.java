@@ -14,10 +14,8 @@ import android.widget.ListView;
 import java.util.List;
 
 import mosis.comiccollector.R;
-import mosis.comiccollector.repository.ComicRepository;
 import mosis.comiccollector.ui.comic.ViewComic;
 import mosis.comiccollector.ui.comic.ComicListAdapter;
-import mosis.comiccollector.util.DepProvider;
 
 public class ComicListActivity extends AppCompatActivity {
 
@@ -180,12 +178,11 @@ public class ComicListActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
-                Intent full_preview = new Intent(ComicListActivity.this, FullPreviewActivity.class);
-
-                full_preview.putExtra("comic_index", position);
-                full_preview.putExtra("preview_context", String.valueOf(list_context));
-
-                startActivity(full_preview);
+//                Intent full_preview = new Intent(ComicListActivity.this, FullPreviewActivity.class);
+//                full_preview.putExtra("comic_index", position);
+//                full_preview.putExtra("preview_context", String.valueOf(list_context));
+//
+//                startActivity(full_preview);
 
             }
         });

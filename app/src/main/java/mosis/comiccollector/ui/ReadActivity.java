@@ -3,7 +3,9 @@ package mosis.comiccollector.ui;
 
 import android.content.Intent;
 import android.os.Bundle;
+
 import androidx.annotation.Nullable;
+
 import android.view.View;
 import android.view.WindowManager;
 import android.view.animation.Animation;
@@ -70,7 +72,8 @@ public class ReadActivity extends AppCompatActivity {
         this.exit_btn = (Button) this.findViewById(R.id.exit_read_btn);
 
         this.next_page_btn = (Button) this.findViewById(R.id.next_page_btn);
-        this.prev_page_btn = (Button) this.findViewById(R.id.preview_pages_list);
+        this.prev_page_btn = null;
+//                (Button) this.findViewById(R.id.preview_pages_list);
 
         this.continue_btn = (Button) this.findViewById(R.id.continue_reading);
 

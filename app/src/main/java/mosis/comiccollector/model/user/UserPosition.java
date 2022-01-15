@@ -1,4 +1,4 @@
-package mosis.comiccollector.model.realtime;
+package mosis.comiccollector.model.user;
 
 public class UserPosition {
 

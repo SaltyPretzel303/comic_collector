@@ -17,6 +17,8 @@ import mosis.comiccollector.repository.AuthRepository;
 import mosis.comiccollector.repository.ComicRepository;
 import mosis.comiccollector.repository.DataMapper;
 import mosis.comiccollector.repository.PeopleRepository;
+import mosis.comiccollector.ui.PreviewItemData;
+import mosis.comiccollector.ui.PreviewItemProvider;
 import mosis.comiccollector.ui.comic.ViewComic;
 import mosis.comiccollector.ui.user.ViewUser;
 import mosis.comiccollector.util.DepProvider;
@@ -49,11 +51,13 @@ public class UserProfileViewModel extends AndroidViewModel {
 
     }
 
+    // region user info
+
     public String getMyId() {
         return authRepo.getCurrentUser().user.getUserId();
     }
 
-    public MutableLiveData<ViewUser> getUser(String userId) {
+    public MutableLiveData<ViewUser> getUser(String userId, int width, int height) {
         if (this.liveUserData == null) {
             this.liveUserData = new MutableLiveData<>();
         }
@@ -63,7 +67,7 @@ public class UserProfileViewModel extends AndroidViewModel {
             // where did I got id if that user doesn't exists ...
             User user = people.get(0);
             ViewUser viewUser = this.userMapper.mapToViewModel(user);
-            viewUser.setLiveProfilePic(this.loadProfilePic(userId));
+            viewUser.setLiveProfilePic(this.loadProfilePic(userId, width, height));
 
             this.liveUserData.postValue(viewUser);
         });
@@ -90,7 +94,7 @@ public class UserProfileViewModel extends AndroidViewModel {
         return uploadUri;
     }
 
-    private MutableLiveData<Bitmap> loadProfilePic(String userId) {
+    private MutableLiveData<Bitmap> loadProfilePic(String userId, int width, int height) {
 
         MutableLiveData<Bitmap> livePic = new MutableLiveData<>();
 //        if (this.liveProfilePic == null) {
@@ -105,6 +109,10 @@ public class UserProfileViewModel extends AndroidViewModel {
 //        return this.liveProfilePic;
         return livePic;
     }
+
+    // endregion
+
+    // region created comics
 
     public MutableLiveData<List<ViewComic>> loadCreatedComics(String userId) {
         if (this.liveCreatedComics == null) {
@@ -121,7 +129,6 @@ public class UserProfileViewModel extends AndroidViewModel {
             List<ViewComic> vComicL = new ArrayList<>();
             for (Comic comic : newComics) {
                 ViewComic vComic = comicMapper.mapToViewModel(comic);
-                vComic.liveTitlePage = loadTitlePage(comic.getId());
 
                 vComicL.add(vComic);
             }
@@ -132,10 +139,50 @@ public class UserProfileViewModel extends AndroidViewModel {
         return this.liveCreatedComics;
     }
 
-    private MutableLiveData<Bitmap> loadTitlePage(String comicId) {
+    public ViewComic getCreatedComic(String id) {
+        if (liveCreatedComics != null && liveCreatedComics.getValue() != null) {
+            for (ViewComic comic : liveCreatedComics.getValue()) {
+                if (comic.modelId.equals(id)) {
+                    return comic;
+                }
+            }
+        }
+        return null;
+    }
+
+    public ViewComic getCreatedComicAt(int index, int width, int height) {
+        if (liveCreatedComics != null
+                && liveCreatedComics.getValue() != null
+                && liveCreatedComics.getValue().size() >= index) {
+
+            ViewComic comic = liveCreatedComics.getValue().get(index);
+            if (comic.liveTitlePage == null) {
+                comic.liveTitlePage = loadTitlePage(comic.modelId, width, height);
+            }
+
+            return comic;
+        }
+
+        return null;
+    }
+
+    public int getCreatedCount() {
+        if (liveCreatedComics != null
+                && liveCreatedComics.getValue() != null) {
+            return liveCreatedComics.getValue().size();
+        }
+
+        return 0;
+    }
+
+    // endregion
+
+    // region collected comics
+
+    private MutableLiveData<Bitmap> loadTitlePage(String comicId, int width, int height) {
         MutableLiveData<Bitmap> livePic = new MutableLiveData<>();
 
-        comicRepo.loadTitlePage(comicId, (List<Bitmap> newPages) -> {
+        comicRepo.loadTitlePage(comicId, width, height, (List<Bitmap> newPages) -> {
             if (newPages == null) {
                 Log.e("viewModelProfile", "Failed to load titlePage for: " + comicId);
                 livePic.postValue(null);
@@ -165,7 +212,6 @@ public class UserProfileViewModel extends AndroidViewModel {
             List<ViewComic> vComics = new ArrayList<>();
             for (Comic comic : newComics) {
                 ViewComic vComic = this.comicMapper.mapToViewModel(comic);
-                vComic.liveTitlePage = loadTitlePage(userId);
 
                 vComics.add(vComic);
             }
@@ -176,14 +222,65 @@ public class UserProfileViewModel extends AndroidViewModel {
         return this.liveCollectedComics;
     }
 
+    public ViewComic getCollectedComic(String id) {
+        if (liveCollectedComics != null && liveCollectedComics.getValue() != null) {
+            for (ViewComic comic : liveCollectedComics.getValue()) {
+                if (comic.modelId.equals(id)) {
+                    return comic;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public ViewComic getCollectedComicAt(int index, int width, int height) {
+        if (liveCollectedComics != null
+                && liveCollectedComics.getValue() != null
+                && liveCollectedComics.getValue().size() >= index) {
+
+            ViewComic comic = liveCollectedComics.getValue().get(index);
+            if (comic.liveTitlePage == null) {
+                comic.liveTitlePage = this.loadTitlePage(
+                        comic.modelId,
+                        width,
+                        height);
+            }
+
+            return comic;
+        }
+
+        return null;
+    }
+
+    public int getCollectedCount() {
+
+        if (liveCollectedComics != null && liveCollectedComics.getValue() != null) {
+            return liveCollectedComics.getValue().size();
+        }
+
+        return 0;
+    }
+
+    // endregion
+
+    // region friends
+
     public MutableLiveData<List<ViewUser>> loadFriends(String userId) {
-        MutableLiveData<List<ViewUser>> liveFriends = new MutableLiveData<>();
+        if (liveFriends == null) {
+            liveFriends = new MutableLiveData<>();
+        }
 
         peopleRepo.getFriends(userId, (List<User> people) -> {
+            if (people == null) {
+                Log.e("profileViewModel", "Failed to get friends for user: " + userId);
+                liveFriends.postValue(null);
+                return;
+            }
+
             List<ViewUser> vPeople = new ArrayList<>();
             for (User uPeople : people) {
                 ViewUser vUser = userMapper.mapToViewModel(uPeople);
-                vUser.setLiveProfilePic(this.loadProfilePic(userId));
                 vPeople.add(vUser);
             }
             liveFriends.postValue(vPeople);
@@ -191,5 +288,42 @@ public class UserProfileViewModel extends AndroidViewModel {
 
         return liveFriends;
     }
+
+    public ViewUser getFriend(String id) {
+        if (liveFriends != null && liveFriends.getValue() != null) {
+            for (ViewUser friend : this.liveFriends.getValue()) {
+                if (friend.userId.equals(id)) {
+
+                    return friend;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public ViewUser getFriendAt(int index, int width, int height) {
+        if (liveFriends != null
+                && liveFriends.getValue() != null
+                && liveFriends.getValue().size() >= index) {
+
+            ViewUser friend = liveFriends.getValue().get(index);
+            if (friend.liveProfilePic == null) {
+                friend.liveProfilePic = this.loadProfilePic(friend.userId, width, height);
+            }
+
+            return friend;
+        }
+        return null;
+    }
+
+    public int getFriendsCount() {
+        if (liveFriends != null && liveFriends.getValue() != null) {
+            return liveFriends.getValue().size();
+        }
+        return 0;
+    }
+
+    // endregion
 
 }

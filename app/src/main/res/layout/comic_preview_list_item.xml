@@ -2,19 +2,48 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="match_parent"
-    android:background="@drawable/small_preview_background">
+    android:gravity="center"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:id="@+id/preview_item_text_holder"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/item_upper_text_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Upper text"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/item_lower_text_content"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Lower text"
+            android:textSize="15sp" />
+
+    </LinearLayout>
 
     <androidx.cardview.widget.CardView
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_margin="3dp">
+        android:layout_margin="3dp"
+        android:background="@color/transparent">
 
         <ImageView
             android:id="@+id/comic_preview_list_item_image"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:adjustViewBounds="true"
             android:contentDescription="Comic title page" />
 
     </androidx.cardview.widget.CardView>
+
 
 </LinearLayout>

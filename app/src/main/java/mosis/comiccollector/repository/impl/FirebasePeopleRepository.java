@@ -124,8 +124,7 @@ public class FirebasePeopleRepository implements PeopleRepository {
                 .get()
                 .addOnCompleteListener((Task<DocumentSnapshot> task) -> {
 
-                    if (!task.isSuccessful()) {
-
+                    if (!task.isSuccessful() || !task.getResult().exists()) {
                         Log.e("peopleRepo", "Failed to get friendsIds for: " + userId);
                         peopleHandler.handlePeople(null);
 
@@ -146,6 +145,12 @@ public class FirebasePeopleRepository implements PeopleRepository {
                                     peopleHandler.handlePeople(null);
                                     return;
                                 }
+
+                                peopleHandler.handlePeople(friendsTask
+                                        .getResult()
+                                        .toObjects(User.class));
+
+                                return;
                             });
 
                 });
@@ -158,12 +163,6 @@ public class FirebasePeopleRepository implements PeopleRepository {
                 .collection(USER_LOCATIONS_PATH)
                 .document(userId)
                 .set(newLocation);
-
-//        FirebaseDatabase
-//                .getInstance()
-//                .getReference(USER_LOCATIONS_PATH)
-//                .child(userId)
-//                .setValue(newLocation);
     }
 
     @Override

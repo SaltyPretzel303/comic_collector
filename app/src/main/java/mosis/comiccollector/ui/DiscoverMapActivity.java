@@ -8,13 +8,10 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
-import android.location.Geocoder;
-import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -23,7 +20,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LifecycleOwner;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 
@@ -38,7 +34,6 @@ import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.ItemizedIconOverlay.OnItemGestureListener;
 import org.osmdroid.views.overlay.MapEventsOverlay;
 import org.osmdroid.views.overlay.mylocation.IMyLocationConsumer;
-import org.osmdroid.views.overlay.mylocation.IMyLocationProvider;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +47,6 @@ import mosis.comiccollector.model.user.UserLocation;
 import mosis.comiccollector.ui.map.MovingItemsOverlay;
 import mosis.comiccollector.ui.map.NamedItemsOverlay;
 import mosis.comiccollector.ui.map.OverlayItemWithId;
-import mosis.comiccollector.ui.user.ViewUser;
 import mosis.comiccollector.ui.viewmodel.DiscoveryViewModel;
 import mosis.comiccollector.ui.map.LocationWithPicture;
 
@@ -391,7 +385,7 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
             public boolean onItemSingleTapUp(int index, OverlayItemWithId item) {
                 Log.e("Fiend click", "You clicked on friend ... ");
 
-                Dialog dialog = new PeopleMapDialog(activity,
+                Dialog dialog = new ShortProfileDialog(activity,
                         viewModel.getShortUser(item.getItemId()));
 
                 dialog.show();

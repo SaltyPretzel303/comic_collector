@@ -16,12 +16,12 @@ public class ViewUser implements Serializable {
     public String email;
     public String name;
 
-    public MutableLiveData<Bitmap> liveProfilePic;
+    public transient MutableLiveData<Bitmap> liveProfilePic;
 
     public int rating;
 
-    private MutableLiveData<List<ViewComic>> createdComics;
-    private MutableLiveData<List<ViewComic>> collectedComics;
+    private transient MutableLiveData<List<ViewComic>> createdComics;
+    private transient MutableLiveData<List<ViewComic>> collectedComics;
 
     // mainly used for auth
     public String errorMessage;
@@ -31,7 +31,7 @@ public class ViewUser implements Serializable {
     }
 
     public ViewUser(String errorMessage) {
-        this(null, null, null, -1, errorMessage);
+        this("-Unknown-", "Unknown", "Unknown", -1, errorMessage);
     }
 
     public ViewUser(String userId,

@@ -1,24 +1,31 @@
 package mosis.comiccollector.ui.comic;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import mosis.comiccollector.R;
-import mosis.comiccollector.ui.ImageWithId;
+import mosis.comiccollector.ui.PreviewItemData;
+import mosis.comiccollector.ui.PreviewItemProvider;
+import mosis.comiccollector.util.Units;
 
 // used with recycler view
 // TODO should be moved outside comic package
@@ -30,42 +37,67 @@ public class PreviewListAdapter extends RecyclerView.Adapter<PreviewListAdapter.
         // in case of comics title page preview, this is comic id
         // in case of user profile picture preview this is user id
         public String id;
+
+        public View textHolder;
+
+        public TextView upperText;
+        public TextView lowerText;
+
         public ImageView page;
+//        public View button;
 
         public PreviewHolder(@NonNull View itemView) {
             super(itemView);
 
-            this.page = (ImageView) itemView.findViewById(R.id.comic_preview_list_item_image);
-            this.page.setMaxHeight(120);
-            this.page.setMaxWidth(80);
+            this.upperText = itemView.findViewById(R.id.item_upper_text_content);
+            this.lowerText = itemView.findViewById(R.id.item_lower_text_content);
+
+            this.page = itemView.findViewById(R.id.comic_preview_list_item_image);
+
+//            this.button = itemView.findViewById(R.id.preview_item_button);
+
+            this.textHolder = itemView.findViewById(R.id.preview_item_text_holder);
+
         }
+
+        public void showPage() {
+            this.textHolder.setVisibility(View.GONE);
+            this.page.setVisibility(View.VISIBLE);
+        }
+
+        public void showText() {
+            this.textHolder.setVisibility(View.VISIBLE);
+            this.page.setVisibility(View.GONE);
+        }
+
 
     }
 
     private Context context;
     private LayoutInflater inflater;
-    private List<ImageWithId> pages;
     private int resource;
+    private int maxWidth;
+    private int maxHeight;
+
     private PreviewClickHandler clickHandler;
+
+    private PreviewItemProvider itemProvider;
 
     public PreviewListAdapter(Context context,
                               int resource,
-                              List<ImageWithId> pages,
+                              int maxWidth,
+                              int maxHeight,
+                              PreviewItemProvider dataProvider,
                               @NotNull PreviewClickHandler clickHandler) {
 
         this.context = context;
         this.inflater = LayoutInflater.from(context);
-        this.pages = pages;
+        this.itemProvider = dataProvider;
         this.resource = resource;
+        this.maxWidth = maxWidth;
+        this.maxHeight = maxHeight;
+
         this.clickHandler = clickHandler;
-    }
-
-    public PreviewListAdapter(Context context,
-                              int resource,
-                              @NotNull PreviewClickHandler clickHandler) {
-
-        this(context, resource, new ArrayList<>(), clickHandler);
-
     }
 
     @NonNull
@@ -76,16 +108,27 @@ public class PreviewListAdapter extends RecyclerView.Adapter<PreviewListAdapter.
     }
 
     @Override
-    public void onBindViewHolder(@NonNull PreviewHolder previewHolder, int i) {
+    public void onBindViewHolder(@NonNull PreviewHolder previewHolder, int index) {
 
-        ImageWithId img = pages.get(i);
-        if (img.hasBitmap()) {
-            previewHolder.page.setImageBitmap(pages.get(i).getBitmap());
-        } else {
-            previewHolder.page.setImageURI(Uri.parse(pages.get(i).getUri()));
+        previewHolder.page.setMaxWidth(Units.dpToPx(this.context, this.maxWidth));
+        previewHolder.page.setMaxHeight(Units.dpToPx(this.context, this.maxHeight));
+
+        PreviewItemData data = this.itemProvider.getItem(index);
+        if (data == null) {
+            Log.e("previewAdapter", "Preview holder got null as data at: " + index);
+            return;
         }
 
-        previewHolder.id = this.pages.get(i).getId();
+        previewHolder.showText();
+
+        data.getBitmap().observe((LifecycleOwner) context, (Bitmap bitmap) -> {
+            previewHolder.page.setImageBitmap(bitmap);
+            previewHolder.showPage();
+
+        });
+
+        previewHolder.upperText.setText(data.getUpperText());
+        previewHolder.id = data.getId();
 
         previewHolder.page.setOnClickListener((View v) -> {
             clickHandler.handleClick(previewHolder.id);
@@ -95,17 +138,16 @@ public class PreviewListAdapter extends RecyclerView.Adapter<PreviewListAdapter.
 
     @Override
     public int getItemCount() {
-        return this.pages.size();
+        return itemProvider.getItemsCount();
     }
 
-    public void addItem(String id, Bitmap newBitmap) {
-        this.pages.add(new ImageWithId(id, newBitmap));
-        this.notifyItemInserted(pages.size() - 1);
+    public int getMaxWidth() {
+        return this.maxWidth;
     }
 
-    public void addItem(String id, String uri) {
-        this.pages.add(new ImageWithId(id, uri));
-        this.notifyItemInserted(pages.size() - 1);
+    public int getMaxHeight() {
+        return this.maxHeight;
     }
+
 }
 

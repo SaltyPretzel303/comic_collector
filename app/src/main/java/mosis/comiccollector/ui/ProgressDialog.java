@@ -24,7 +24,6 @@ public class ProgressDialog extends Dialog implements ProgressDisplay {
 
         this.maxProgress = maxProgress;
         this.currentProgress = 0;
-
     }
 
     @Override

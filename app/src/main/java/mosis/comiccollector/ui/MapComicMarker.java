@@ -10,6 +10,7 @@ import java.util.List;
 
 import mosis.comiccollector.ui.comic.ViewComic;
 
+// TODO remove, looks like this one is not used
 public class MapComicMarker extends OverlayItem {
 
     private List<ViewComic> comics;
@@ -22,26 +23,16 @@ public class MapComicMarker extends OverlayItem {
                           Drawable unknownMarker) {
         super("title", "description",
 //                new GeoPoint(comic.position.x, comic.position.y));
-                new GeoPoint(0,1));
+                new GeoPoint(0, 1));
 
         this.comics = new ArrayList<ViewComic>();
 
         this.comics.add(comic);
 
-//        if (comic.discovered) {
-//            this.showAsKnown();
-//        } else {
-//            this.showAsUnknown();
-//        }
-
     }
 
     public void addComic(ViewComic newComic) {
         this.comics.add(newComic);
-
-//        if (newComic.discovered) {
-//            this.showAsKnown();
-//        }
 
     }
 
