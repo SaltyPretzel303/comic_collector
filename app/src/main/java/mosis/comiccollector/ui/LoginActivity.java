@@ -99,8 +99,7 @@ public class LoginActivity extends AppCompatActivity {
                     .getCredential(googleIdToken, null);
 
             Log.e("LOGIN ACT", "Gonna sign in with google ... all good");
-            this.userViewModel
-                    .loginWithGoogle(googleAuthCredential)
+            this.userViewModel.loginWithGoogle(googleAuthCredential)
                     .observe(this, (ViewUser response) ->
                     {
                         if (response == null || response.errorMessage != null) {

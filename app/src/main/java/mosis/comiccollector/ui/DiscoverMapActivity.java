@@ -138,7 +138,6 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
 
     }
 
-
     // region permissions
 
     private void initPermissionRequester() {
@@ -466,26 +465,6 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
             this.myLocationReceiver = null;
         }
 
-    }
-
-    // left just for reference
-    private void setClickableOverlay() {
-
-        MapEventsOverlay overlay = new MapEventsOverlay(new MapEventsReceiver() {
-            @Override
-            public boolean singleTapConfirmedHelper(GeoPoint p) {
-
-                Log.e("events overlay", "YOU CLICKED OUTSIDE ITEM ... ");
-                return true;
-            }
-
-            @Override
-            public boolean longPressHelper(GeoPoint p) {
-                return false;
-            }
-        });
-
-        this.map.getOverlays().add(overlay);
     }
 
     // region location consumer implementation

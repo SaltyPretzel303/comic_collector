@@ -165,7 +165,7 @@ public class ComicListActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                Intent sort_intent = new Intent(ComicListActivity.this, SortActivity.class);
+                Intent sort_intent = new Intent(ComicListActivity.this, SortDialog.class);
 
                 sort_intent.putExtra("sort_context", String.valueOf(list_context));
 

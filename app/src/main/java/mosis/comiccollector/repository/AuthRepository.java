@@ -23,8 +23,8 @@ public interface AuthRepository {
     void loginWithEmail(String username, String password,
                         AuthResultHandler resultHandler);
 
-    void registerWithUsername(String username, String password,
-                              AuthResultHandler resultHandler);
+    void registerWithEmail(String username, String password,
+                           AuthResultHandler resultHandler);
 
     void logInWithGoogleAuth(AuthCredential credentials, AuthResultHandler resultHandler);
 

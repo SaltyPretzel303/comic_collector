@@ -36,11 +36,11 @@ public class FirebaseAuthRepository implements AuthRepository {
 
         if (fUser == null) {
             response.user = null;
+            response.responseType = UserAuthResponseType.UnknownError;
         } else {
             response.user = mapToUser(fUser);
+            response.responseType = UserAuthResponseType.Success;
         }
-
-        response.responseType = UserAuthResponseType.Success;
 
         return response;
     }
@@ -56,9 +56,7 @@ public class FirebaseAuthRepository implements AuthRepository {
 
                     if (resultTask.isSuccessful()) {
 
-                        response.user = mapToUser(FirebaseAuth.getInstance()
-                                .getCurrentUser());
-
+                        response.user = mapToUser(FirebaseAuth.getInstance().getCurrentUser());
                         response.responseType = UserAuthResponseType.Success;
 
                         Log.e("username login", "login response good ... ");
@@ -82,8 +80,8 @@ public class FirebaseAuthRepository implements AuthRepository {
     }
 
     @Override
-    public void registerWithUsername(String username, String password,
-                                     AuthResultHandler resultHandler) {
+    public void registerWithEmail(String username, String password,
+                                  AuthResultHandler resultHandler) {
         FirebaseAuth.getInstance().createUserWithEmailAndPassword(username, password)
                 .addOnCompleteListener((Task<AuthResult> task) -> {
                     UserAuthResponse response = new UserAuthResponse();
@@ -94,7 +92,7 @@ public class FirebaseAuthRepository implements AuthRepository {
 
                         DepProvider
                                 .getPeopleRepository()
-                                .createUser(response.user, (user) -> {
+                                .createUser(response.user, (people) -> {
                                     // TODO do something ...
                                 });
 
@@ -116,12 +114,20 @@ public class FirebaseAuthRepository implements AuthRepository {
                 .addOnCompleteListener((Task<AuthResult> task) -> {
                     UserAuthResponse response = new UserAuthResponse();
 
-                    task.getResult();
-
                     if (task.isSuccessful()) {
                         Log.e("googleLogin", "login good ... ");
                         response.user = mapToUser(task.getResult().getUser());
                         response.responseType = UserAuthResponseType.Success;
+
+                        DepProvider
+                                .getPeopleRepository()
+                                .createUser(response.user, (people) -> {
+                                    resultHandler.handleResult(new UserAuthResponse(
+                                            people.get(0),
+                                            UserAuthResponseType.Success
+                                    ));
+                                });
+
                     } else {
                         Log.e("googleLogin", "login bad ... " + task.getException().getMessage());
 
@@ -152,13 +158,14 @@ public class FirebaseAuthRepository implements AuthRepository {
 
     public User mapToUser(FirebaseUser user) {
         if (user != null) {
-            return new User(user.getUid(), user.getEmail(), user.getDisplayName(),
+            return new User(user.getUid(),
+                    user.getEmail(),
+                    user.getDisplayName(),
                     user.getPhotoUrl(),
                     -1);
         }
 
         return null;
-
     }
 
 }

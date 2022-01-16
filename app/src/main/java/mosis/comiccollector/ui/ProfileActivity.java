@@ -18,6 +18,7 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import mosis.comiccollector.R;
@@ -50,6 +51,17 @@ public class ProfileActivity extends AppCompatActivity {
 
     private MutableLiveData<ViewUser> liveUser;
 
+    private String createdSort;
+    private List<SortDialog.Sort> createdSorts;
+
+    private String collectedSort;
+    private List<SortDialog.Sort> collectedSorts;
+
+    private String friendsSort;
+    private List<SortDialog.Sort> friendsSorts;
+
+    private Dialog sortDialog;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -62,12 +74,8 @@ public class ProfileActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
         if (intent.hasExtra(USER_DATA_EXTRA)) {
-//            ProfileData pData = (ProfileData) intent.getSerializableExtra(USER_DATA_EXTRA);
-//            ViewUser vData = ViewUser.fromProfileData(pData);
 
             ViewUser vData = (ViewUser) intent.getSerializableExtra(USER_DATA_EXTRA);
-//            this.liveUser = new MutableLiveData<>();
-//            this.liveUser.postValue(vData);
             this.liveUser = viewModel.getUser(
                     vData.userId,
                     PROFILE_PIC_WIDTH,
@@ -145,7 +153,139 @@ public class ProfileActivity extends AppCompatActivity {
             loadFriends(user.userId);
 
         });
+
+        initCreatedSorts();
+        initCollectedSorts();
+        initFriendsSorts();
+
+        findViewById(R.id.sort_crated_comics_btn).setOnClickListener((View v) -> {
+            this.sortDialog = new SortDialog(this, this.createdSorts);
+            this.sortDialog.show();
+        });
+
+        findViewById(R.id.sort_collected_comics_btn).setOnClickListener((View v) -> {
+            this.sortDialog = new SortDialog(this, this.collectedSorts);
+            this.sortDialog.show();
+        });
+
+        findViewById(R.id.sort_friends_comics_btn).setOnClickListener((View v) -> {
+            this.sortDialog = new SortDialog(this, this.friendsSorts);
+            this.sortDialog.show();
+        });
+
     }
+
+    // region init sorts
+
+    private void initCreatedSorts() {
+        this.createdSorts = new ArrayList<>();
+        this.createdSorts.add(new SortDialog.Sort() {
+            @Override
+            public String getDisplayName() {
+                return "By Title descending";
+
+            }
+
+            @Override
+            public void performSort() {
+                createdSort = getDisplayName();
+                viewModel.sortCreatedComics((comic1, comic2) -> {
+                    return comic1.title.compareTo(comic2.title);
+                });
+                createdAdapter.notifyDataSetChanged();
+            }
+        });
+
+        this.createdSorts.add(new SortDialog.Sort() {
+            @Override
+            public String getDisplayName() {
+                return "By Pages ascending";
+            }
+
+            @Override
+            public void performSort() {
+                collectedSort = getDisplayName();
+                viewModel.sortCreatedComics((comic1, comic2) -> {
+                    return comic1.pagesCount - comic2.pagesCount;
+                });
+                createdAdapter.notifyDataSetChanged();
+            }
+        });
+
+    }
+
+    private void initCollectedSorts() {
+        this.collectedSorts = new ArrayList<>();
+        this.collectedSorts.add(new SortDialog.Sort() {
+            @Override
+            public String getDisplayName() {
+                return "By Title ascending";
+            }
+
+            @Override
+            public void performSort() {
+                collectedSort = getDisplayName();
+                viewModel.sortCreatedComics((comic1, comic2) -> {
+                    return comic1.title.compareTo(comic2.title) * -1;
+                });
+                collectedAdapter.notifyDataSetChanged();
+            }
+        });
+
+        this.collectedSorts.add(new SortDialog.Sort() {
+            @Override
+            public String getDisplayName() {
+                return "By Rating ascending";
+            }
+
+            @Override
+            public void performSort() {
+                collectedSort = getDisplayName();
+                viewModel.sortCreatedComics((comic1, comic2) -> {
+                    return comic1.rating - comic2.rating;
+                });
+                collectedAdapter.notifyDataSetChanged();
+            }
+        });
+
+        this.collectedSorts.add(new SortDialog.Sort() {
+            @Override
+            public String getDisplayName() {
+                return "By Pages ascending";
+            }
+
+            @Override
+            public void performSort() {
+                collectedSort = getDisplayName();
+                viewModel.sortCreatedComics((comic1, comic2) -> {
+                    return comic1.pagesCount - comic2.pagesCount;
+                });
+                collectedAdapter.notifyDataSetChanged();
+            }
+        });
+
+    }
+
+    private void initFriendsSorts() {
+        this.friendsSorts = new ArrayList<>();
+        this.friendsSorts.add(new SortDialog.Sort() {
+            @Override
+            public String getDisplayName() {
+                return "By Name ascending";
+            }
+
+            @Override
+            public void performSort() {
+                friendsSort = getDisplayName();
+                viewModel.sortFirends((user1, user2) -> {
+                    return user1.name.compareTo(user2.name);
+                });
+                friendsAdapter.notifyDataSetChanged();
+            }
+        });
+    }
+
+    // endregion
 
     // region load images
 

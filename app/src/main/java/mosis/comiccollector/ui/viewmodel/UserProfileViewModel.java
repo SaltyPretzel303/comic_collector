@@ -9,6 +9,7 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.MutableLiveData;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import mosis.comiccollector.model.comic.Comic;
@@ -24,6 +25,14 @@ import mosis.comiccollector.ui.user.ViewUser;
 import mosis.comiccollector.util.DepProvider;
 
 public class UserProfileViewModel extends AndroidViewModel {
+
+    public interface SortComicCriteria {
+        int compare(ViewComic comic1, ViewComic comic2);
+    }
+
+    public interface SortFriendsCriteria {
+        int compare(ViewUser user1, ViewUser user2);
+    }
 
     private AuthRepository authRepo;
     private ComicRepository comicRepo;
@@ -322,6 +331,22 @@ public class UserProfileViewModel extends AndroidViewModel {
             return liveFriends.getValue().size();
         }
         return 0;
+    }
+
+    // endregion
+
+    // region sorts
+
+    public void sortCreatedComics(SortComicCriteria criteria) {
+        this.liveCreatedComics.getValue().sort(criteria::compare);
+    }
+
+    public void sortCollectedComics(SortComicCriteria criteria) {
+        this.liveCollectedComics.getValue().sort(criteria::compare);
+    }
+
+    public void sortFirends(SortFriendsCriteria criteria) {
+        this.liveFriends.getValue().sort(criteria::compare);
     }
 
     // endregion

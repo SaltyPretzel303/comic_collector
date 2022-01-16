@@ -75,7 +75,7 @@ public class FirebasePeopleRepository implements PeopleRepository {
                 .get()
                 .addOnCompleteListener((docSnapshotTask) -> {
 
-                    if (!docSnapshotTask.isSuccessful()) {
+                    if (!docSnapshotTask.isSuccessful() || !docSnapshotTask.getResult().exists()) {
                         // TODO handle failure
                         locationHandler.handleLocations(null);
                         return;

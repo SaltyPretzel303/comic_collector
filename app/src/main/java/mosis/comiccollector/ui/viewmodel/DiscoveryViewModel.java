@@ -117,7 +117,7 @@ public class DiscoveryViewModel extends AndroidViewModel {
         MutableLiveData<ViewUser> shortUser = new MutableLiveData<>();
 
         this.peopleRepo.getUser(userId, (List<User> people) -> {
-            if (people != null && people.size() > 0) {
+            if (people != null && people.size() > 0 && people.get(0) != null) {
 
                 ViewUser viewUser = this.viewUserMapper.mapToViewModel(people.get(0));
                 viewUser.setLiveProfilePic(getLiveLocalPic(userId));
@@ -141,7 +141,7 @@ public class DiscoveryViewModel extends AndroidViewModel {
             }
         }
 
-        // TODO search trough other people list when i get implemented
+        // TODO search trough other people list when it get implemented
         // not just friends
 
         return null;
@@ -153,7 +153,7 @@ public class DiscoveryViewModel extends AndroidViewModel {
         String myId = authRepo.getCurrentUser().user.getUserId();
 
         this.peopleRepo.getLastLocation(myId, (List<UserLocation> locations) -> {
-            if (locations != null && locations.size() > 0) {
+            if (locations != null && locations.size() > 0 && locations.get(0) != null) {
                 MutableLiveData<Bitmap> livePic = new MutableLiveData<>();
                 livePic.postValue(null); // there is no need to display my pic on map
 

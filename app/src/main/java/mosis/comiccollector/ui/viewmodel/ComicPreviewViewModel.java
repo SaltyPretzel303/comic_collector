@@ -68,7 +68,7 @@ public class ComicPreviewViewModel extends AndroidViewModel {
     public ComicPreviewViewModel(@NonNull Application application) {
         super(application);
 
-        this.currentComic = new ViewComic("", "", "", "", null, 0);
+        this.currentComic = new ViewComic("", "", "", "", null, 0, 0);
         this.pages = new ArrayList<>();
 
         this.authRepo = DepProvider.getAuthRepository();
@@ -223,12 +223,13 @@ public class ComicPreviewViewModel extends AndroidViewModel {
         this.currentComic.location = location;
         this.currentComic.pagesCount = this.getNewCount();
         this.currentComic.authorId = authorId;
+        this.currentComic.rating = 0;
 
         Comic newComic = new Comic(
                 this.currentComic.authorId,
                 this.currentComic.title,
                 this.currentComic.description,
-                0,
+                this.currentComic.rating,
                 this.currentComic.pagesCount,
                 this.currentComic.location);
 

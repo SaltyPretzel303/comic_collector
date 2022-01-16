@@ -84,7 +84,7 @@ public class AuthUserViewModel extends AndroidViewModel {
             this.liveRegUser = new MutableLiveData<>();
         }
 
-        this.authRepo.registerWithUsername(email, password,
+        this.authRepo.registerWithEmail(email, password,
                 (UserAuthResponse response) -> {
                     liveRegUser.postValue(userMapper.mapToViewModel(response));
                 });

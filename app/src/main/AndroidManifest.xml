@@ -34,9 +34,6 @@
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_read"
             android:theme="@style/FullscreenTheme" />
-        <activity
-            android:name=".ui.SortActivity"
-            android:theme="@style/NoTitleDialog" />
         <activity android:name=".ui.ComicListActivity" />
         <activity android:name=".ui.MainPageActivity">
             <intent-filter>

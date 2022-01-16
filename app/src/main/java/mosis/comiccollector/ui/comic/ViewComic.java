@@ -24,6 +24,8 @@ public class ViewComic implements Serializable {
 
     public int pagesCount;
 
+    public int rating;
+
     public ViewComic() {
 
     }
@@ -34,6 +36,7 @@ public class ViewComic implements Serializable {
                      String description,
                      String authorId,
                      Location location,
+                     int rating,
                      int pagesCount) {
 
         this.modelId = modelId;
@@ -44,6 +47,8 @@ public class ViewComic implements Serializable {
 
         this.location = location;
         this.pagesCount = pagesCount;
+
+        this.rating = rating;
     }
 
 }

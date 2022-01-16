@@ -13,6 +13,7 @@ public class ComicModelMapper implements DataMapper<Comic, ViewComic> {
                 input.getDescription(),
                 input.getAuthorId(),
                 input.getLocation(),
+                input.getRating(),
                 input.getPagesCount());
     }
 }
