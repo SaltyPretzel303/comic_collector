@@ -34,17 +34,17 @@ public class LoginActivity extends AppCompatActivity {
 
     private TextView loginStatusTv;
 
+    private TextView usernameTv;
     private EditText usernameEt;
+    private EditText emailEt;
     private EditText passwordEt;
 
+    private TextView emailTv;
     private TextView repPasswordTv;
     private EditText repPasswordEt;
 
-    private Button posLoginButton;
-    private Button negLoginButton;
-
     private Button registerBtn;
-
+    private Button loginButton;
     private SignInButton googleLoginBtn;
 
     private ActivityResultLauncher<Intent> googleLoginActivity;
@@ -61,7 +61,6 @@ public class LoginActivity extends AppCompatActivity {
         this.initGoogleLoginActivity();
         this.findViews();
         this.initButtons();
-
     }
 
     private void initGoogleLoginActivity() {
@@ -126,26 +125,30 @@ public class LoginActivity extends AppCompatActivity {
 
     private void findViews() {
 
-        this.loginStatusTv = (TextView) this.findViewById(R.id.login_status_field);
+        this.loginStatusTv = this.findViewById(R.id.login_status_field);
 
-        this.usernameEt = (EditText) this.findViewById(R.id.login_username_et);
-        this.passwordEt = (EditText) this.findViewById(R.id.login_password_et);
+        this.emailTv = this.findViewById(R.id.login_email_tv);
+        this.emailEt = this.findViewById(R.id.login_email_et);
 
-        this.repPasswordTv = (TextView) this.findViewById(R.id.login_rep_password_tw);
+        this.usernameTv = this.findViewById(R.id.username_tv);
+        this.usernameTv.setVisibility(View.GONE);
+        this.usernameEt = this.findViewById(R.id.login_username_et);
+        this.usernameEt.setVisibility(View.GONE);
+
+        this.passwordEt = this.findViewById(R.id.login_password_et);
+
+        this.repPasswordTv = this.findViewById(R.id.login_rep_password_tw);
         this.repPasswordTv.setVisibility(View.GONE);
-        this.repPasswordEt = (EditText) this.findViewById(R.id.login_rep_password_et);
+        this.repPasswordEt = this.findViewById(R.id.login_rep_password_et);
         this.repPasswordEt.setVisibility(View.GONE);
 
-        this.posLoginButton = (Button) this.findViewById(R.id.login_pos_btn);
-
-        this.registerBtn = (Button) this.findViewById(R.id.register_btn);
-
+        this.loginButton = this.findViewById(R.id.login_pos_btn);
+        this.registerBtn = this.findViewById(R.id.register_btn);
         this.googleLoginBtn = this.findViewById(R.id.google_sign_in_btn);
-
     }
 
     private void initButtons() {
-        this.posLoginButton.setOnClickListener(this::loginButtonClick);
+        this.loginButton.setOnClickListener(this::loginButtonClick);
 
         this.registerBtn.setOnClickListener(this::registerButtonClick);
 
@@ -163,6 +166,10 @@ public class LoginActivity extends AppCompatActivity {
 
     private void loginButtonClick(View v) {
         if (repPasswordEt.getVisibility() == View.VISIBLE) {
+
+            usernameTv.setVisibility(View.GONE);
+            usernameEt.setVisibility(View.GONE);
+
             repPasswordTv.setVisibility(View.GONE);
             repPasswordEt.setVisibility(View.GONE);
 
@@ -172,18 +179,18 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        final String username = usernameEt.getText().toString();
+        final String email = emailEt.getText().toString();
         final String password = passwordEt.getText().toString();
 
         // TODO add additional rules with text watchers and such ...
-        if (username.isEmpty() || password.isEmpty()) {
+        if (email.isEmpty() || password.isEmpty()) {
             showMessage("Username and password are required ... ");
 
             return;
         }
 
 
-        this.userViewModel.loginWithEmail(username, password)
+        this.userViewModel.loginWithEmail(email, password)
                 .observe(this, (ViewUser response) -> {
 
                     if (response == null || response.errorMessage != null) {
@@ -203,9 +210,17 @@ public class LoginActivity extends AppCompatActivity {
     private void registerButtonClick(View v) {
         if (repPasswordEt.getVisibility() != View.VISIBLE) {
 
+            // should always be visible
+//            emailTv.setVisibility(View.VISIBLE);
+//            emailEt.setVisibility(View.VISIBLE);
+
+            usernameTv.setVisibility(View.VISIBLE);
+            usernameEt.setVisibility(View.VISIBLE);
+
             repPasswordTv.setVisibility(View.VISIBLE);
             repPasswordEt.setVisibility(View.VISIBLE);
 
+            emailEt.setText("");
             usernameEt.setText("");
             passwordEt.setText("");
             repPasswordEt.setText("");
@@ -213,11 +228,13 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
+        final String email = emailEt.getText().toString();
         final String username = usernameEt.getText().toString();
         final String password = passwordEt.getText().toString();
         final String repPassword = repPasswordEt.getText().toString();
 
         if (username.isEmpty()
+                || email.isEmpty()
                 || password.isEmpty()
                 || !password.equals(repPassword)) {
 
@@ -226,7 +243,7 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        this.userViewModel.registerWithEmail(username, password)
+        this.userViewModel.registerWithEmail(email, username, password)
                 .observe(this, (ViewUser response) -> {
 
                     if (response == null || response.errorMessage != null) {
@@ -239,10 +256,11 @@ public class LoginActivity extends AppCompatActivity {
                     showMessage("YOU DID IT ... ");
                     Log.e("register result", "You are registered ... ");
 
+                    usernameTv.setVisibility(View.GONE);
+                    usernameEt.setVisibility(View.GONE);
+
                     repPasswordTv.setVisibility(View.GONE);
                     repPasswordEt.setVisibility(View.GONE);
-
-                    repPasswordEt.setText("");
 
                     return;
                 });

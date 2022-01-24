@@ -109,7 +109,7 @@ public class ProfileActivity extends AppCompatActivity {
         this.liveUser.observe(this, (ViewUser user) -> {
 
             ((TextView) this.findViewById(R.id.profile_username_tv))
-                    .setText(user.email);
+                    .setText(user.name);
             ((ProgressBar) this.findViewById(R.id.user_rating_pb))
                     .setProgress(user.rating);
             ((TextView) this.findViewById(R.id.user_rating_tv))
@@ -310,7 +310,7 @@ public class ProfileActivity extends AppCompatActivity {
 
                             if (comic != null) {
                                 return new PreviewItemData(
-                                        comic.modelId,
+                                        comic.comicId,
                                         comic.title,
                                         comic.description,
                                         comic.liveTitlePage);
@@ -362,7 +362,7 @@ public class ProfileActivity extends AppCompatActivity {
 
                             if (comic != null) {
                                 return new PreviewItemData(
-                                        comic.modelId,
+                                        comic.comicId,
                                         comic.title,
                                         comic.description,
                                         comic.liveTitlePage);

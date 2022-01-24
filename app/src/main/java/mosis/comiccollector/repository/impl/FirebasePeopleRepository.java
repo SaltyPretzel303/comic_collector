@@ -172,21 +172,24 @@ public class FirebasePeopleRepository implements PeopleRepository {
                 .collection(USER_INFO_PATH)
                 .document(newUser.getUserId())
                 .set(newUser)
-                .addOnCompleteListener(
-                        (task) -> {
-                            if (task.isSuccessful()) {
-                                Log.e("peopleRepo", "New doc added for new user ... ");
-                                List<User> retList = new ArrayList<User>();
-                                retList.add(newUser);
+                .addOnCompleteListener((task) -> {
+                    if (!task.isSuccessful()) {
+                        Log.e("peopleRepo", "Failed with firestore ... "
+                                + task.getException().getMessage());
 
-                                doneHandler.handlePeople(retList);
-                            } else {
-                                Log.e("peopleRepo", "Failed with firestore ... "
-                                        + task.getException().getMessage());
+                        doneHandler.handlePeople(null);
 
-                                doneHandler.handlePeople(null);
-                            }
-                        });
+                        return;
+                    }
+
+                    Log.e("peopleRepo", "New doc added for new user ... ");
+                    List<User> retList = new ArrayList<User>();
+                    retList.add(newUser);
+
+                    doneHandler.handlePeople(retList);
+
+                    return;
+                });
 
     }
 

@@ -22,8 +22,7 @@ public class AuthUserMapper implements DataMapper<UserAuthResponse, ViewUser> {
                     input.user.getEmail(),
                     input.user.getName(),
                     input.user.getRating(),
-                    errorMessage
-            );
+                    errorMessage);
         } else {
             return null;
         }

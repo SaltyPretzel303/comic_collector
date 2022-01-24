@@ -23,6 +23,10 @@ public interface ComicRepository {
         void handleSingleUpload(String docId, long uploadSize);
     }
 
+    interface DoneHandler {
+        void handle(String error);
+    }
+
     void getCreatedComics(String userId, ComicsHandler handler);
 
     void getCollectedComics(String userId, ComicsHandler handler);
@@ -39,5 +43,11 @@ public interface ComicRepository {
     void createComic(Comic comicInfo,
                      List<IndexedUriPage> pagesUris,
                      @NotNull UploadHandler handler);
+
+    void getUnknownComics(String userId, ComicsHandler handler);
+
+    void collectComic(String userId, String comicId, DoneHandler handler);
+
+    void getComic(String comicId, ComicsHandler handler);
 
 }

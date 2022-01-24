@@ -23,7 +23,7 @@ public class LocalLocationReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
 
-        Log.e("bcastRcver", "Local location rcvr got newLocation ... ");
+//        Log.e("bcastRcver", "Local location rcvr got newLocation ... ");
 
         Location newLocation = (Location) intent
                 .getExtras()
@@ -33,10 +33,10 @@ public class LocalLocationReceiver extends BroadcastReceiver {
             Log.e("bcastRcver", "Location is null ... ");
             return;
         }
-        Log.e("bCast receiver", "rcvdLocation:"
-                + " lat: " + newLocation.getLatitude()
-                + " - "
-                + "long: " + newLocation.getLongitude());
+//        Log.e("bCast receiver", "rcvdLocation:"
+//                + " lat: " + newLocation.getLatitude()
+//                + " - "
+//                + "long: " + newLocation.getLongitude());
 
         UserLocation userLocation = new UserLocation(
                 this.myId,

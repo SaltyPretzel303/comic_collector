@@ -1,5 +1,7 @@
 package mosis.comiccollector.model.user;
 
+import mosis.comiccollector.model.Location;
+
 public class UserLocation {
 
     public static final String USER_ID_FIELD = "userId";
@@ -57,4 +59,9 @@ public class UserLocation {
     public String getUserId() {
         return userId;
     }
+
+    public Location getLocation() {
+        return new Location(latitude, longitude);
+    }
+
 }

@@ -5,10 +5,12 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FirebaseStorage;
@@ -18,6 +20,7 @@ import com.nostra13.universalimageloader.core.assist.ImageSize;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.List;
 
 import mosis.comiccollector.model.UserCollectedComicsList;
@@ -221,6 +224,90 @@ public class FirebaseComicRepository implements ComicRepository {
 
                             });
 
+                });
+    }
+
+    @Override
+    public void getUnknownComics(String userId, ComicsHandler handler) {
+        FirebaseFirestore.getInstance()
+                .collection(USER_COLLECTED_COMICS)
+                .document(userId)
+                .get()
+                .addOnCompleteListener((@NonNull Task<DocumentSnapshot> task) -> {
+                    if (!task.isSuccessful() || !task.getResult().exists()) {
+                        Log.e("comicsRepo", "Failed to load collected comics for: " + userId);
+                        handler.handleComics(null);
+                        return;
+                    }
+
+                    UserCollectedComicsList collectedList = task
+                            .getResult()
+                            .toObject(UserCollectedComicsList.class);
+
+                    FirebaseFirestore.getInstance()
+                            .collection(COMICS_INFO_PATH)
+                            .whereNotIn(Comic.COMIC_ID_FIELD, collectedList.comicsIds)
+                            .get()
+                            .addOnCompleteListener((@NonNull Task<QuerySnapshot> queryTask) -> {
+
+                                if (!queryTask.isSuccessful()) {
+                                    Log.e("comicRepo", "Failed to query unknown comics ... ");
+                                    handler.handleComics(null);
+                                    return;
+                                }
+
+                                List<Comic> comics = queryTask
+                                        .getResult()
+                                        .toObjects(Comic.class);
+                                comics.removeIf((comic) -> {
+                                    return comic.getAuthorId().equals(userId);
+                                });
+
+                                handler.handleComics(comics);
+
+                                return;
+                            });
+
+
+                });
+    }
+
+    @Override
+    public void collectComic(String userId, String comicId, DoneHandler handler) {
+        FirebaseFirestore.getInstance()
+                .collection(USER_COLLECTED_COMICS)
+                .document(userId)
+                .update(UserCollectedComicsList.COLLECTED_LIST_FIELD, FieldValue.arrayUnion(comicId))
+                .addOnCompleteListener((@NonNull Task<Void> task) -> {
+                    if (!task.isSuccessful()) {
+                        Log.e("comicRepo", "Failed to update collected comics list ... ");
+                        handler.handle(task.getException().getMessage());
+                        return;
+                    }
+
+                    handler.handle(null);
+
+                    return;
+                });
+    }
+
+    @Override
+    public void getComic(String comicId, ComicsHandler handler) {
+        FirebaseFirestore.getInstance()
+                .collection(COMICS_INFO_PATH)
+                .document(comicId)
+                .get().
+                addOnCompleteListener((@NonNull Task<DocumentSnapshot> task) -> {
+                    if (!task.isSuccessful()) {
+                        Log.e("comicRepo", "Failed to get comic: " + comicId);
+                        handler.handleComics(null);
+                        return;
+                    }
+
+                    Comic comic = task.getResult().toObject(Comic.class);
+                    handler.handleComics(Arrays.asList(comic));
+
+                    return;
                 });
     }
 }

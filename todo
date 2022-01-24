@@ -1,15 +1,17 @@
 # 1. firebase registracja - googleAuth
 
-2. nalazenje prijatelja - bluetooth
+? 2. nalazenje prijatelja - bluetooth
 
 # 3. prati kretanje korisnika na mapi
-    - prijatelj prikazan slikom sa profila
+    ? - prijatelj prikazan slikom sa profila
     - notifikacije za prijatelje
     # implementirati servisom
 
-4. postavljanje/skupljanje stripova/stranica po mapi
+4. stripovi na mapi
+    # postavljanje
+    # skupljanje
 
-5. prikaz inf. korisnika koji su u blizini
+# 5. prikaz inf. korisnika koji su u blizini
 
 6. pretrazivanje stripova/korisnika
     - po kriterijumima
@@ -19,13 +21,13 @@ uloge mape
     - discover - 
             - people 
                 # - live prikaz ljudi u okolini
-                - klik na osobe za prikaz info. i friendRequest
-                - search za pretragu svih korisnika i lokaciju na mapi
+                # - klik na osobe za prikaz info. i friendRequest
+                - search za pretragu svih korisnika
 
             - comics
-                - prikaz comics-a u blizini
-                - klik za prikaz info. + prijatelji koji poseduju comic
-                - search za pretragu comic-a i lokacija na mapi
+                # prikaz comics-a u blizini
+                # klik za prikaz info.
+                - search za pretragu comic-a
 
     - edit
-            - klik na mapu za postavljanje stranice/strip-a
+            # - klik na mapu za postavljanje stripa

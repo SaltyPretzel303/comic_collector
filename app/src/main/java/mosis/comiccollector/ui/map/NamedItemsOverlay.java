@@ -11,7 +11,12 @@ public class NamedItemsOverlay<ItemType extends OverlayItem>
         extends ItemizedIconOverlay<ItemType> {
 
     public enum Names {
-        MyLocationOverlay, FriendsOverlay, PeopleOverlay, ComicsOverlay
+        MyLocationOverlay,
+        FriendsOverlay,
+        PeopleOverlay,
+        CreatedComicsOverlay,
+        CollectedComicsOverlay,
+        UnknownComicsOverlay
     }
 
     public Names name;
@@ -19,13 +24,11 @@ public class NamedItemsOverlay<ItemType extends OverlayItem>
     public NamedItemsOverlay(
             Names name,
             Context pContext,
-            List pList,
-            OnItemGestureListener pOnItemGestureListener) {
+            List<ItemType> pList,
+            OnItemGestureListener<ItemType> pOnItemGestureListener) {
 
         super(pContext, pList, pOnItemGestureListener);
 
         this.name = name;
-
-
     }
 }

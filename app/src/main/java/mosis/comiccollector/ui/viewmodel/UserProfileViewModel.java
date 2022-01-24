@@ -9,7 +9,6 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.MutableLiveData;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 import mosis.comiccollector.model.comic.Comic;
@@ -18,8 +17,6 @@ import mosis.comiccollector.repository.AuthRepository;
 import mosis.comiccollector.repository.ComicRepository;
 import mosis.comiccollector.repository.DataMapper;
 import mosis.comiccollector.repository.PeopleRepository;
-import mosis.comiccollector.ui.PreviewItemData;
-import mosis.comiccollector.ui.PreviewItemProvider;
 import mosis.comiccollector.ui.comic.ViewComic;
 import mosis.comiccollector.ui.user.ViewUser;
 import mosis.comiccollector.util.DepProvider;
@@ -151,7 +148,7 @@ public class UserProfileViewModel extends AndroidViewModel {
     public ViewComic getCreatedComic(String id) {
         if (liveCreatedComics != null && liveCreatedComics.getValue() != null) {
             for (ViewComic comic : liveCreatedComics.getValue()) {
-                if (comic.modelId.equals(id)) {
+                if (comic.comicId.equals(id)) {
                     return comic;
                 }
             }
@@ -166,7 +163,7 @@ public class UserProfileViewModel extends AndroidViewModel {
 
             ViewComic comic = liveCreatedComics.getValue().get(index);
             if (comic.liveTitlePage == null) {
-                comic.liveTitlePage = loadTitlePage(comic.modelId, width, height);
+                comic.liveTitlePage = loadTitlePage(comic.comicId, width, height);
             }
 
             return comic;
@@ -234,7 +231,7 @@ public class UserProfileViewModel extends AndroidViewModel {
     public ViewComic getCollectedComic(String id) {
         if (liveCollectedComics != null && liveCollectedComics.getValue() != null) {
             for (ViewComic comic : liveCollectedComics.getValue()) {
-                if (comic.modelId.equals(id)) {
+                if (comic.comicId.equals(id)) {
                     return comic;
                 }
             }
@@ -251,7 +248,7 @@ public class UserProfileViewModel extends AndroidViewModel {
             ViewComic comic = liveCollectedComics.getValue().get(index);
             if (comic.liveTitlePage == null) {
                 comic.liveTitlePage = this.loadTitlePage(
-                        comic.modelId,
+                        comic.comicId,
                         width,
                         height);
             }

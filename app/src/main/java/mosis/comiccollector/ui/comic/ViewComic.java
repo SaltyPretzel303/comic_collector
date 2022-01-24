@@ -5,19 +5,18 @@ import android.graphics.Bitmap;
 import androidx.lifecycle.MutableLiveData;
 
 import java.io.Serializable;
-import java.util.List;
 
-import kotlin.jvm.Transient;
 import mosis.comiccollector.model.Location;
+import mosis.comiccollector.ui.user.ViewUser;
 
 public class ViewComic implements Serializable {
 
-    public String modelId;
+    public String comicId;
 
     public String title;
     public String description;
-    public String authorId;
 
+    public transient MutableLiveData<ViewUser> liveAuthor;
     public transient MutableLiveData<Bitmap> liveTitlePage;
 
     public Location location;
@@ -30,20 +29,17 @@ public class ViewComic implements Serializable {
 
     }
 
-
     public ViewComic(String modelId,
                      String title,
                      String description,
-                     String authorId,
                      Location location,
                      int rating,
                      int pagesCount) {
 
-        this.modelId = modelId;
+        this.comicId = modelId;
 
         this.title = title;
         this.description = description;
-        this.authorId = authorId;
 
         this.location = location;
         this.pagesCount = pagesCount;

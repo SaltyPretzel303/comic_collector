@@ -36,7 +36,9 @@ public class ShortProfileDialog extends Dialog {
 
     private Button openProfileButton;
 
-    public ShortProfileDialog(@NonNull Context context, LiveData<ViewUser> liveData) {
+    public ShortProfileDialog(
+            @NonNull Context context,
+            LiveData<ViewUser> liveData) {
         super(context);
 
         this.context = context;

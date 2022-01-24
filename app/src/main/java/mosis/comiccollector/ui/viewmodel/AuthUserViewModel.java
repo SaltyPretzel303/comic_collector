@@ -79,12 +79,12 @@ public class AuthUserViewModel extends AndroidViewModel {
         return this.liveUser;
     }
 
-    public LiveData<ViewUser> registerWithEmail(String email, String password) {
+    public LiveData<ViewUser> registerWithEmail(String email, String username, String password) {
         if (this.liveRegUser == null) {
             this.liveRegUser = new MutableLiveData<>();
         }
 
-        this.authRepo.registerWithEmail(email, password,
+        this.authRepo.registerWithEmail(email, username, password,
                 (UserAuthResponse response) -> {
                     liveRegUser.postValue(userMapper.mapToViewModel(response));
                 });
@@ -106,6 +106,5 @@ public class AuthUserViewModel extends AndroidViewModel {
 
         return this.liveUser;
     }
-
 
 }

@@ -68,7 +68,7 @@ public class ComicPreviewViewModel extends AndroidViewModel {
     public ComicPreviewViewModel(@NonNull Application application) {
         super(application);
 
-        this.currentComic = new ViewComic("", "", "", "", null, 0, 0);
+        this.currentComic = new ViewComic("", "", "", null, 0, 0);
         this.pages = new ArrayList<>();
 
         this.authRepo = DepProvider.getAuthRepository();
@@ -122,7 +122,7 @@ public class ComicPreviewViewModel extends AndroidViewModel {
             targetPage = new IndexedBitmapPage(pageIndex, livePage);
             this.pages.add(targetPage);
 
-            comicsRepo.loadPage(currentComic.modelId, width, height, pageIndex,
+            comicsRepo.loadPage(currentComic.comicId, width, height, pageIndex,
                     (List<Bitmap> newPages) -> {
                         if (newPages == null || newPages.size() == 0) {
                             Log.e("updateViewModel", "Comic repo returned null as page ... ");
@@ -195,7 +195,7 @@ public class ComicPreviewViewModel extends AndroidViewModel {
         MutableLiveData<Long> liveResult = new MutableLiveData<>();
 
         comicsRepo.addPages(
-                currentComic.modelId,
+                currentComic.comicId,
                 currentComic.pagesCount,
                 this.getNewPages(),
                 (String docId, long uploadValue) -> {
@@ -222,11 +222,11 @@ public class ComicPreviewViewModel extends AndroidViewModel {
         this.currentComic.description = description;
         this.currentComic.location = location;
         this.currentComic.pagesCount = this.getNewCount();
-        this.currentComic.authorId = authorId;
+//        this.currentComic.authorId = authorId;
         this.currentComic.rating = 0;
 
         Comic newComic = new Comic(
-                this.currentComic.authorId,
+                authorId,
                 this.currentComic.title,
                 this.currentComic.description,
                 this.currentComic.rating,
@@ -237,7 +237,7 @@ public class ComicPreviewViewModel extends AndroidViewModel {
                 newComic,
                 this.getNewPages(),
                 (String docId, long uploadSize) -> {
-                    this.currentComic.modelId = docId;
+                    this.currentComic.comicId = docId;
                     // this will be called for each page that gets updated
                     liveUri.postValue(new UploadProgress(docId, uploadSize));
                 });

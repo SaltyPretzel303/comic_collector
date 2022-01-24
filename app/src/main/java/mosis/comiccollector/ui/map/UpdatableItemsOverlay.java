@@ -17,9 +17,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
+import mosis.comiccollector.model.Location;
 import mosis.comiccollector.model.user.UserLocation;
 
-public class MovingItemsOverlay {
+public class UpdatableItemsOverlay {
 
     private Context context;
 
@@ -30,7 +31,9 @@ public class MovingItemsOverlay {
     private List<LocationWithPicture> locations;
     private ItemizedIconOverlay.OnItemGestureListener<OverlayItemWithId> clickHandler;
 
-    public MovingItemsOverlay(
+    private boolean enabled;
+
+    public UpdatableItemsOverlay(
             Context context,
             NamedItemsOverlay.Names overlayName,
             MapView map,
@@ -48,18 +51,31 @@ public class MovingItemsOverlay {
 
         this.clickHandler = clickHandler;
 
+        this.enabled = true;
+
         this.generateOverlay();
+    }
+
+    public void enable() {
+        this.enabled = true;
+        generateOverlay();
+    }
+
+    public void disable() {
+        this.enabled = false;
+        this.removeOverlay();
+        this.map.postInvalidate();
     }
 
     public void updateItem(UserLocation newItem) {
 
-        Predicate<LocationWithPicture> filter = (location) -> {
-            return location.getUserId().equals(newItem.getUserId());
+        Predicate<LocationWithPicture> filterItem = (location) -> {
+            return location.getId().equals(newItem.getUserId());
         };
 
-        if (this.locations.stream().anyMatch(filter)) {
+        if (this.locations.stream().anyMatch(filterItem)) {
             this.locations.stream()
-                    .filter(filter)
+                    .filter(filterItem)
                     .findFirst()
                     .get()
                     .updateLocation(newItem);
@@ -72,28 +88,39 @@ public class MovingItemsOverlay {
             fakeLivePic.postValue(null);
             newLocation.setLivePic(fakeLivePic);
 
-            this.addItem(new LocationWithPicture(newItem));
+            this.addItem(newLocation);
         }
 
-
-        this.generateOverlay();
+        if (enabled) {
+            this.generateOverlay();
+        }
     }
 
     public void setItems(List<LocationWithPicture> newLocations) {
         this.locations = newLocations;
-        this.generateOverlay();
+
+        if (enabled) {
+            this.generateOverlay();
+        }
     }
 
     public void addItem(LocationWithPicture newLocation) {
         this.locations.add(newLocation);
-        this.generateOverlay();
+
+        if (enabled) {
+            this.generateOverlay();
+        }
+    }
+
+    public int getItemsCount(){
+        return this.locations.size();
     }
 
     private void generateOverlay() {
 
         for (LocationWithPicture item : this.locations) {
             if (!item.getLivePic().hasObservers()) {
-                Log.e("Moving overlay", "Adding pic observer ... ");
+                Log.e("updatableOverlay", "Adding pic observer ... ");
                 item.getLivePic().observe((LifecycleOwner) context, (Bitmap uri) -> {
                     if (uri == null) {
                         // if uri is null there is nothing to be updated
@@ -108,7 +135,7 @@ public class MovingItemsOverlay {
         List<OverlayItemWithId> overlayItems = new ArrayList<>();
         for (LocationWithPicture item : this.locations) {
             OverlayItemWithId newItem = new OverlayItemWithId(
-                    item.getUserId(),
+                    item.getId(),
                     "",
                     "",
                     getPoint(item.getLocation()));
@@ -118,7 +145,7 @@ public class MovingItemsOverlay {
                 // newItem.setMarker(this.icon);
             } else {
                 // TODO create marker using profile pic ...
-                Log.e("MovingOverlay", "This item has pic ... ");
+//                Log.e("MovingOverlay", "This item has pic ... ");
             }
 
             // TODO remove this after upper if gets implemented
@@ -127,9 +154,7 @@ public class MovingItemsOverlay {
             overlayItems.add(newItem);
         }
 
-        Log.e("MovingOverlay", "Overlay items: " + overlayItems.size());
-
-        Overlay newOverlay = new NamedItemsOverlay<OverlayItemWithId>(
+        Overlay newOverlay = new NamedItemsOverlay<>(
                 this.overlayName,
                 this.context,
                 overlayItems,
@@ -148,8 +173,8 @@ public class MovingItemsOverlay {
         }
     }
 
-    private GeoPoint getPoint(UserLocation loc) {
-        return new GeoPoint(loc.getLatitude(), loc.getLongitude());
+    private GeoPoint getPoint(Location loc) {
+        return new GeoPoint(loc.latitude, loc.longitude);
     }
 
     private boolean isThisOverlay(Overlay overlay) {
@@ -168,6 +193,13 @@ public class MovingItemsOverlay {
             }
 
             return overlay;
+        });
+    }
+
+    private void removeOverlay() {
+        this.map.getOverlays().removeIf((overlay) -> {
+            return (overlay instanceof NamedItemsOverlay
+                    && ((NamedItemsOverlay) overlay).name == this.overlayName);
         });
     }
 

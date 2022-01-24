@@ -57,8 +57,6 @@ public class LocationService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
-        Log.e("locService", "Hello from service, you are in onStartCommand ... ");
-
         Notification notif = this.buildNotification();
         startForeground(FG_SERVICE_ID, notif);
 
@@ -72,6 +70,7 @@ public class LocationService extends Service {
         // TODO read this values from intent passed from map activity
         LocationRequest lReq = LocationRequest.create();
         lReq.setInterval(1000);
+        lReq.setSmallestDisplacement(2);
         lReq.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
         this.locationListener = new LocationHandler(this);
