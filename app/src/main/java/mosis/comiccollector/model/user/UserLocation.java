@@ -11,8 +11,6 @@ public class UserLocation {
     private double latitude;
     private double longitude;
 
-    private String lastUpdate;
-
     public UserLocation() {
         // required for serialization
     }
@@ -20,14 +18,12 @@ public class UserLocation {
 
     public UserLocation(String userId,
                         double latitude,
-                        double longitude,
-                        String lastUpdate) {
+                        double longitude) {
 
         this.userId = userId;
 
         this.latitude = latitude;
         this.longitude = longitude;
-        this.lastUpdate = lastUpdate;
     }
 
     // get set ...
@@ -46,14 +42,6 @@ public class UserLocation {
 
     public void setLongitude(double longitude) {
         this.longitude = longitude;
-    }
-
-    public String getLastUpdate() {
-        return lastUpdate;
-    }
-
-    public void setLastUpdate(String lastUpdate) {
-        this.lastUpdate = lastUpdate;
     }
 
     public String getUserId() {

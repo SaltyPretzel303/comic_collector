@@ -67,7 +67,11 @@ public class UpdatableItemsOverlay {
         this.map.postInvalidate();
     }
 
-    public void updateItem(UserLocation newItem) {
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void updateItem(UserLocation newItem, boolean follow) {
 
         Predicate<LocationWithPicture> filterItem = (location) -> {
             return location.getId().equals(newItem.getUserId());
@@ -93,6 +97,12 @@ public class UpdatableItemsOverlay {
 
         if (enabled) {
             this.generateOverlay();
+            if (follow) {
+                this.map.getController().animateTo(
+                        new GeoPoint(
+                                newItem.getLatitude(),
+                                newItem.getLongitude()));
+            }
         }
     }
 
@@ -112,7 +122,7 @@ public class UpdatableItemsOverlay {
         }
     }
 
-    public int getItemsCount(){
+    public int getItemsCount() {
         return this.locations.size();
     }
 
@@ -120,7 +130,6 @@ public class UpdatableItemsOverlay {
 
         for (LocationWithPicture item : this.locations) {
             if (!item.getLivePic().hasObservers()) {
-                Log.e("updatableOverlay", "Adding pic observer ... ");
                 item.getLivePic().observe((LifecycleOwner) context, (Bitmap uri) -> {
                     if (uri == null) {
                         // if uri is null there is nothing to be updated

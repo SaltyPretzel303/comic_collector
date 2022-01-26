@@ -69,6 +69,9 @@ dependencies {
     // image loader
     implementation 'com.nostra13.universalimageloader:universal-image-loader:1.9.5'
 
+    // support for querying firestore items by location
+    implementation 'com.github.imperiumlabs:GeoFirestore-Android:v1.5.0'
+
 }
 
 // for firebase

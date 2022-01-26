@@ -29,7 +29,13 @@ public interface ComicRepository {
 
     void getCreatedComics(String userId, ComicsHandler handler);
 
+    void getCreatedComics(String userId, double lat, double lon, double rad,
+                          ComicsHandler handler);
+
     void getCollectedComics(String userId, ComicsHandler handler);
+
+    void getCollectedComics(String userId, double lat, double lon, double rad,
+                            ComicsHandler handler);
 
     void loadTitlePage(String comicId, int width, int height, PagesHandler handler);
 
@@ -45,6 +51,9 @@ public interface ComicRepository {
                      @NotNull UploadHandler handler);
 
     void getUnknownComics(String userId, ComicsHandler handler);
+
+    void getUnknownComics(String userId, double lat, double lon, double rad,
+                          ComicsHandler handler);
 
     void collectComic(String userId, String comicId, DoneHandler handler);
 

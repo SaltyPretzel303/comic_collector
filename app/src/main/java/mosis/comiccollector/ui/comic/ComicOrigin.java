@@ -1,4 +1,4 @@
-package mosis.comiccollector.ui;
+package mosis.comiccollector.ui.comic;
 
 public enum ComicOrigin {
     Created,

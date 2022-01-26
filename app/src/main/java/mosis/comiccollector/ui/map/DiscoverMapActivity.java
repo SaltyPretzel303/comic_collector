@@ -1,4 +1,4 @@
-package mosis.comiccollector.ui;
+package mosis.comiccollector.ui.map;
 
 import android.Manifest;
 import android.app.Dialog;
@@ -25,6 +25,10 @@ import androidx.preference.PreferenceManager;
 
 import org.osmdroid.api.IMapController;
 import org.osmdroid.config.Configuration;
+import org.osmdroid.events.DelayedMapListener;
+import org.osmdroid.events.MapListener;
+import org.osmdroid.events.ScrollEvent;
+import org.osmdroid.events.ZoomEvent;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
@@ -32,6 +36,7 @@ import org.osmdroid.views.overlay.ItemizedIconOverlay.OnItemGestureListener;
 import org.osmdroid.views.overlay.mylocation.IMyLocationConsumer;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -39,13 +44,14 @@ import mosis.comiccollector.location.LocalLocationReceiver;
 import mosis.comiccollector.location.LocationConsumer;
 import mosis.comiccollector.location.LocationService;
 import mosis.comiccollector.R;
+import mosis.comiccollector.model.Location;
 import mosis.comiccollector.model.user.UserLocation;
+import mosis.comiccollector.ui.PermissionRequester;
+import mosis.comiccollector.ui.comic.ShortComicDialog;
+import mosis.comiccollector.ui.user.ShortProfileDialog;
+import mosis.comiccollector.ui.comic.ComicOrigin;
 import mosis.comiccollector.ui.comic.ViewComic;
-import mosis.comiccollector.ui.map.UpdatableItemsOverlay;
-import mosis.comiccollector.ui.map.NamedItemsOverlay;
-import mosis.comiccollector.ui.map.OverlayItemWithId;
 import mosis.comiccollector.ui.viewmodel.DiscoveryViewModel;
-import mosis.comiccollector.ui.map.LocationWithPicture;
 import mosis.comiccollector.util.Toaster;
 
 public class DiscoverMapActivity extends AppCompatActivity implements LocationConsumer {
@@ -68,8 +74,11 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
     private MapView map;
     private IMapController mapController;
 
-    private Drawable knownComicMarker;
+    private Drawable createdComicMarker;
+    private Drawable collectedComicMarker;
     private Drawable unknownComicMarker;
+
+    private Drawable myMarker;
     private Drawable knownPersonMarker;
     private Drawable unknownPersonMarker;
 
@@ -83,7 +92,10 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
     private BroadcastReceiver myLocationReceiver;
     private IMyLocationConsumer myLocationConsumer;
 
-    private UpdatableItemsOverlay movingFriendsOverlay;
+    private MapFiltersState filtersState;
+
+    private UpdatableItemsOverlay friendsOverlay;
+    private UpdatableItemsOverlay unknownPeopleOverlay;
     private UpdatableItemsOverlay myLocationOverlay;
 
     private UpdatableItemsOverlay createdComicsOverlay;
@@ -106,22 +118,27 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
 
         this.viewModel = new ViewModelProvider(this).get(DiscoveryViewModel.class);
 
-        this.setupMapView();
-        this.initOverlays();
-        this.setupCheckBoxes();
 
+        this.loadDrawables();
+
+        this.setupMapView();
+        this.setupFilters();
 
         this.loadMyself();
         this.loadFriends();
+        this.loadUnknownPeople();
         this.loadCreatedComics();
         this.loadCollectedComics();
         this.loadUnknownComics();
-
-//        this.setupFollowButton();
-
     }
 
-    private void setupCheckBoxes() {
+    private void setupFilters() {
+
+        if (filtersState == null) {
+            filtersState = MapFiltersState.read(this);
+        }
+
+        // filter state is loaded/saved in onResume/onPause
 
         followMeCb = findViewById(R.id.follow_me_cb);
         followMeCb.setChecked(isFollowingEnabled());
@@ -133,36 +150,127 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
             }
         });
 
-        showFriendsCb = findViewById(R.id.show_friends_cb);
-        showFriendsCb.setChecked(isShowingFriendsEnabled());
-        showFriendsCb.setOnCheckedChangeListener((CompoundButton compoundButton, boolean checked) -> {
-            // TODO update next lines once showing people (other than friends) gets implemented
-            if (checked) {
-                movingFriendsOverlay.enable();
-                markToShowFriends();
-            } else {
-                movingFriendsOverlay.disable();
-                markToNotShowFriends();
-            }
+        findViewById(R.id.map_people_filter).setOnClickListener((v) -> {
+            activeDialog = new MapFiltersDialog(
+                    this,
+                    getPeopleFilters());
+
+            activeDialog.setOnDismissListener((d) -> {
+                activeDialog = null;
+            });
+
+            activeDialog.show();
         });
 
-        showComicsCb = findViewById(R.id.show_comics_cb);
-        showComicsCb.setChecked(isShowingComicsEnabled());
-        showComicsCb.setOnCheckedChangeListener((CompoundButton compoundButton, boolean checked) -> {
-            if (checked) {
-                createdComicsOverlay.enable();
-                collectedComicsOverlay.enable();
-                unknownComicsOverlay.enable();
+        findViewById(R.id.map_comics_filter).setOnClickListener((v) -> {
+            activeDialog = new MapFiltersDialog(
+                    this,
+                    getComicsFilters());
 
-                markToShowComics();
-            } else {
-                createdComicsOverlay.disable();
-                collectedComicsOverlay.disable();
-                unknownComicsOverlay.disable();
+            activeDialog.setOnDismissListener((d) -> {
+                activeDialog = null;
+            });
 
-                markToNotShowComics();
-            }
+            activeDialog.show();
+
         });
+
+    }
+
+    private List<MapFiltersDialog.Filter> getPeopleFilters() {
+        return Arrays.asList(
+                new MapFiltersDialog.Filter() {
+                    @Override
+                    public boolean isActive() {
+                        return filtersState.showFriends;
+                    }
+
+                    @Override
+                    public String getText() {
+                        return "Show friends";
+                    }
+
+                    @Override
+                    public void handleStateChange(boolean state) {
+                        filtersState.showFriends = state;
+                        loadFriends();
+                    }
+                },
+                new MapFiltersDialog.Filter() {
+                    @Override
+                    public boolean isActive() {
+                        return filtersState.showUnknownPeople;
+                    }
+
+                    @Override
+                    public String getText() {
+                        return "Show unknown people";
+                    }
+
+                    @Override
+                    public void handleStateChange(boolean state) {
+                        filtersState.showUnknownPeople = state;
+                        loadUnknownPeople();
+                    }
+                }
+
+        );
+    }
+
+    private List<MapFiltersDialog.Filter> getComicsFilters() {
+        return Arrays.asList(
+                new MapFiltersDialog.Filter() {
+                    @Override
+                    public boolean isActive() {
+                        return filtersState.showCreatedComics;
+                    }
+
+                    @Override
+                    public String getText() {
+                        return "Show created comics";
+                    }
+
+                    @Override
+                    public void handleStateChange(boolean state) {
+                        filtersState.showCreatedComics = state;
+                        loadCreatedComics();
+                    }
+                },
+                new MapFiltersDialog.Filter() {
+                    @Override
+                    public boolean isActive() {
+                        return filtersState.showCollectedComics;
+                    }
+
+                    @Override
+                    public String getText() {
+                        return "Show collected comics";
+                    }
+
+                    @Override
+                    public void handleStateChange(boolean state) {
+                        filtersState.showCollectedComics = state;
+                        loadCollectedComics();
+                    }
+                },
+                new MapFiltersDialog.Filter() {
+                    @Override
+                    public boolean isActive() {
+                        return filtersState.showUnknownComics;
+                    }
+
+                    @Override
+                    public String getText() {
+                        return "Show unknown comics";
+                    }
+
+                    @Override
+                    public void handleStateChange(boolean state) {
+                        filtersState.showUnknownComics = state;
+                        loadUnknownComics();
+                    }
+                }
+        );
     }
 
     private void setupMapView() {
@@ -174,6 +282,46 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
         this.mapController.setZoom(15.0);
         this.mapController.setCenter(new GeoPoint(43.6845, 21.7966));
 
+        this.map.addMapListener(new DelayedMapListener(new MapListener() {
+            @Override
+            public boolean onScroll(ScrollEvent event) {
+                Log.e("mapView", "We are scrolling ... ");
+
+                loadCollectedComics();
+                loadCreatedComics();
+                loadUnknownComics();
+                loadUnknownPeople();
+                loadFriends();
+
+                return true;
+            }
+
+            @Override
+            public boolean onZoom(ZoomEvent event) {
+                Log.e("mapView", "We are zooming ... ");
+
+                loadCollectedComics();
+                loadCreatedComics();
+                loadUnknownComics();
+                loadUnknownPeople();
+                loadFriends();
+
+                return true;
+            }
+        }, 500));
+        // with just MapListener (not-delayed) onScroll event will be triggered
+        // each time map is moved which is many times while user is "holding" map
+        // with delayed listener onScroll should be triggered only once
+        // approximately when user "release" map, he is not moving it anymore
+
+    }
+
+    private GeoPoint getCenter() {
+        return this.map.getBoundingBox().getCenterWithDateLine();
+    }
+
+    private double getRadius() {
+        return this.map.getBoundingBox().getDiagonalLengthInMeters();
     }
 
     // region permissions
@@ -313,16 +461,6 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
                 .getBoolean(FOLLOWING_BOOL, false);
     }
 
-    private boolean isShowingFriendsEnabled() {
-        return getSharedPreferences(PREFS_PATH, Context.MODE_PRIVATE)
-                .getBoolean(SHOW_FRIENDS_BOOL, false);
-    }
-
-    private boolean isShowingComicsEnabled() {
-        return getSharedPreferences(PREFS_PATH, Context.MODE_PRIVATE)
-                .getBoolean(SHOW_COMICS_BOOL, false);
-    }
-
     private void markAsFollowing() {
         Log.e("SharedPrefs", "Marked as FOLLOWING ... ");
         getSharedPreferences(PREFS_PATH, Context.MODE_PRIVATE)
@@ -339,142 +477,165 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
                 .apply();
     }
 
-    private void markToNotShowFriends() {
-        getSharedPreferences(PREFS_PATH, Context.MODE_PRIVATE)
-                .edit()
-                .putBoolean(SHOW_FRIENDS_BOOL, false)
-                .apply();
-    }
-
-    private void markToShowFriends() {
-        getSharedPreferences(PREFS_PATH, Context.MODE_PRIVATE)
-                .edit()
-                .putBoolean(SHOW_FRIENDS_BOOL, true)
-                .apply();
-    }
-
-    private void markToNotShowComics() {
-        getSharedPreferences(PREFS_PATH, Context.MODE_PRIVATE)
-                .edit()
-                .putBoolean(SHOW_COMICS_BOOL, false)
-                .apply();
-    }
-
-    private void markToShowComics() {
-        getSharedPreferences(PREFS_PATH, Context.MODE_PRIVATE)
-                .edit()
-                .putBoolean(SHOW_COMICS_BOOL, true)
-                .apply();
-    }
-
-    // endregions
+    // endregion
 
     // region overlays
 
-    private void initOverlays() {
-        this.loadDrawables();
-
-        this.myLocationOverlay = new UpdatableItemsOverlay(
-                this,
-                NamedItemsOverlay.Names.MyLocationOverlay,
-                this.map,
-                this.unknownPersonMarker, // TODO replace with 'myselfMarker'
-                new ArrayList<>(),
-                this.getEmptyClickHandler()
-        );
-
-        this.movingFriendsOverlay = new UpdatableItemsOverlay(
-                this,
-                NamedItemsOverlay.Names.FriendsOverlay,
-                this.map,
-                this.knownPersonMarker,
-                new ArrayList<>(),
-                this.getFriendItemClickHandler());
-
-        this.createdComicsOverlay = new UpdatableItemsOverlay(
-                this,
-                NamedItemsOverlay.Names.CreatedComicsOverlay,
-                this.map,
-                this.knownComicMarker,
-                new ArrayList<>(),
-                this.getCreatedComicClickHandler());
-
-        this.collectedComicsOverlay = new UpdatableItemsOverlay(
-                this,
-                NamedItemsOverlay.Names.CollectedComicsOverlay,
-                this.map,
-                this.knownComicMarker,
-                new ArrayList<>(),
-                this.getCollectedComicClickHandler());
-
-        this.unknownComicsOverlay = new UpdatableItemsOverlay(
-                this,
-                NamedItemsOverlay.Names.UnknownComicsOverlay,
-                this.map,
-                this.unknownComicMarker,
-                new ArrayList<>(),
-                this.getUnknownComicClickHandler());
-
-    }
-
     private void loadMyself() {
+        if (this.myLocationOverlay == null) {
+            this.myLocationOverlay = new UpdatableItemsOverlay(
+                    this,
+                    NamedItemsOverlay.Names.MyLocationOverlay,
+                    this.map,
+                    this.myMarker,
+                    new ArrayList<>(),
+                    this.getEmptyClickHandler()
+            );
+
+
+        }
         this.viewModel.getMyLastLocation()
                 .observe(this, (UserLocation location) -> {
                     if (myLocationOverlay.getItemsCount() == 0) {
                         // following is not enabled
                         // or following service still haven't found my location
                         // show last known location
+                        myLocationOverlay.updateItem(
+                                new UserLocation(
+                                        location.getUserId(),
+                                        location.getLatitude(),
+                                        location.getLongitude()),
+                                true);
 
-                        myLocationOverlay.updateItem(new UserLocation(
-                                location.getUserId(),
-                                location.getLatitude(),
-                                location.getLongitude(),
-                                location.getLastUpdate()));
-
+                    } else {
+                        Log.e("discAct", "THERE IS ALREADY SOME ITEM IN MY OVERLAY ... ");
                     }
                 });
     }
 
     private void loadFriends() {
-        if (!isShowingFriendsEnabled()) {
-            movingFriendsOverlay.disable();
+        if (this.friendsOverlay == null) {
+            this.friendsOverlay = new UpdatableItemsOverlay(
+                    this,
+                    NamedItemsOverlay.Names.FriendsOverlay,
+                    this.map,
+                    this.knownPersonMarker,
+                    new ArrayList<>(),
+                    this.getFriendItemClickHandler());
         }
 
-        this.viewModel.getNearbyFriends(100, 100, 100)
+        if (!filtersState.showFriends) {
+            // if overlay should be hidden
+            friendsOverlay.disable();
+            return;
+        } else {
+            // if overlay should be shown
+            if (!friendsOverlay.isEnabled()) {
+                // if it was previously hidden show it
+                friendsOverlay.enable();
+            }
+        }
+
+        this.viewModel.getNearbyFriends(
+                this.map.getBoundingBox().getCenterLatitude(),
+                this.map.getBoundingBox().getCenterLongitude(),
+                this.map.getBoundingBox().getDiagonalLengthInMeters())
                 .observe(this, (nearbyFriends) -> {
 
                     // triggered whenever list of friends get updated
 
                     if (nearbyFriends == null) {
-                        Log.e("friends", "Failed to update friends ... ");
                         return;
                     }
 
-                    Log.e("friends", "Friends updated with: "
+                    Log.e("friendsInViewModel", "Friends updated with: "
                             + nearbyFriends.size() + "nearby friends ... ");
 
-                    this.movingFriendsOverlay.setItems(nearbyFriends);
-
-                    for (LocationWithPicture friend : nearbyFriends) {
-                        this.viewModel.subscribeForLocationUpdates(
-                                friend.getId(),
-                                movingFriendsOverlay::updateItem
-                        );
-                    }
+                    this.friendsOverlay.setItems(nearbyFriends);
 
                 });
 
     }
 
     private void loadUnknownPeople() {
+        if (this.unknownPeopleOverlay == null) {
+            this.unknownPeopleOverlay = new UpdatableItemsOverlay(
+                    this,
+                    NamedItemsOverlay.Names.UnknownPeopleOverlay,
+                    this.map,
+                    this.unknownPersonMarker,
+                    new ArrayList<>(),
+                    this.getUnknownPeopleClickHandler());
+        }
+
+        if (!filtersState.showUnknownPeople) {
+            unknownPeopleOverlay.disable();
+            return;
+        } else {
+            if (!unknownPeopleOverlay.isEnabled()) {
+                unknownPeopleOverlay.enable();
+            }
+        }
+
+        this.viewModel.getNearbyUnknownPeople(
+                getCenter().getLatitude(),
+                getCenter().getLongitude(),
+                getRadius())
+                .observe(this, (nearbyPeople) -> {
+
+                    // triggered whenever list of nearby people get updated
+
+                    if (nearbyPeople == null) {
+                        return;
+                    }
+
+                    Log.e("peopleInViewModel", "People updated with: "
+                            + nearbyPeople.size() + "nearby people ... ");
+
+                    this.unknownPeopleOverlay.setItems(nearbyPeople);
+
+                    if (activeDialog != null && activeDialog instanceof PersonFollower) {
+                        String id = ((PersonFollower) activeDialog).getPersonId();
+                        if (nearbyPeople.stream().anyMatch((person) -> person.getId().equals(id))) {
+                            Location loc = nearbyPeople.stream()
+                                    .filter((person) -> person.getId().equals(id))
+                                    .findFirst()
+                                    .get()
+                                    .getLocation();
+                            ((PersonFollower) activeDialog).consumePersonLocation(
+                                    new UserLocation(id, loc.latitude, loc.longitude));
+                        }
+                    }
+
+                });
     }
 
     private void loadCreatedComics() {
-        if (!isShowingComicsEnabled()) {
-            createdComicsOverlay.disable();
+        if (this.createdComicsOverlay == null) {
+            this.createdComicsOverlay = new UpdatableItemsOverlay(
+                    this,
+                    NamedItemsOverlay.Names.CreatedComicsOverlay,
+                    this.map,
+                    this.createdComicMarker,
+                    new ArrayList<>(),
+                    this.getCreatedComicClickHandler());
         }
 
-        viewModel.getCreatedComics(100, 100)
+        if (!filtersState.showCreatedComics) {
+            createdComicsOverlay.disable();
+            return;
+        } else {
+            if (!createdComicsOverlay.isEnabled()) {
+                createdComicsOverlay.enable();
+            }
+        }
+
+        viewModel.getCreatedComics(
+                100,
+                100,
+                getCenter().getLatitude(),
+                getCenter().getLongitude(),
+                getRadius())
                 .observe(this, (locations) -> {
                     if (locations == null) {
                         Log.e("discMapAct", "Got null as created comics ... ");
@@ -488,11 +649,31 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
     }
 
     private void loadCollectedComics() {
-        if (!isShowingComicsEnabled()) {
-            collectedComicsOverlay.disable();
+        if (this.collectedComicsOverlay == null) {
+            this.collectedComicsOverlay = new UpdatableItemsOverlay(
+                    this,
+                    NamedItemsOverlay.Names.CollectedComicsOverlay,
+                    this.map,
+                    this.collectedComicMarker,
+                    new ArrayList<>(),
+                    this.getCollectedComicClickHandler());
         }
 
-        viewModel.getCollectedComics(100, 100)
+        if (!filtersState.showCollectedComics) {
+            collectedComicsOverlay.disable();
+            return;
+        } else {
+            if (!collectedComicsOverlay.isEnabled()) {
+                collectedComicsOverlay.enable();
+            }
+        }
+
+        viewModel.getCollectedComics(
+                100,
+                100,
+                getCenter().getLatitude(),
+                getCenter().getLongitude(),
+                getRadius())
                 .observe(this, (locations) -> {
                     if (locations == null) {
                         Log.e("discMapAct", "Got null as collected comics ... ");
@@ -503,15 +684,34 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
 
                     return;
                 });
-
     }
 
     private void loadUnknownComics() {
-        if (!isShowingComicsEnabled()) {
-            unknownComicsOverlay.disable();
+        if (this.unknownComicsOverlay == null) {
+            this.unknownComicsOverlay = new UpdatableItemsOverlay(
+                    this,
+                    NamedItemsOverlay.Names.UnknownComicsOverlay,
+                    this.map,
+                    this.unknownComicMarker,
+                    new ArrayList<>(),
+                    this.getUnknownComicClickHandler());
         }
 
-        viewModel.getUnknownComics(100, 100)
+        if (!filtersState.showUnknownComics) {
+            unknownComicsOverlay.disable();
+            return;
+        } else {
+            if (!unknownComicsOverlay.isEnabled()) {
+                unknownComicsOverlay.enable();
+            }
+        }
+
+        viewModel.getUnknownComics(
+                100,
+                100,
+                getCenter().getLatitude(),
+                getCenter().getLongitude(),
+                getRadius())
                 .observe(this, (List<LocationWithPicture> locations) -> {
                     if (locations == null) {
                         Log.e("discActivity", "Got nll as unknown comics ... ");
@@ -522,7 +722,6 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
 
                     return;
                 });
-
     }
 
     private OnItemGestureListener<OverlayItemWithId> getFriendItemClickHandler() {
@@ -535,6 +734,38 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
 
                 activeDialog = new ShortProfileDialog(activity,
                         viewModel.getShortUser(item.getItemId()));
+
+                activeDialog.setOnDismissListener(dialogInterface -> {
+                    activeDialog = null;
+                });
+
+                activeDialog.show();
+
+                return true;
+            }
+
+            @Override
+            public boolean onItemLongPress(int index, OverlayItemWithId item) {
+                return false;
+            }
+        };
+
+    }
+
+    private OnItemGestureListener<OverlayItemWithId> getUnknownPeopleClickHandler() {
+        AppCompatActivity activity = this;
+        return new OnItemGestureListener<>() {
+
+            @Override
+            public boolean onItemSingleTapUp(int index, OverlayItemWithId item) {
+                Log.e("Fiend click", "You clicked on unknown person ... ");
+
+                activeDialog = new ShortProfileDialog(
+                        activity,
+                        viewModel.getShortUser(item.getItemId()),
+                        viewModel.getUserLocation(item.getItemId()),
+                        viewModel.getMyLastLocation(),
+                        (person) -> friendRequest(person));
 
                 activeDialog.setOnDismissListener(dialogInterface -> {
                     activeDialog = null;
@@ -649,6 +880,7 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
                         activity,
                         comic,
                         ComicOrigin.Unknown,
+                        viewModel.getMyLastLocation(),
                         (comicId) -> {
                             viewModel.collectComic(comicId).
                                     observe(activity, (String err) -> {
@@ -678,11 +910,21 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
     }
 
     private void loadDrawables() {
-        this.unknownComicMarker = AppCompatResources.getDrawable(this, R.drawable.marker_unknown_comic);
-        this.knownComicMarker = AppCompatResources.getDrawable(this, R.drawable.marker_known_comic);
+        this.myMarker = AppCompatResources.getDrawable(this, R.drawable.my_marker);
 
-        this.unknownPersonMarker = AppCompatResources.getDrawable(this, R.drawable.marker_unknown_person);
-        this.knownPersonMarker = AppCompatResources.getDrawable(this, R.drawable.marker_known_person);
+        this.createdComicMarker = AppCompatResources.getDrawable(this, R.drawable.created_comic_marker);
+        this.collectedComicMarker = AppCompatResources.getDrawable(this, R.drawable.collected_comic_marker);
+        this.unknownComicMarker = AppCompatResources.getDrawable(this, R.drawable.unknown_comic_marker);
+
+        this.unknownPersonMarker = AppCompatResources.getDrawable(this, R.drawable.unknown_person_marker);
+        this.knownPersonMarker = AppCompatResources.getDrawable(this, R.drawable.known_person_marker);
+    }
+
+    private void friendRequest(String personId) {
+        viewModel.makeFriends(personId);
+        if (activeDialog != null) {
+            activeDialog.dismiss();
+        }
     }
 
     // endregion
@@ -709,6 +951,10 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
             registerReceiver(this.myLocationReceiver, registerIntent);
         }
 
+        if (filtersState == null) {
+            filtersState = MapFiltersState.read(this);
+        }
+
     }
 
     @Override
@@ -726,16 +972,26 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
             this.myLocationReceiver = null;
         }
 
+        if (filtersState != null) {
+            MapFiltersState.write(this, filtersState);
+        }
+
     }
 
     // region location consumer implementation
 
     @Override
-    public void updateLocation(UserLocation newLocation) {
-        this.myLocationOverlay.updateItem(newLocation);
+    public void consumeMyLocation(UserLocation newLocation) {
+        this.myLocationOverlay.updateItem(newLocation, true);
+
+        // these are loaded based on my current location
+        loadFriends();
+        loadCreatedComics();
+        loadCollectedComics();
+        loadUnknownComics();
 
         if (activeDialog instanceof LocationConsumer) {
-            ((LocationConsumer) activeDialog).updateLocation(newLocation);
+            ((LocationConsumer) activeDialog).consumeMyLocation(newLocation);
         }
     }
 

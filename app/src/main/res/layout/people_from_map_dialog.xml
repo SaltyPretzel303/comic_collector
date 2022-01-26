@@ -25,19 +25,24 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:background="@drawable/rounded_gradient_back"
+            android:paddingHorizontal="10dp"
             android:text="Username"
-            android:textSize="20dp" />
+            android:textSize="18dp" />
 
         <TextView
             android:id="@+id/username_people_map"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="PlaceholderText" />
+            android:text="PlaceholderText"
+            android:textSize="35dp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="15dp"
+            android:background="@drawable/rounded_gradient_back"
+            android:paddingHorizontal="10dp"
             android:text="Rating" />
 
         <ProgressBar
@@ -46,6 +51,7 @@
             android:layout_width="match_parent"
             android:layout_height="10dp"
             android:layout_marginHorizontal="20dp"
+            android:layout_marginTop="5dp"
             android:max="100"
             android:progress="65"
             android:progressBackgroundTint="@android:color/holo_red_dark"

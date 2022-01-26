@@ -73,15 +73,15 @@ public class PreviewListAdapter extends RecyclerView.Adapter<PreviewListAdapter.
 
     }
 
-    private Context context;
-    private LayoutInflater inflater;
-    private int resource;
-    private int maxWidth;
-    private int maxHeight;
+    private final Context context;
+    private final LayoutInflater inflater;
+    private final int resource;
+    private final int maxWidth;
+    private final int maxHeight;
 
-    private PreviewClickHandler clickHandler;
+    private final PreviewClickHandler clickHandler;
 
-    private PreviewItemProvider itemProvider;
+    private final PreviewItemProvider itemProvider;
 
     public PreviewListAdapter(Context context,
                               int resource,

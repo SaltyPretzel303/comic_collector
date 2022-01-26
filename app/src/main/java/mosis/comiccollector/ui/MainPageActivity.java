@@ -19,18 +19,13 @@ import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 import com.nostra13.universalimageloader.core.assist.ImageScaleType;
 
 import mosis.comiccollector.R;
+import mosis.comiccollector.ui.map.DiscoverMapActivity;
+import mosis.comiccollector.ui.user.ProfileActivity;
 import mosis.comiccollector.ui.user.ViewUser;
 import mosis.comiccollector.ui.viewmodel.AuthUserViewModel;
 import mosis.comiccollector.util.Toaster;
 
 public class MainPageActivity extends AppCompatActivity {
-
-    private Button logoutBtn;
-
-    private Button readBtn;
-    private Button collectBtn;
-    private Button discoverBtn;
-    private Button profileButton;
 
     private AuthUserViewModel userViewModel;
 
@@ -45,8 +40,6 @@ public class MainPageActivity extends AppCompatActivity {
 
         this.userViewModel = new ViewModelProvider(this).get(AuthUserViewModel.class);
 
-//        this.initLoginActivity();
-
         this.initButtons();
 
         this.resolveUser();
@@ -55,8 +48,7 @@ public class MainPageActivity extends AppCompatActivity {
 
     private void initButtons() {
 
-        this.logoutBtn = (Button) this.findViewById(R.id.logout_btn);
-        this.logoutBtn.setOnClickListener(v -> {
+        findViewById(R.id.logout_btn).setOnClickListener(v -> {
 
             (new AlertDialog.Builder(this))
                     .setMessage("After logout all your cached comics will be removed !!!")
@@ -79,30 +71,7 @@ public class MainPageActivity extends AppCompatActivity {
 
         });
 
-        this.readBtn = (Button) this.findViewById(R.id.read_btn);
-        this.readBtn.setOnClickListener(v -> {
-
-            Intent list_intent = new Intent(MainPageActivity.this, ComicListActivity.class);
-
-            list_intent.putExtra("list_context", String.valueOf(ComicListContext.CollectedComics));
-
-            startActivity(list_intent);
-
-        });
-
-        this.collectBtn = (Button) this.findViewById(R.id.collect_main_btn);
-        this.collectBtn.setOnClickListener(v -> {
-
-            Intent list_indent = new Intent(MainPageActivity.this, ComicListActivity.class);
-
-            list_indent.putExtra("list_context", String.valueOf(ComicListContext.QueuedComics));
-
-            startActivity(list_indent);
-
-        });
-
-        this.discoverBtn = (Button) this.findViewById(R.id.discover_main_btn);
-        this.discoverBtn.setOnClickListener(v -> {
+        findViewById(R.id.discover_main_btn).setOnClickListener(v -> {
 
 //            Intent discover_intent = new Intent(MainPageActivity.this, ComicListActivity.class);
 //            discover_intent.putExtra("list_context", String.valueOf(ComicListContext.DiscoverComics));
@@ -112,8 +81,7 @@ public class MainPageActivity extends AppCompatActivity {
 
         });
 
-        this.profileButton = (Button) this.findViewById(R.id.profile_main_btn);
-        this.profileButton.setOnClickListener(v -> {
+        findViewById(R.id.profile_main_btn).setOnClickListener(v -> {
 
             Intent profileIntent = new Intent(MainPageActivity.this, ProfileActivity.class);
             startActivity(profileIntent);

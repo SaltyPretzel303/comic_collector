@@ -2,6 +2,8 @@ package mosis.comiccollector.repository;
 
 import android.graphics.Bitmap;
 
+import com.google.firebase.firestore.GeoPoint;
+
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -20,18 +22,41 @@ public interface PeopleRepository {
     }
 
     interface PicReady {
-        void handlePic(Bitmap picUri);
+        void handlePic(Bitmap pic);
     }
 
     interface LocationsReady {
         void handleLocations(List<UserLocation> locations);
     }
 
+    interface PeopleUpdateHandler {
+        void personIn(String id, GeoPoint loc);
+
+        void personOut(String id);
+
+        void personMoved(String id, GeoPoint loc);
+
+        void everyoneLoaded();
+
+        void error(String err);
+    }
+
+    interface DoneHandler {
+        void handleDone(String err);
+    }
+
     void getLastLocation(String userId, @NotNull LocationsReady handleLocation);
 
-    void getNearbyFriendsLocations(String userId,
-                                   double lat, double lgt, double range,
-                                   @NotNull LocationsReady handleLocations);
+    void getNearbyFriendsLocations(String userId, GeoPoint point, double range,
+                                   @NotNull PeopleUpdateHandler onFriendsUpdate);
+
+    void updateFriendsRadius(GeoPoint point, double radius);
+
+
+    void getNearbyPeopleLocations(String userId, GeoPoint point, double range,
+                                  @NotNull PeopleUpdateHandler onPeopleUpdate);
+
+    void updatePeopleRadius(GeoPoint point, double radius);
 
     void getFriends(String userId, @NotNull PeopleReady peopleHandler);
 
@@ -48,5 +73,9 @@ public interface PeopleRepository {
     void updatePicUri(String userId, String picUri, @NotNull UriReady uriHandler);
 
     UnsubscribeProvider subscribeForLocUpdates(String userId, PeopleLocationConsumer locHandler);
+
+    void makeFriends(String user_1, String user_2, DoneHandler doneHandler);
+
+    void sendFriendRequest(String sender, String receiver, DoneHandler doneHandler);
 
 }

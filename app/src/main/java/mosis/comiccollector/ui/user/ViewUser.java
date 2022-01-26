@@ -51,21 +51,6 @@ public class ViewUser implements Serializable {
         this.liveProfilePic = livePicUri;
     }
 
-    public static ViewUser fromProfileData(ProfileData pData) {
-        ViewUser vData = new ViewUser(
-                pData.userId,
-                pData.email,
-                "notImplemented",
-                pData.rating,
-                "");
-
-        MutableLiveData<Bitmap> livePic = new MutableLiveData<>();
-        livePic.postValue(pData.profilePic);
-        vData.setLiveProfilePic(livePic);
-
-        return vData;
-    }
-
     public MutableLiveData<List<ViewComic>> getCreatedComics() {
         return createdComics;
     }

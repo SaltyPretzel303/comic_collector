@@ -25,29 +25,6 @@ import mosis.comiccollector.util.DepProvider;
 
 public class ComicPreviewViewModel extends AndroidViewModel {
 
-    public class IndexedBitmapPage {
-        public int index;
-        public MutableLiveData<Bitmap> livePage;
-
-        public boolean isNew;
-        public String localUri;
-
-        public IndexedBitmapPage(int index, MutableLiveData<Bitmap> livePage) {
-            this.index = index;
-            this.livePage = livePage;
-
-            this.isNew = false;
-        }
-
-        public IndexedBitmapPage(int index, String localUri) {
-            this.index = index;
-            this.localUri = localUri;
-
-            this.isNew = true;
-        }
-
-    }
-
     public class UploadProgress {
         public String docId;
         public long progress;
@@ -58,12 +35,12 @@ public class ComicPreviewViewModel extends AndroidViewModel {
         }
     }
 
-    private AuthRepository authRepo;
-    private ComicRepository comicsRepo;
+    private final AuthRepository authRepo;
+    private final ComicRepository comicsRepo;
 
     private ViewComic currentComic;
 
-    private List<IndexedBitmapPage> pages;
+    private final List<IndexedBitmapPage> pages;
 
     public ComicPreviewViewModel(@NonNull Application application) {
         super(application);
@@ -254,6 +231,5 @@ public class ComicPreviewViewModel extends AndroidViewModel {
         }
         return uris;
     }
-
 
 }

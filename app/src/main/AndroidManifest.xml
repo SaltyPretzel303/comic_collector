@@ -23,18 +23,17 @@
             android:name=".ui.comic.ComicPreviewAndEditActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.DiscoverMapActivity"
+            android:name=".ui.map.DiscoverMapActivity"
             android:exported="false" />
         <activity
             android:name=".ui.LoginActivity"
             android:exported="false" />
-        <activity android:name=".ui.ProfileActivity" />
+        <activity android:name=".ui.user.ProfileActivity" />
         <activity
-            android:name=".ui.ReadActivity"
+            android:name=".ui.comic.ReadActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_read"
             android:theme="@style/FullscreenTheme" />
-        <activity android:name=".ui.ComicListActivity" />
         <activity android:name=".ui.MainPageActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

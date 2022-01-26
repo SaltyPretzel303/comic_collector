@@ -4,6 +4,8 @@ import android.graphics.Bitmap;
 
 import androidx.lifecycle.MutableLiveData;
 
+import com.google.firebase.firestore.GeoPoint;
+
 import mosis.comiccollector.model.Location;
 import mosis.comiccollector.model.user.UserLocation;
 
@@ -19,9 +21,14 @@ public class LocationWithPicture {
         this.location = new Location(location.getLatitude(), location.getLongitude());
     }
 
-    public LocationWithPicture(String id, Location location){
+    public LocationWithPicture(String id, Location location) {
         this.id = id;
         this.location = location;
+    }
+
+    public LocationWithPicture(String id, GeoPoint point) {
+        this.id = id;
+        this.location = new Location(point.getLatitude(), point.getLongitude());
     }
 
     public Location getLocation() {
@@ -34,6 +41,10 @@ public class LocationWithPicture {
 
     public void updateLocation(UserLocation newLocation) {
         this.location = new Location(newLocation.getLatitude(), newLocation.getLongitude());
+    }
+
+    public void updateLocation(GeoPoint point) {
+        this.location = new Location(point.getLatitude(), point.getLongitude());
     }
 
     public MutableLiveData<Bitmap> getLivePic() {

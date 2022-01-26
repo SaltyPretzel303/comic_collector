@@ -1,4 +1,4 @@
-package mosis.comiccollector.ui;
+package mosis.comiccollector.ui.map;
 
 import android.Manifest;
 import android.app.Dialog;
@@ -58,10 +58,11 @@ public class PickAPlaceDialog extends Dialog {
         initMap();
 
         findViewById(R.id.pick_a_place_pick_button).setOnClickListener(this::placeHereClick);
-
     }
 
     private void initMap() {
+
+        MapView map = findViewById(R.id.pick_a_place_map);
 
         MapEventsOverlay overlay = new MapEventsOverlay(new MapEventsReceiver() {
             @Override
@@ -86,7 +87,10 @@ public class PickAPlaceDialog extends Dialog {
             }
         });
 
-        ((MapView) findViewById(R.id.pick_a_place_map)).getOverlays().add(overlay);
+        map.getOverlays().add(overlay);
+        map.getController().setZoom(15.0);
+        map.getController().setCenter(new GeoPoint(43.6845, 21.7966));
+        
     }
 
     private String tryToGeocode(double lat, double lgt) {

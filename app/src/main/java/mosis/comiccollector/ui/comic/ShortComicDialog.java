@@ -1,4 +1,4 @@
-package mosis.comiccollector.ui;
+package mosis.comiccollector.ui.comic;
 
 import android.app.Dialog;
 import android.content.Context;
@@ -19,21 +19,20 @@ import androidx.lifecycle.MutableLiveData;
 import mosis.comiccollector.R;
 import mosis.comiccollector.location.LocationConsumer;
 import mosis.comiccollector.model.user.UserLocation;
-import mosis.comiccollector.ui.comic.ComicPreviewAndEditActivity;
-import mosis.comiccollector.ui.comic.ViewComic;
+import mosis.comiccollector.ui.user.ShortProfileDialog;
 import mosis.comiccollector.ui.user.ViewUser;
 import mosis.comiccollector.util.Distance;
 
 public class ShortComicDialog extends Dialog implements LocationConsumer {
 
-    interface CollectHandler {
+    public interface CollectHandler {
         void collect(String comicId);
     }
 
     private static final String UNKNOWN_COMIC_BUTTON_TEXT = "COLLECT";
     private static final String KNOWN_COMIC_BUTTON_TEXT = "PREVIEW";
 
-    private static final double MAX_COLLECT_DISTANCE_KM = 0.02; // 20m ... ?
+    private static final double MAX_COLLECT_DISTANCE_M = 20; // 20m
 
     public static final int TITLE_PAGE_WIDTH = 200;
     public static final int TITLE_PAGE_HEIGHT = 200;
@@ -46,6 +45,9 @@ public class ShortComicDialog extends Dialog implements LocationConsumer {
     private Button actionButton;
 
     private CollectHandler howToCollect;
+
+    private LiveData<UserLocation> liveLocation;
+    private UserLocation lastLocation;
 
     public ShortComicDialog(
             @NonNull Context context,
@@ -63,9 +65,11 @@ public class ShortComicDialog extends Dialog implements LocationConsumer {
             @NonNull Context context,
             MutableLiveData<ViewComic> comic,
             ComicOrigin origin,
+            LiveData<UserLocation> liveLocation,
             CollectHandler howToCollect) {
         this(context, comic, origin);
 
+        this.liveLocation = liveLocation;
         this.howToCollect = howToCollect;
     }
 
@@ -75,6 +79,15 @@ public class ShortComicDialog extends Dialog implements LocationConsumer {
         setContentView(R.layout.comic_from_map_dialog);
 
         comic.observe((LifecycleOwner) context, this::initViews);
+        if (liveLocation != null) {
+            liveLocation.observe((LifecycleOwner) context, (loc) -> {
+                if (lastLocation == null) {
+                    // following is not enabled or location service still has not computed
+                    // current location
+                    consumeMyLocation(loc);
+                }
+            });
+        }
     }
 
     private void initViews(ViewComic vComic) {
@@ -148,35 +161,47 @@ public class ShortComicDialog extends Dialog implements LocationConsumer {
                 }
             });
 
-            // will be enabled once updateLocation method receives location
-            // that is within the MAX_COLLECT_DISTANCE
-            actionButton.setEnabled(false);
+            boolean enabled = false;
+            if (lastLocation != null) {
+                double distance = myDistance(
+                        lastLocation.getLatitude(),
+                        lastLocation.getLongitude());
+
+                Log.e("shortComic", "INITIAL (m) distance is : " + distance);
+
+                enabled = distance < MAX_COLLECT_DISTANCE_M;
+            }
+
+            actionButton.setEnabled(enabled);
         }
 
 
     }
 
-
     @Override
-    public void updateLocation(UserLocation newLocation) {
+    public void consumeMyLocation(UserLocation newLocation) {
+        this.lastLocation = newLocation;
         if (origin == ComicOrigin.Unknown && actionButton != null) {
             double myDistance = myDistance(newLocation.getLatitude(), newLocation.getLongitude());
-            Log.e("shortComic", "Calculated (km) distance is : " + myDistance);
-            actionButton.setEnabled(myDistance < MAX_COLLECT_DISTANCE_KM);
+            actionButton.setEnabled(myDistance < MAX_COLLECT_DISTANCE_M);
         }
     }
 
     private double myDistance(double myLat, double myLong) {
         if (comic.getValue() != null) {
-            return Distance.calculateInKm(
+            double myDistance = Distance.calculateInKm(
                     myLat,
                     myLong,
                     comic.getValue().location.latitude,
                     comic.getValue().location.longitude);
+
+            Log.e("shortComic", "Calculated (m) distance is : " + myDistance);
+
+            return myDistance;
         }
 
         // just some value that wont trigger collect button activation
-        return 2 * MAX_COLLECT_DISTANCE_KM;
+        return 100 * MAX_COLLECT_DISTANCE_M;
     }
 
 }

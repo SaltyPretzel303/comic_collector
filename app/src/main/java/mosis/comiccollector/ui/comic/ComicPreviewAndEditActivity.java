@@ -20,6 +20,7 @@ import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,9 +29,8 @@ import java.util.Map;
 
 import mosis.comiccollector.R;
 import mosis.comiccollector.model.Location;
-import mosis.comiccollector.ui.ImagePreviewWithActionsDialog;
 import mosis.comiccollector.ui.PermissionRequester;
-import mosis.comiccollector.ui.PickAPlaceDialog;
+import mosis.comiccollector.ui.map.PickAPlaceDialog;
 import mosis.comiccollector.ui.PreviewItemData;
 import mosis.comiccollector.ui.PreviewItemProvider;
 import mosis.comiccollector.ui.ProgressDialog;
@@ -104,24 +104,28 @@ public class ComicPreviewAndEditActivity extends AppCompatActivity {
     }
 
     private void setupForPreview() {
+        findViewById(R.id.new_comic_name_et).setVisibility(View.GONE);
+        findViewById(R.id.new_comic_description_et).setVisibility(View.GONE);
+
+        findViewById(R.id.comic_name_tv).setVisibility(View.VISIBLE);
+        findViewById(R.id.comic_description_tv).setVisibility(View.VISIBLE);
+
         findViewById(R.id.create_comic_finish_buttons).setVisibility(View.GONE);
         findViewById(R.id.add_page_button).setVisibility(View.GONE);
 
-        // TODO this doesn't look good visually...
-        findViewById(R.id.new_comic_name_et).setEnabled(false);
-        findViewById(R.id.new_comic_description_et).setEnabled(false);
-
-        ((EditText) findViewById(R.id.new_comic_name_et))
+        ((TextView) findViewById(R.id.comic_name_tv))
                 .setText(viewModel.getComic().title);
-        ((EditText) findViewById(R.id.new_comic_description_et))
+        ((TextView) findViewById(R.id.comic_description_tv))
                 .setText(viewModel.getComic().description);
 
     }
 
     private void setupForEdit() {
-        // TODO this doesn't look good ...
-        findViewById(R.id.new_comic_name_et).setEnabled(false);
-        findViewById(R.id.new_comic_description_et).setEnabled(false);
+        findViewById(R.id.new_comic_name_et).setVisibility(View.GONE);
+        findViewById(R.id.new_comic_description_et).setVisibility(View.GONE);
+
+        findViewById(R.id.comic_name_tv).setVisibility(View.VISIBLE);
+        findViewById(R.id.comic_description_tv).setVisibility(View.VISIBLE);
 
         findViewById(R.id.pick_a_place_button).setVisibility(View.GONE);
         findViewById(R.id.preview_comic_author_button).setVisibility(View.GONE);
@@ -129,13 +133,20 @@ public class ComicPreviewAndEditActivity extends AppCompatActivity {
         findViewById(R.id.add_page_button).setOnClickListener(this::addPageClick);
         findViewById(R.id.add_comic_finish_button).setOnClickListener(this::updateFinishClick);
 
-        ((EditText) findViewById(R.id.new_comic_name_et))
+        ((TextView) findViewById(R.id.comic_name_tv))
                 .setText(viewModel.getComic().title);
-        ((EditText) findViewById(R.id.new_comic_description_et))
+        ((TextView) findViewById(R.id.comic_description_tv))
                 .setText(viewModel.getComic().description);
     }
 
     private void setupForCreate() {
+
+        findViewById(R.id.new_comic_name_et).setVisibility(View.VISIBLE);
+        findViewById(R.id.new_comic_description_et).setVisibility(View.VISIBLE);
+
+        findViewById(R.id.comic_name_tv).setVisibility(View.GONE);
+        findViewById(R.id.comic_description_tv).setVisibility(View.GONE);
+
         findViewById(R.id.preview_comic_author_button_holder).setVisibility(View.GONE);
 
         findViewById(R.id.add_page_button).setOnClickListener(this::addPageClick);
@@ -160,8 +171,7 @@ public class ComicPreviewAndEditActivity extends AppCompatActivity {
                                         index,
                                         PREVIEW_PAGE_WIDTH,
                                         PREVIEW_PAGE_HEIGHT)
-                                        .livePage
-                        );
+                                        .livePage);
                     }
 
                     @Override
@@ -184,8 +194,13 @@ public class ComicPreviewAndEditActivity extends AppCompatActivity {
         // TODO dimensions for dialog are gonna be larger than for previewList
         // pass LiveData to dialog and setup ViewModel to reload bitmap if diff size is requested
 
-        this.currentDialog = new ImagePreviewWithActionsDialog(this, image, null);
-        this.currentDialog.show();
+        Intent readIntent = new Intent(this, ReadActivity.class);
+        readIntent.putExtra(ReadActivity.COMIC_EXTRA, viewModel.getComic());
+        readIntent.putExtra(ReadActivity.COMIC_PAGE_EXTRA, Integer.parseInt(itemId));
+        startActivity(readIntent);
+
+//        this.currentDialog = new ImagePreviewWithActionsDialog(this, image, null);
+//        this.currentDialog.show();
     }
 
     private void previewWithRemoveClick(String itemId) {

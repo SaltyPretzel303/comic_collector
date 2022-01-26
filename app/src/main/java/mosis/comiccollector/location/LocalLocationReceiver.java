@@ -7,8 +7,6 @@ import android.location.Location;
 import android.util.Log;
 
 import mosis.comiccollector.model.user.UserLocation;
-import mosis.comiccollector.util.DateTime;
-import mosis.comiccollector.util.DepProvider;
 
 public class LocalLocationReceiver extends BroadcastReceiver {
 
@@ -41,10 +39,9 @@ public class LocalLocationReceiver extends BroadcastReceiver {
         UserLocation userLocation = new UserLocation(
                 this.myId,
                 newLocation.getLatitude(),
-                newLocation.getLongitude(),
-                DateTime.now());
+                newLocation.getLongitude());
 
-        this.consumer.updateLocation(userLocation);
+        this.consumer.consumeMyLocation(userLocation);
 
     }
 }

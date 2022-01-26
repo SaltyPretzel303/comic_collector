@@ -1,8 +1,10 @@
-package mosis.comiccollector.ui;
+package mosis.comiccollector.ui.user;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.drawable.RoundedBitmapDrawable;
+import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
@@ -10,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.app.Dialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -19,12 +22,17 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import mosis.comiccollector.R;
+import mosis.comiccollector.ui.PreviewItemData;
+import mosis.comiccollector.ui.PreviewItemProvider;
+import mosis.comiccollector.ui.SortDialog;
 import mosis.comiccollector.ui.comic.PreviewListAdapter;
 import mosis.comiccollector.ui.comic.ComicPreviewAndEditActivity;
 import mosis.comiccollector.ui.comic.ViewComic;
+import mosis.comiccollector.ui.user.ShortProfileDialog;
 import mosis.comiccollector.ui.user.ViewUser;
 import mosis.comiccollector.ui.viewmodel.UserProfileViewModel;
 
@@ -94,7 +102,9 @@ public class ProfileActivity extends AppCompatActivity {
         this.loadPicActivityLauncher = registerForActivityResult(
                 new ActivityResultContracts.GetContent(),
                 (Uri uri) -> {
-
+                    if (uri == null) {
+                        return;
+                    }
                     Log.e("Pic uri", "We got this pic uri: " + uri.toString());
 
                     ((ImageView) findViewById(R.id.profile_pic_iv)).setImageURI(uri);
@@ -115,10 +125,26 @@ public class ProfileActivity extends AppCompatActivity {
             ((TextView) this.findViewById(R.id.user_rating_tv))
                     .setText(user.rating + "/100");
 
+            // default profile pic
+            Bitmap defaultBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.profile_pic);
+            RoundedBitmapDrawable roundedBitmapDrawable =
+                    RoundedBitmapDrawableFactory.create(getResources(), defaultBitmap);
+            roundedBitmapDrawable.setCircular(true);
+            ((ImageView) findViewById(R.id.profile_pic_iv))
+                    .setImageDrawable(roundedBitmapDrawable);
+
             user.liveProfilePic.observe(this, (Bitmap bitmap) -> {
                 if (bitmap != null) {
-                    ((ImageView) this.findViewById(R.id.profile_pic_iv))
-                            .setImageBitmap(bitmap);
+
+                    // https://stackoverflow.com/questions/31675420/set-round-corner-image-in-imageview
+                    ImageView imageView = findViewById(R.id.profile_pic_iv);
+                    RoundedBitmapDrawable rbd =
+                            RoundedBitmapDrawableFactory.create(getResources(), bitmap);
+                    rbd.setCircular(true);
+                    imageView.setImageDrawable(rbd);
+
+//                    ((ImageView) this.findViewById(R.id.profile_pic_iv))
+//                            .setImageBitmap(bitmap);
                 } else {
                     Log.e("imageView", "Image bitmap is null ... ");
                 }
@@ -158,58 +184,48 @@ public class ProfileActivity extends AppCompatActivity {
         initCollectedSorts();
         initFriendsSorts();
 
-        findViewById(R.id.sort_crated_comics_btn).setOnClickListener((View v) -> {
-            this.sortDialog = new SortDialog(this, this.createdSorts);
-            this.sortDialog.show();
-        });
-
-        findViewById(R.id.sort_collected_comics_btn).setOnClickListener((View v) -> {
-            this.sortDialog = new SortDialog(this, this.collectedSorts);
-            this.sortDialog.show();
-        });
-
-        findViewById(R.id.sort_friends_comics_btn).setOnClickListener((View v) -> {
-            this.sortDialog = new SortDialog(this, this.friendsSorts);
-            this.sortDialog.show();
-        });
-
     }
 
     // region init sorts
 
     private void initCreatedSorts() {
-        this.createdSorts = new ArrayList<>();
-        this.createdSorts.add(new SortDialog.Sort() {
-            @Override
-            public String getDisplayName() {
-                return "By Title descending";
+        this.createdSorts = Arrays.asList(
+                new SortDialog.Sort() {
+                    @Override
+                    public String getDisplayName() {
+                        return "By Title descending";
 
-            }
+                    }
 
-            @Override
-            public void performSort() {
-                createdSort = getDisplayName();
-                viewModel.sortCreatedComics((comic1, comic2) -> {
-                    return comic1.title.compareTo(comic2.title);
-                });
-                createdAdapter.notifyDataSetChanged();
-            }
-        });
+                    @Override
+                    public void performSort() {
+                        createdSort = getDisplayName();
+                        viewModel.sortCreatedComics((comic1, comic2) -> {
+                            return comic1.title.compareTo(comic2.title);
+                        });
+                        createdAdapter.notifyDataSetChanged();
+                    }
+                },
+                new SortDialog.Sort() {
+                    @Override
+                    public String getDisplayName() {
+                        return "By Pages ascending";
+                    }
 
-        this.createdSorts.add(new SortDialog.Sort() {
-            @Override
-            public String getDisplayName() {
-                return "By Pages ascending";
-            }
+                    @Override
+                    public void performSort() {
+                        collectedSort = getDisplayName();
+                        viewModel.sortCreatedComics((comic1, comic2) -> {
+                            return comic1.pagesCount - comic2.pagesCount;
+                        });
+                        createdAdapter.notifyDataSetChanged();
+                    }
+                }
+        );
 
-            @Override
-            public void performSort() {
-                collectedSort = getDisplayName();
-                viewModel.sortCreatedComics((comic1, comic2) -> {
-                    return comic1.pagesCount - comic2.pagesCount;
-                });
-                createdAdapter.notifyDataSetChanged();
-            }
+        findViewById(R.id.sort_crated_comics_btn).setOnClickListener((View v) -> {
+            this.sortDialog = new SortDialog(this, this.createdSorts);
+            this.sortDialog.show();
         });
 
     }
@@ -264,6 +280,11 @@ public class ProfileActivity extends AppCompatActivity {
             }
         });
 
+        findViewById(R.id.sort_collected_comics_btn).setOnClickListener((View v) -> {
+            this.sortDialog = new SortDialog(this, this.collectedSorts);
+            this.sortDialog.show();
+        });
+
     }
 
     private void initFriendsSorts() {
@@ -282,6 +303,11 @@ public class ProfileActivity extends AppCompatActivity {
                 });
                 friendsAdapter.notifyDataSetChanged();
             }
+        });
+
+        findViewById(R.id.sort_friends_comics_btn).setOnClickListener((View v) -> {
+            this.sortDialog = new SortDialog(this, this.friendsSorts);
+            this.sortDialog.show();
         });
     }
 
@@ -463,9 +489,15 @@ public class ProfileActivity extends AppCompatActivity {
         updateIntent.putExtra(
                 ComicPreviewAndEditActivity.COMIC_INFO_EXTRA,
                 comic);
-        updateIntent.putExtra(
-                ComicPreviewAndEditActivity.PREVIEW_REASON,
-                ComicPreviewAndEditActivity.PreviewReason.PreviewAndEdit);
+        if (liveUser.getValue().userId.equals(myId)) {
+            updateIntent.putExtra(
+                    ComicPreviewAndEditActivity.PREVIEW_REASON,
+                    ComicPreviewAndEditActivity.PreviewReason.PreviewAndEdit);
+        } else {
+            updateIntent.putExtra(
+                    ComicPreviewAndEditActivity.PREVIEW_REASON,
+                    ComicPreviewAndEditActivity.PreviewReason.JustPreview);
+        }
 
         startActivity(updateIntent);
     }

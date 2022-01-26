@@ -22,8 +22,7 @@ import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 
 import mosis.comiccollector.model.user.UserLocation;
-import mosis.comiccollector.ui.DiscoverMapActivity;
-import mosis.comiccollector.util.DateTime;
+import mosis.comiccollector.ui.map.DiscoverMapActivity;
 import mosis.comiccollector.util.DepProvider;
 
 public class LocationService extends Service {
@@ -150,8 +149,7 @@ public class LocationService extends Service {
                     .updateLocation(myId, new UserLocation(
                             myId,
                             location.getLatitude(),
-                            location.getLongitude(),
-                            DateTime.now()));
+                            location.getLongitude()));
 
             Log.e("LocationService", "bcasting: ( "
                     + "lat->" + location.getLatitude()

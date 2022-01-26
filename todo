@@ -31,3 +31,17 @@ uloge mape
 
     - edit
             # - klik na mapu za postavljanje stripa
+
+=============================
+
+# komunikacija preko bluetooth-a
+# prikaz prijatelja slikom sa profila
+
+
+- princip prijatelja
+- pretrazivanje u odredjenom radijusu
+- neki oblik notifikacije ...
+    pretpostaljam da moze da se iskoristi trenutni locationBroadcastReceiver
+
+
+- filtriranje prikaza (na mapi)

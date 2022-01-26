@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <gradient
+        android:endColor="@color/transparent"
+        android:startColor="@color/transparent_red" />
+
+    <stroke
+        android:width="1dp"
+        android:color="@android:color/holo_red_dark" />
+
+    <corners android:radius="30dp" />
+
+    <!--    <padding-->
+    <!--        android:bottom="10dp"-->
+    <!--        android:left="10dp"-->
+    <!--        android:right="10dp"-->
+    <!--        android:top="10dp" />-->
+
+</shape>
+
+    <!--<shape xmlns:android="http://schemas.android.com/apk/res/android">-->
+    <!--    android:shape=”rectangle”-->
+    <!--    android:thicknessRatio=”0.4″>-->
+    <!--<padding android:left=”10dp”-->
+    <!--    android:top=”10dp”-->
+    <!--    android:right=”10dp”-->
+    <!--    android:bottom=”10dp” />-->
+    <!--<solid android:color=”#00ffffff” />-->
+    <!--<corners android:radius=”60dp” />-->
+    <!--<stroke android:width=”20dp” android:color=”@color/myGreen” />-->
+    <!--    </shape>-->

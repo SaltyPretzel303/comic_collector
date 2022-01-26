@@ -13,7 +13,7 @@ public class NamedItemsOverlay<ItemType extends OverlayItem>
     public enum Names {
         MyLocationOverlay,
         FriendsOverlay,
-        PeopleOverlay,
+        UnknownPeopleOverlay,
         CreatedComicsOverlay,
         CollectedComicsOverlay,
         UnknownComicsOverlay

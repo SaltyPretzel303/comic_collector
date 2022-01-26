@@ -10,8 +10,10 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FirebaseStorage;
@@ -19,9 +21,13 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.nostra13.universalimageloader.core.ImageLoader;
 
+import org.imperiumlabs.geofirestore.GeoFirestore;
+import org.imperiumlabs.geofirestore.GeoQuery;
+import org.imperiumlabs.geofirestore.listeners.GeoQueryEventListener;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import mosis.comiccollector.model.UserFriendsList;
@@ -40,79 +46,209 @@ public class FirebasePeopleRepository implements PeopleRepository {
 
     private static final String USER_LOCATIONS_PATH = "user_locations";
 
+    private static final String GEO_FIRESTORE_POINT_FIEL = "l";
+
+    // this looks bad ... static and all that ...
+    private static List<String> friends;
+    private static GeoQuery peopleQuery;
+
     @Override
     public void getLastLocation(String userId, @NonNull LocationsReady handleLocation) {
+
+//        new GeoFirestore(FirebaseFirestore.getInstance().collection(USER_LOCATIONS_PATH))
+//                // "srz2xcpg22" - geo cache
+//                .getLocation(userId, (@Nullable GeoPoint geoPoint, @Nullable Exception e) -> {
+//                    if (e != null) {
+//                        Log.e("peopleRepo", "Failed to get MY last location: " + e.getMessage());
+//                        handleLocation.handleLocations(Collections.emptyList());
+//                        return;
+//                    }
+//
+//                    handleLocation.handleLocations(Arrays.asList(
+//                            new UserLocation(
+//                                    userId,
+//                                    geoPoint.getLatitude(),
+//                                    geoPoint.getLongitude()
+//                            )));
+//                });
+
         FirebaseFirestore.getInstance()
                 .collection(USER_LOCATIONS_PATH)
                 .document(userId)
                 .get()
-                .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                        if (!task.isSuccessful()) {
-                            Log.e("PeopleRepo", "Failed to get last location for: " + userId);
-                            handleLocation.handleLocations(new ArrayList<>());
-                            return;
-                        }
-
-                        List<UserLocation> locations = new ArrayList<>();
-                        locations.add(task.getResult().toObject(UserLocation.class));
-                        handleLocation.handleLocations(locations);
+                .addOnCompleteListener((task) -> {
+                    if (!task.isSuccessful()
+                            || !task.getResult().exists()
+                            || task.getResult() == null) {
+                        Log.e("PeopleRepo", "Failed to get last location for: " + userId);
+                        handleLocation.handleLocations(new ArrayList<>());
+                        return;
                     }
+
+                    GeoPoint point = (GeoPoint) task.getResult().get(GEO_FIRESTORE_POINT_FIEL);
+                    handleLocation.handleLocations(Arrays.asList(
+                            new UserLocation(
+                                    userId,
+                                    point.getLatitude(),
+                                    point.getLongitude())
+                    ));
                 });
     }
 
     @Override
     public void getNearbyFriendsLocations(String userId,
-                                          double lat,
-                                          double lgt,
+                                          GeoPoint point,
                                           double range,
-                                          @NotNull LocationsReady locationHandler) {
+                                          @NotNull PeopleUpdateHandler onFriendsUpdate) {
 
         FirebaseFirestore.getInstance()
                 .collection(USER_FRIENDS_PATH)
                 .document(userId)
                 .get()
-                .addOnCompleteListener((docSnapshotTask) -> {
+                .addOnCompleteListener((@NonNull Task<DocumentSnapshot> task) -> {
+                    if (!task.isSuccessful()
+                            || !task.getResult().exists()
+                            || task.getResult() == null) {
 
-                    if (!docSnapshotTask.isSuccessful() || !docSnapshotTask.getResult().exists()) {
-                        // TODO handle failure
-                        locationHandler.handleLocations(null);
+                        Log.e("peopleRepo", "Failed to load friends ids ... ");
+                        onFriendsUpdate.error("Some random error ... ");
                         return;
                     }
 
-                    UserFriendsList friendsObj = docSnapshotTask
-                            .getResult()
-                            .toObject(UserFriendsList.class);
-                    Log.e("peopleRepo", "He got: " + friendsObj.friendsIds.size() + " friends ... ");
+                    friends = task.getResult()
+                            .toObject(UserFriendsList.class)
+                            .friendsIds;
 
-                    FirebaseFirestore.getInstance()
-                            .collection(USER_LOCATIONS_PATH)
-                            .whereIn(UserLocation.USER_ID_FIELD, friendsObj.friendsIds)
-                            .get()
-                            .addOnCompleteListener((querySnapshotTask) -> {
+                    peopleQuery = new GeoFirestore(FirebaseFirestore
+                            .getInstance()
+                            .collection(USER_LOCATIONS_PATH))
+                            .queryAtLocation(point, range);
 
-                                if (!querySnapshotTask.isSuccessful()) {
-                                    // TODO handle failure
-                                    Log.e("peopleRepo", "Failed to query ... ");
-                                    locationHandler.handleLocations(new ArrayList<>());
+                    peopleQuery.addGeoQueryEventListener(new GeoQueryEventListener() {
 
-                                    return;
-                                }
+                        @Override
+                        public void onKeyEntered(@NonNull String s, @NonNull GeoPoint geoPoint) {
+                            if (isFriend(s)) {
+                                onFriendsUpdate.personIn(s, geoPoint);
+                            }
+                        }
 
-                                int size = querySnapshotTask
-                                        .getResult()
-                                        .size();
+                        @Override
+                        public void onKeyExited(@NonNull String s) {
+                            if (isFriend(s)) {
+                                onFriendsUpdate.personOut(s);
+                            }
+                        }
 
-                                List<UserLocation> userLocations = querySnapshotTask
-                                        .getResult()
-                                        .toObjects(UserLocation.class);
+                        @Override
+                        public void onKeyMoved(@NonNull String s, @NonNull GeoPoint geoPoint) {
+                            if (isFriend(s)) {
+                                onFriendsUpdate.personMoved(s, geoPoint);
+                            }
 
-                                locationHandler.handleLocations(userLocations);
-                            });
+                        }
+
+                        @Override
+                        public void onGeoQueryReady() {
+                            onFriendsUpdate.everyoneLoaded();
+                        }
+
+                        @Override
+                        public void onGeoQueryError(@NonNull Exception e) {
+                            onFriendsUpdate.error(e.getMessage());
+                        }
+                    });
 
                 });
 
+    }
+
+    @Override
+    public void updateFriendsRadius(GeoPoint point, double radius) {
+        // TODO do the same for unknown people
+        if (peopleQuery != null) {
+            peopleQuery.setLocation(point, radius);
+        }
+    }
+
+    @Override
+    public void getNearbyPeopleLocations(String userId, GeoPoint point, double range,
+                                         @NonNull PeopleUpdateHandler onPeopleUpdate) {
+
+        FirebaseFirestore.getInstance()
+                .collection(USER_FRIENDS_PATH)
+                .document(userId)
+                .get()
+                .addOnCompleteListener((@NonNull Task<DocumentSnapshot> task) -> {
+                    if (!task.isSuccessful()) {
+                        Log.e("peopleRepo", "Failed to load friends ids ... ");
+                        onPeopleUpdate.error("Some random error ... ");
+                        return;
+                    }
+
+                    // this should be empty array but firebase doesn't support
+                    // whereNotIn query on an empty array so "-1" should be Id
+                    // impossible to match ...
+                    friends = Arrays.asList("-1");
+
+                    if (task.getResult().exists() && task.getResult() != null) {
+                        friends = task.getResult()
+                                .toObject(UserFriendsList.class)
+                                .friendsIds;
+                    }
+
+                    peopleQuery = new GeoFirestore(FirebaseFirestore
+                            .getInstance()
+                            .collection(USER_LOCATIONS_PATH))
+                            .queryAtLocation(point, range);
+
+                    peopleQuery.addGeoQueryEventListener(new GeoQueryEventListener() {
+
+                        @Override
+                        public void onKeyEntered(@NonNull String s, @NonNull GeoPoint geoPoint) {
+                            if (!isFriend(s) && !s.equals(userId)) {
+                                onPeopleUpdate.personIn(s, geoPoint);
+                            }
+                        }
+
+                        @Override
+                        public void onKeyExited(@NonNull String s) {
+                            if (!isFriend(s) && !s.equals(userId)) {
+                                onPeopleUpdate.personOut(s);
+                            }
+                        }
+
+                        @Override
+                        public void onKeyMoved(@NonNull String s, @NonNull GeoPoint geoPoint) {
+                            if (!isFriend(s) && !s.equals(userId)) {
+                                onPeopleUpdate.personMoved(s, geoPoint);
+                            }
+
+                        }
+
+                        @Override
+                        public void onGeoQueryReady() {
+                            onPeopleUpdate.everyoneLoaded();
+                        }
+
+                        @Override
+                        public void onGeoQueryError(@NonNull Exception e) {
+                            onPeopleUpdate.error(e.getMessage());
+                        }
+                    });
+
+                });
+    }
+
+    @Override
+    public void updatePeopleRadius(GeoPoint point, double radius) {
+
+    }
+
+    private boolean isFriend(String id) {
+        return friends != null
+                && friends.size() > 0
+                && friends.stream().anyMatch((friend) -> friend.equals(id));
     }
 
     @Override
@@ -159,10 +295,16 @@ public class FirebasePeopleRepository implements PeopleRepository {
 
     @Override
     public void updateLocation(String userId, UserLocation newLocation) {
-        FirebaseFirestore.getInstance()
-                .collection(USER_LOCATIONS_PATH)
-                .document(userId)
-                .set(newLocation);
+
+        new GeoFirestore(FirebaseFirestore.getInstance().collection(USER_LOCATIONS_PATH))
+                .setLocation(userId, new GeoPoint(
+                        newLocation.getLatitude(),
+                        newLocation.getLongitude()));
+
+//        FirebaseFirestore.getInstance()
+//                .collection(USER_LOCATIONS_PATH)
+//                .document(userId)
+//                .set(newLocation);
     }
 
     @Override
@@ -335,6 +477,7 @@ public class FirebasePeopleRepository implements PeopleRepository {
                 });
     }
 
+    // TODO should be removed when geoFirestore get fully implemented
     @Override
     public UnsubscribeProvider subscribeForLocUpdates(String userId, @NotNull PeopleLocationConsumer locHandler) {
 
@@ -357,6 +500,73 @@ public class FirebasePeopleRepository implements PeopleRepository {
                         });
 
         return new FirebaseUnsubProvider(userId, lReg);
+    }
+
+    @Override
+    public void makeFriends(String user_1, String user_2, DoneHandler doneHandler) {
+
+        updateFriends(user_1, user_2, (err_1) -> {
+            if (err_1 != null) {
+                Log.e("peopleRepo", "Err occurred while updating friends ... ");
+                doneHandler.handleDone(err_1);
+                return;
+            }
+
+            updateFriends(user_2, user_1, (err_2) -> {
+                if (err_2 != null) {
+                    Log.e("peopleRepo", "Err occurred while updating friends ... ");
+                    doneHandler.handleDone(err_2);
+                    return;
+                }
+
+                doneHandler.handleDone(null);
+            });
+
+        });
+
+    }
+
+    private void updateFriends(String user, String newFriend, DoneHandler handler) {
+        FirebaseFirestore.getInstance()
+                .collection(USER_FRIENDS_PATH)
+                .document(user)
+                .update(UserFriendsList.FRIENDS_IDS_FIELD, FieldValue.arrayUnion(newFriend))
+                .addOnCompleteListener((task_1) -> {
+                    if (!task_1.isSuccessful()) {
+                        Log.e("peopleRepo", "Failed to UPDATE friends list ... ");
+
+                        FirebaseFirestore.getInstance()
+                                .collection(USER_FRIENDS_PATH)
+                                .document(user)
+                                .set(new UserFriendsList(user, Arrays.asList(newFriend)))
+                                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                    @Override
+                                    public void onComplete(@NonNull Task<Void> task) {
+                                        if (!task.isSuccessful()) {
+                                            Log.e("peopleRepo", "Failed to CREATE friends list ... ");
+                                            if (task.getException() != null) {
+                                                handler.handleDone(task.getException().getMessage());
+                                            } else {
+                                                handler.handleDone("Some err ... ");
+                                            }
+                                            return;
+                                        }
+
+                                        handler.handleDone(null);
+                                    }
+                                });
+
+                        return;
+                    }
+
+                    handler.handleDone(null);
+                });
+    }
+
+
+    @Override
+    public void sendFriendRequest(String sender, String receiver, DoneHandler doneHandler) {
+
     }
 
 }

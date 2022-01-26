@@ -1,4 +1,4 @@
-package mosis.comiccollector.ui;
+package mosis.comiccollector.ui.comic;
 
 import android.app.Dialog;
 import android.content.Context;

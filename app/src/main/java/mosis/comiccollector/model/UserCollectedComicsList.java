@@ -15,5 +15,9 @@ public class UserCollectedComicsList implements Serializable {
 
     }
 
+    public UserCollectedComicsList(String userId, List<String> comics) {
+        this.userId = userId;
+        this.comicsIds = comics;
+    }
 
 }
