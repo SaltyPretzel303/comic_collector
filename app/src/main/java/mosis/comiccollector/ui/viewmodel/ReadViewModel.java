@@ -6,18 +6,21 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import mosis.comiccollector.repository.ComicRepository;
+import mosis.comiccollector.repository.PeopleRepository;
 import mosis.comiccollector.ui.comic.IndexedUriPage;
 import mosis.comiccollector.ui.comic.ViewComic;
 import mosis.comiccollector.util.DepProvider;
 
 public class ReadViewModel extends AndroidViewModel {
 
+    private PeopleRepository peopleRepo;
     private ComicRepository comicsRepo;
 
     private List<IndexedBitmapPage> pages;
@@ -27,6 +30,7 @@ public class ReadViewModel extends AndroidViewModel {
         super(application);
 
         this.pages = new ArrayList<>();
+        this.peopleRepo = DepProvider.getPeopleRepository();
         this.comicsRepo = DepProvider.getComicRepository();
     }
 
@@ -74,6 +78,33 @@ public class ReadViewModel extends AndroidViewModel {
 
     public int getPagesCount() {
         return comic.pagesCount;
+    }
+
+    public LiveData<Void> setRating(float comicRating, float authorRating) {
+        var retData = new MutableLiveData<Void>();
+
+        comicsRepo.addRating(comic.comicId, comicRating, (comicErr) -> {
+
+            if (comicErr != null) {
+                Log.e("readViewModel", "Error while updating comic rating: " + comicErr);
+                retData.postValue(null);
+                return;
+            }
+
+            peopleRepo.addRating(comic.authorId, authorRating, (authorErr) -> {
+                if (authorErr != null) {
+                    Log.e("readViewModel", "Error while updating author rating: " + authorErr);
+                    retData.postValue(null);
+                    return;
+                }
+
+                Log.e("readViewModel", "Ratings updated ... ");
+                retData.postValue(null);
+            });
+
+        });
+
+        return retData;
     }
 
 }

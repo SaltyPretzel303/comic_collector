@@ -18,6 +18,7 @@ import mosis.comiccollector.ui.user.ViewUser;
 import mosis.comiccollector.ui.viewmodel.mapper.AuthUserMapper;
 import mosis.comiccollector.ui.viewmodel.mapper.ComicModelMapper;
 import mosis.comiccollector.ui.viewmodel.mapper.UserModelMapper;
+import mosis.comiccollector.ui.viewmodel.mapper.ViewComicMapper;
 
 // singleton
 public class DepProvider {
@@ -75,6 +76,10 @@ public class DepProvider {
 
     public static DataMapper<Comic, ViewComic> getComicModelMapper() {
         return new ComicModelMapper();
+    }
+
+    public static DataMapper<ViewComic, Comic> getViewComicMapper() {
+        return new ViewComicMapper();
     }
 
 }

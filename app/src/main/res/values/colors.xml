@@ -10,4 +10,6 @@
     <color name="transparent_orange">#B2ED7A2E</color>
     <color name="transparent_red">#6DA50B00</color>
     <color name="gray">#DA363636</color>
+    <color name="dark_blue">#3783F6</color>
+    <color name="white">#FFFFFF</color>
 </resources>

@@ -45,7 +45,7 @@ public class ComicPreviewViewModel extends AndroidViewModel {
     public ComicPreviewViewModel(@NonNull Application application) {
         super(application);
 
-        this.currentComic = new ViewComic("", "", "", null, 0, 0);
+        this.currentComic = new ViewComic("", "", "", "", null, 0, 0);
         this.pages = new ArrayList<>();
 
         this.authRepo = DepProvider.getAuthRepository();
@@ -130,7 +130,7 @@ public class ComicPreviewViewModel extends AndroidViewModel {
         MutableLiveData<Bitmap> livePage = new MutableLiveData<>();
         IndexedBitmapPage newPage = new IndexedBitmapPage(currentComic.pagesCount, uri);
         newPage.livePage = livePage;
-        this.pages.add(newPage);
+        pages.add(newPage);
         currentComic.pagesCount++;
 
         ImageLoader.getInstance().loadImage(uri, new SimpleImageLoadingListener() {
@@ -174,10 +174,9 @@ public class ComicPreviewViewModel extends AndroidViewModel {
         comicsRepo.addPages(
                 currentComic.comicId,
                 currentComic.pagesCount,
-                this.getNewPages(),
-                (String docId, long uploadValue) -> {
-                    // mark all added pages as not-new
-                    pages.forEach((page) -> page.isNew = false);
+                getNewPages(),
+                (String docId, int pageIndex, long uploadValue) -> {
+                    markAsOld(pageIndex);
                     liveResult.postValue(uploadValue);
                 });
 
@@ -199,23 +198,25 @@ public class ComicPreviewViewModel extends AndroidViewModel {
         this.currentComic.description = description;
         this.currentComic.location = location;
         this.currentComic.pagesCount = this.getNewCount();
-//        this.currentComic.authorId = authorId;
+        this.currentComic.authorId = authorId;
         this.currentComic.rating = 0;
 
-        Comic newComic = new Comic(
-                authorId,
-                this.currentComic.title,
-                this.currentComic.description,
-                this.currentComic.rating,
-                this.currentComic.pagesCount,
-                this.currentComic.location);
+        Comic newComic = DepProvider.getViewComicMapper().mapThis(currentComic);
+//        Comic newComic = new Comic(
+//                authorId,
+//                this.currentComic.title,
+//                this.currentComic.description,
+//                this.currentComic.rating,
+//                this.currentComic.pagesCount,
+//                this.currentComic.location);
 
         comicsRepo.createComic(
                 newComic,
                 this.getNewPages(),
-                (String docId, long uploadSize) -> {
+                (String docId, int pageIndex, long uploadSize) -> {
                     this.currentComic.comicId = docId;
-                    // this will be called for each page that gets updated
+                    markAsOld(pageIndex);
+
                     liveUri.postValue(new UploadProgress(docId, uploadSize));
                 });
 
@@ -230,6 +231,17 @@ public class ComicPreviewViewModel extends AndroidViewModel {
             }
         }
         return uris;
+    }
+
+    private void markAsOld(int index) {
+        for (var page : pages) {
+            if (page.isNew && page.index == index) {
+                page.isNew = false;
+                return;
+            }
+
+        }
+
     }
 
 }

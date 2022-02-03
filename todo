@@ -15,7 +15,7 @@
 
 6. pretrazivanje stripova/korisnika
     - po kriterijumima
-    - po trenutnoj lokaciji
+    # po trenutnoj lokaciji
 
 uloge mape
     - discover - 
@@ -39,9 +39,10 @@ uloge mape
 
 
 - princip prijatelja
+- filtriranje prikaza (na mapi)
 - pretrazivanje u odredjenom radijusu
+
 - neki oblik notifikacije ...
     pretpostaljam da moze da se iskoristi trenutni locationBroadcastReceiver
 
 
-- filtriranje prikaza (na mapi)

@@ -246,7 +246,7 @@ public class DiscoveryViewModel extends AndroidViewModel {
         this.peopleRepo.getUser(userId, (List<User> people) -> {
             if (people != null && people.size() > 0 && people.get(0) != null) {
 
-                ViewUser viewUser = this.viewUserMapper.mapToViewModel(people.get(0));
+                ViewUser viewUser = this.viewUserMapper.mapThis(people.get(0));
                 viewUser.setLiveProfilePic(getLiveLocalPic(userId));
 
                 shortUser.postValue(viewUser);
@@ -321,7 +321,7 @@ public class DiscoveryViewModel extends AndroidViewModel {
                 return;
             }
 
-            ViewUser vAuthor = viewUserMapper.mapToViewModel(people.get(0));
+            ViewUser vAuthor = viewUserMapper.mapThis(people.get(0));
             vAuthor.liveProfilePic = loadUserPic(vAuthor.userId);
 
             liveAuthor.postValue(vAuthor);
@@ -539,7 +539,7 @@ public class DiscoveryViewModel extends AndroidViewModel {
                 return;
             }
 
-            ViewComic vComic = viewComicMapper.mapToViewModel(newComics.get(0));
+            ViewComic vComic = viewComicMapper.mapThis(newComics.get(0));
             vComic.liveTitlePage = new MutableLiveData<>();
 
             comicRepo.loadTitlePage(id, width, height, (List<Bitmap> pages) -> {

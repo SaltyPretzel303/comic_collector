@@ -33,6 +33,7 @@ import java.util.List;
 import mosis.comiccollector.model.UserFriendsList;
 import mosis.comiccollector.model.user.User;
 import mosis.comiccollector.model.user.UserLocation;
+import mosis.comiccollector.repository.DoneHandler;
 import mosis.comiccollector.repository.PeopleRepository;
 import mosis.comiccollector.repository.UnsubscribeProvider;
 import mosis.comiccollector.repository.PeopleLocationConsumer;
@@ -539,21 +540,18 @@ public class FirebasePeopleRepository implements PeopleRepository {
                                 .collection(USER_FRIENDS_PATH)
                                 .document(user)
                                 .set(new UserFriendsList(user, Arrays.asList(newFriend)))
-                                .addOnCompleteListener(new OnCompleteListener<Void>() {
-                                    @Override
-                                    public void onComplete(@NonNull Task<Void> task) {
-                                        if (!task.isSuccessful()) {
-                                            Log.e("peopleRepo", "Failed to CREATE friends list ... ");
-                                            if (task.getException() != null) {
-                                                handler.handleDone(task.getException().getMessage());
-                                            } else {
-                                                handler.handleDone("Some err ... ");
-                                            }
-                                            return;
+                                .addOnCompleteListener(task -> {
+                                    if (!task.isSuccessful()) {
+                                        Log.e("peopleRepo", "Failed to CREATE friends list ... ");
+                                        if (task.getException() != null) {
+                                            handler.handleDone(task.getException().getMessage());
+                                        } else {
+                                            handler.handleDone("Some err ... ");
                                         }
-
-                                        handler.handleDone(null);
+                                        return;
                                     }
+
+                                    handler.handleDone(null);
                                 });
 
                         return;
@@ -566,6 +564,11 @@ public class FirebasePeopleRepository implements PeopleRepository {
 
     @Override
     public void sendFriendRequest(String sender, String receiver, DoneHandler doneHandler) {
+
+    }
+
+    @Override
+    public void addRating(String userId, float rating, DoneHandler handler) {
 
     }
 

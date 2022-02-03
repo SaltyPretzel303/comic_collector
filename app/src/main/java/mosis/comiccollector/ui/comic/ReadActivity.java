@@ -8,12 +8,15 @@ import android.view.WindowManager;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
 import mosis.comiccollector.R;
 import mosis.comiccollector.ui.PreviewItemData;
 import mosis.comiccollector.ui.PreviewItemProvider;
+import mosis.comiccollector.ui.RateDialog;
 import mosis.comiccollector.ui.viewmodel.ReadViewModel;
 
 public class ReadActivity extends AppCompatActivity {
@@ -22,11 +25,13 @@ public class ReadActivity extends AppCompatActivity {
     public static final String COMIC_PAGE_EXTRA = "comic_page_to_read";
 
     private static final int PAGE_WIDTH = 400;
-    private static final int PAGE_HEIDHT = 400;
+    private static final int PAGE_HEIGHT = 400;
 
     private ViewComic comic;
 
     private ReadViewModel viewModel;
+
+    private RateDialog rateDialog;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -51,7 +56,7 @@ public class ReadActivity extends AppCompatActivity {
                 this,
                 R.layout.read_page_item,
                 PAGE_WIDTH,
-                PAGE_HEIDHT,
+                PAGE_HEIGHT,
                 new PreviewItemProvider() {
                     @Override
                     public PreviewItemData getItem(int index) {
@@ -62,7 +67,7 @@ public class ReadActivity extends AppCompatActivity {
                                 viewModel.getPage(
                                         index,
                                         PAGE_WIDTH,
-                                        PAGE_HEIDHT)
+                                        PAGE_HEIGHT)
                                         .livePage);
                     }
 
@@ -98,6 +103,26 @@ public class ReadActivity extends AppCompatActivity {
 
         // replace this handler with enter fullscreen handler
         v.setOnClickListener(this::enterFullscreenClick);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (rateDialog != null) {
+            // rating dialog is shown but user just wants to leave
+            finish();
+            return;
+        }
+
+        rateDialog = new RateDialog(this, this::rate);
+        rateDialog.show();
+    }
+
+    private void rate(float comicRating, float authorRating) {
+        viewModel.setRating(comicRating, authorRating)
+                .observe(this, (unused) -> {
+                    // TODO show some loading screen
+                    finish();
+                });
     }
 
 

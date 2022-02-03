@@ -4,6 +4,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -13,6 +14,8 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.graphics.drawable.RoundedBitmapDrawable;
+import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.LiveData;
 
@@ -129,6 +132,16 @@ public class ShortProfileDialog
     private void initViews(ViewUser user) {
         this.loadStages.add(LoadStages.DataLoaded);
 
+        Bitmap defaultBitmap = BitmapFactory.decodeResource(
+                context.getResources(),
+                R.drawable.profile_pic);
+        RoundedBitmapDrawable roundedBitmapDrawable = RoundedBitmapDrawableFactory.create(
+                context.getResources(),
+                defaultBitmap);
+        roundedBitmapDrawable.setCircular(true);
+        ((ImageView) findViewById(R.id.profile_pic_people_map))
+                .setImageDrawable(roundedBitmapDrawable);
+
         user.liveProfilePic.observe((LifecycleOwner) context, this::setupProfilePic);
 
         ((TextView) findViewById(R.id.username_people_map)).setText(user.name);
@@ -150,7 +163,15 @@ public class ShortProfileDialog
         this.loadStages.add(LoadStages.ImageLoaded);
 
         if (pic != null) {
-            ((ImageView) findViewById(R.id.profile_pic_people_map)).setImageBitmap(pic);
+
+            ImageView imageView = findViewById(R.id.profile_pic_people_map);
+            RoundedBitmapDrawable rbd = RoundedBitmapDrawableFactory.create(
+                    context.getResources(),
+                    pic);
+            rbd.setCircular(true);
+            imageView.setImageDrawable(rbd);
+
+//            ((ImageView) findViewById(R.id.profile_pic_people_map)).setImageBitmap(pic);
         }
 
         if (this.loadStages.contains(LoadStages.DataLoaded)

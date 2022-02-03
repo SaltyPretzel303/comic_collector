@@ -9,6 +9,7 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.MutableLiveData;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import mosis.comiccollector.model.comic.Comic;
@@ -72,7 +73,7 @@ public class UserProfileViewModel extends AndroidViewModel {
             // I guess people arg can't be null
             // where did I got id if that user doesn't exists ...
             User user = people.get(0);
-            ViewUser viewUser = this.userMapper.mapToViewModel(user);
+            ViewUser viewUser = this.userMapper.mapThis(user);
             viewUser.setLiveProfilePic(this.loadProfilePic(userId, width, height));
 
             this.liveUserData.postValue(viewUser);
@@ -134,7 +135,7 @@ public class UserProfileViewModel extends AndroidViewModel {
 
             List<ViewComic> vComicL = new ArrayList<>();
             for (Comic comic : newComics) {
-                ViewComic vComic = comicMapper.mapToViewModel(comic);
+                ViewComic vComic = comicMapper.mapThis(comic);
 
                 vComicL.add(vComic);
             }
@@ -143,6 +144,35 @@ public class UserProfileViewModel extends AndroidViewModel {
         });
 
         return this.liveCreatedComics;
+    }
+
+    public void updateMyCreatedComics(String id) {
+        comicRepo.getComic(id, (newComics) -> {
+            if (newComics == null || newComics.size() == 0) {
+                Log.e("profileViewModel", "Failed to retrieve new created comics ... ");
+                return;
+            }
+
+            if (liveCreatedComics == null) {
+                liveCreatedComics = new MutableLiveData<>();
+            }
+
+            ViewComic newComic = comicMapper.mapThis(newComics.get(0));
+
+            if (liveCreatedComics.getValue() == null) {
+                liveCreatedComics.postValue(Arrays.asList(newComic));
+            } else {
+                var comics = liveCreatedComics.getValue();
+                comics.add(newComic);
+
+                liveCreatedComics.postValue(comics);
+            }
+
+        });
+    }
+
+    public void updatePagesCount(String comicId, int newCount) {
+        getCreatedComic(comicId).pagesCount = newCount;
     }
 
     public ViewComic getCreatedComic(String id) {
@@ -217,7 +247,7 @@ public class UserProfileViewModel extends AndroidViewModel {
 
             List<ViewComic> vComics = new ArrayList<>();
             for (Comic comic : newComics) {
-                ViewComic vComic = this.comicMapper.mapToViewModel(comic);
+                ViewComic vComic = this.comicMapper.mapThis(comic);
 
                 vComics.add(vComic);
             }
@@ -286,7 +316,7 @@ public class UserProfileViewModel extends AndroidViewModel {
 
             List<ViewUser> vPeople = new ArrayList<>();
             for (User uPeople : people) {
-                ViewUser vUser = userMapper.mapToViewModel(uPeople);
+                ViewUser vUser = userMapper.mapThis(uPeople);
                 vPeople.add(vUser);
             }
             liveFriends.postValue(vPeople);

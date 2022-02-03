@@ -299,12 +299,13 @@ public class FirebaseComicRepository implements ComicRepository {
                     .addOnCompleteListener((@NonNull Task<UploadTask.TaskSnapshot> task) -> {
                         if (!task.isSuccessful()) {
                             Log.e("comicsRepo", "Failed to update comic ... ");
-                            handler.handleSingleUpload(comicId, -1);
+                            handler.handleSingleUpload(comicId, indexedUri.index, 0);
                             return;
                         }
 
                         handler.handleSingleUpload(
                                 comicId,
+                                indexedUri.index,
                                 task.getResult().getBytesTransferred());
 
                     });
@@ -325,25 +326,25 @@ public class FirebaseComicRepository implements ComicRepository {
                 .addOnCompleteListener((@NonNull Task<DocumentReference> createTask) -> {
                     if (!createTask.isSuccessful()) {
                         Log.e("comicRepo", "Failed to create comic info ... ");
-                        handler.handleSingleUpload("", -1);
+                        handler.handleSingleUpload("", 0, -1);
                         return;
                     }
 
                     String docId = createTask.getResult().getId();
 
-                    new GeoFirestore(FirebaseFirestore.getInstance().collection(COMICS_LOCATION_PATH))
-                            .setLocation(
-                                    docId,
-                                    new GeoPoint(
-                                            newComic.getLocation().latitude,
-                                            newComic.getLocation().longitude));
+                    new GeoFirestore(FirebaseFirestore.getInstance()
+                            .collection(COMICS_LOCATION_PATH))
+                            .setLocation(docId, new GeoPoint(
+                                    newComic.getLocation().latitude,
+                                    newComic.getLocation().longitude));
+                    // TODO somehow wait for the upper query to finish first ... ?
 
                     createTask.getResult()
                             .update(Comic.COMIC_ID_FIELD, docId)
                             .addOnCompleteListener((@NonNull Task<Void> updateTask) -> {
                                 if (!updateTask.isSuccessful()) {
                                     Log.e("comicsRepo", "Failed to update comic id ... ");
-                                    handler.handleSingleUpload(docId, -1);
+                                    handler.handleSingleUpload(docId, 0, -1);
                                     return;
                                 }
 
@@ -356,12 +357,16 @@ public class FirebaseComicRepository implements ComicRepository {
                                             .addOnCompleteListener((@NonNull Task<UploadTask.TaskSnapshot> task) -> {
                                                 if (!task.isSuccessful()) {
                                                     Log.e("comicsRepo", "Failed to update comic ... ");
-                                                    handler.handleSingleUpload(docId, -1);
+                                                    handler.handleSingleUpload(
+                                                            docId,
+                                                            page.index,
+                                                            0);
                                                     return;
                                                 }
 
                                                 handler.handleSingleUpload(
                                                         docId,
+                                                        page.index,
                                                         task.getResult().getBytesTransferred());
 
                                             });
@@ -554,5 +559,10 @@ public class FirebaseComicRepository implements ComicRepository {
 
                     return;
                 });
+    }
+
+    @Override
+    public void addRating(String comicId, float rating, DoneHandler handler) {
+
     }
 }

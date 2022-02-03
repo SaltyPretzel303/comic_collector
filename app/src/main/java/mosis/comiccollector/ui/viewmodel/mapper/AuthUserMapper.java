@@ -8,7 +8,7 @@ import mosis.comiccollector.ui.user.ViewUser;
 public class AuthUserMapper implements DataMapper<UserAuthResponse, ViewUser> {
 
     @Override
-    public ViewUser mapToViewModel(UserAuthResponse input) {
+    public ViewUser mapThis(UserAuthResponse input) {
 
         String errorMessage = null;
         if (input.responseType != UserAuthResponseType.Success) {

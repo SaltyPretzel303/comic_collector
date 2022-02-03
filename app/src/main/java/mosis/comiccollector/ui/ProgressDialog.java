@@ -32,7 +32,6 @@ public class ProgressDialog extends Dialog implements ProgressDisplay {
         setContentView(R.layout.progress_dialog);
 
         setCanceledOnTouchOutside(false);
-//        getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
 
         progressBar = findViewById(R.id.progress_bar);
         progressBar.setMax(this.maxProgress);

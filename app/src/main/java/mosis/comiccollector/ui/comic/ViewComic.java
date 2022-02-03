@@ -16,6 +16,7 @@ public class ViewComic implements Serializable {
     public String title;
     public String description;
 
+    public String authorId;
     public transient MutableLiveData<ViewUser> liveAuthor;
     public transient MutableLiveData<Bitmap> liveTitlePage;
 
@@ -30,6 +31,7 @@ public class ViewComic implements Serializable {
     }
 
     public ViewComic(String modelId,
+                     String authorId,
                      String title,
                      String description,
                      Location location,
@@ -37,6 +39,7 @@ public class ViewComic implements Serializable {
                      int pagesCount) {
 
         this.comicId = modelId;
+        this.authorId = authorId;
 
         this.title = title;
         this.description = description;

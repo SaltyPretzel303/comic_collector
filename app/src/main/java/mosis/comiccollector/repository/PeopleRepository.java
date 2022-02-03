@@ -41,10 +41,6 @@ public interface PeopleRepository {
         void error(String err);
     }
 
-    interface DoneHandler {
-        void handleDone(String err);
-    }
-
     void getLastLocation(String userId, @NotNull LocationsReady handleLocation);
 
     void getNearbyFriendsLocations(String userId, GeoPoint point, double range,
@@ -77,5 +73,7 @@ public interface PeopleRepository {
     void makeFriends(String user_1, String user_2, DoneHandler doneHandler);
 
     void sendFriendRequest(String sender, String receiver, DoneHandler doneHandler);
+
+    void addRating(String userId, float rating, DoneHandler handler);
 
 }

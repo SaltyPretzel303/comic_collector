@@ -4,6 +4,8 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
@@ -71,6 +73,8 @@ public class ShortComicDialog extends Dialog implements LocationConsumer {
 
         this.liveLocation = liveLocation;
         this.howToCollect = howToCollect;
+
+
     }
 
     @Override
@@ -88,6 +92,8 @@ public class ShortComicDialog extends Dialog implements LocationConsumer {
                 }
             });
         }
+
+        getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
     }
 
     private void initViews(ViewComic vComic) {

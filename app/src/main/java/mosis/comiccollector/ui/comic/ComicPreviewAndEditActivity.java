@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -45,6 +46,15 @@ public class ComicPreviewAndEditActivity extends AppCompatActivity {
         Create
     }
 
+    public enum UpdateResult {
+        Updated,
+        Created
+    }
+
+    public static final String UPDATE_RESULT_PATH = "update_result";
+    public static final String NEW_PAGES_COUNT_RESULT = "new_pages_count";
+    public static final String COMIC_ID_RESULT = "new_comic_id";
+
     public static final String PREVIEW_REASON = "reason";
     public static final String COMIC_INFO_EXTRA = "comic_info";
 
@@ -59,9 +69,12 @@ public class ComicPreviewAndEditActivity extends AppCompatActivity {
     private static final int PREVIEW_PAGE_WIDTH = 150;
     private static final int PREVIEW_PAGE_HEIGHT = 200;
 
+    private PreviewReason reason;
+
     private ActivityResultLauncher<String[]> permissionsRequesterLauncher;
     private PermissionRequester permissionRequester;
 
+    private RecyclerView pagesListRv;
     private PreviewListAdapter pagesAdapter;
 
     private ComicPreviewViewModel viewModel;
@@ -70,6 +83,8 @@ public class ComicPreviewAndEditActivity extends AppCompatActivity {
     private ActivityResultLauncher<String> loadPicActivityLauncher;
 
     private Dialog currentDialog;
+
+    private boolean updated = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,10 +99,10 @@ public class ComicPreviewAndEditActivity extends AppCompatActivity {
         ViewComic comic = null;
         if (getIntent().hasExtra(COMIC_INFO_EXTRA)) {
             comic = (ViewComic) getIntent().getSerializableExtra(COMIC_INFO_EXTRA);
-            this.viewModel.setComic(comic);
+            viewModel.setComic(comic);
         }
 
-        PreviewReason reason = this.getReason(getIntent());
+        reason = this.getReason(getIntent());
 
         if (reason == PreviewReason.Create) {
             setupForCreate();
@@ -155,7 +170,9 @@ public class ComicPreviewAndEditActivity extends AppCompatActivity {
     }
 
     private void setupPagesAdapter(PreviewClickHandler clickHandler) {
-        this.pagesAdapter = new PreviewListAdapter(
+
+        pagesListRv = findViewById(R.id.new_pages_rv);
+        pagesAdapter = new PreviewListAdapter(
                 this,
                 R.layout.comic_preview_list_item,
                 PREVIEW_PAGE_WIDTH,
@@ -181,7 +198,7 @@ public class ComicPreviewAndEditActivity extends AppCompatActivity {
                 },
                 clickHandler);
 
-        ((RecyclerView) findViewById(R.id.new_pages_rv)).setAdapter(this.pagesAdapter);
+        pagesListRv.setAdapter(this.pagesAdapter);
     }
 
     private void pagePreviewCLick(String itemId) {
@@ -324,14 +341,11 @@ public class ComicPreviewAndEditActivity extends AppCompatActivity {
     }
 
     private void addNewPage(String newUri) {
-//        int index = currentComic.pagesCount;
-//
-//        newPages.add(new IndexedUriPage(index, newUri));
 
         int index = viewModel.addPage(newUri);
         pagesAdapter.notifyItemInserted(index);
 
-//        currentComic.pagesCount++;
+        pagesListRv.scrollToPosition(index);
     }
 
     private void removePage(int index) {
@@ -391,6 +405,8 @@ public class ComicPreviewAndEditActivity extends AppCompatActivity {
                                 progressDialog.dismiss();
 
                                 setupForEdit();
+
+                                updated = true;
                             }
                         });
                     });
@@ -417,9 +433,12 @@ public class ComicPreviewAndEditActivity extends AppCompatActivity {
         viewModel.updateComic().observe((LifecycleOwner) this, (Long aLong) -> {
             mainHandler.post(() -> {
                 progressDialog.addProgress(1);
+                Log.e("updateDialog", "Got progress ... ");
                 if (progressDialog.isDone()) {
                     progressDialog.hide();
                     progressDialog.dismiss();
+
+                    updated = true;
                 }
             });
         });
@@ -433,6 +452,26 @@ public class ComicPreviewAndEditActivity extends AppCompatActivity {
                 && (viewModel.getNewCount() > 0)
                 && (this.pickedLocation != null);
 
+    }
+
+    @Override
+    public void onBackPressed() {
+        Intent retIntent = new Intent();
+        ViewComic comic = viewModel.getComic();
+
+        if (reason == PreviewReason.Create && comic != null && updated) { // updated or created
+            retIntent.putExtra(UPDATE_RESULT_PATH, UpdateResult.Created);
+            retIntent.putExtra(COMIC_ID_RESULT, comic.comicId);
+        } else if (reason == PreviewReason.PreviewAndEdit && comic != null && updated) {
+            Log.e("backPress", "Returning with update ... ");
+            retIntent.putExtra(UPDATE_RESULT_PATH, UpdateResult.Updated);
+            retIntent.putExtra(COMIC_ID_RESULT, comic.comicId);
+            retIntent.putExtra(NEW_PAGES_COUNT_RESULT, comic.pagesCount);
+        }
+
+        setResult(Activity.RESULT_OK, retIntent);
+
+        finish();
     }
 
 }

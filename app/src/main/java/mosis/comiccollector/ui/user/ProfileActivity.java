@@ -9,6 +9,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -32,8 +33,8 @@ import mosis.comiccollector.ui.SortDialog;
 import mosis.comiccollector.ui.comic.PreviewListAdapter;
 import mosis.comiccollector.ui.comic.ComicPreviewAndEditActivity;
 import mosis.comiccollector.ui.comic.ViewComic;
-import mosis.comiccollector.ui.user.ShortProfileDialog;
-import mosis.comiccollector.ui.user.ViewUser;
+import mosis.comiccollector.ui.map.DiscoverMapActivity;
+import mosis.comiccollector.ui.map.MapFiltersState;
 import mosis.comiccollector.ui.viewmodel.UserProfileViewModel;
 
 public class ProfileActivity extends AppCompatActivity {
@@ -53,6 +54,7 @@ public class ProfileActivity extends AppCompatActivity {
     private PreviewListAdapter friendsAdapter;
 
     private ActivityResultLauncher<String> loadPicActivityLauncher;
+    private ActivityResultLauncher<Intent> createComicActivityLauncher;
 
     private UserProfileViewModel viewModel;
     private String myId;
@@ -78,7 +80,8 @@ public class ProfileActivity extends AppCompatActivity {
         this.viewModel = new ViewModelProvider(this).get(UserProfileViewModel.class);
         this.myId = this.viewModel.getMyId();
 
-        this.initLoadPictureActivityLauncher();
+        initLoadPictureActivityLauncher();
+        initCreateComicActivity();
 
         Intent intent = getIntent();
         if (intent.hasExtra(USER_DATA_EXTRA)) {
@@ -111,8 +114,44 @@ public class ProfileActivity extends AppCompatActivity {
 
                     viewModel.saveProfilePic(uri.toString());
 
-                }
-        );
+                });
+    }
+
+    private void initCreateComicActivity() {
+        this.createComicActivityLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                (actResult) -> {
+                    if (actResult.getResultCode() == Activity.RESULT_OK
+                            && actResult.getData() != null
+                            && actResult.getData().hasExtra(ComicPreviewAndEditActivity.UPDATE_RESULT_PATH)) {
+
+                        Log.e("profileAct", "Got result ... ");
+
+                        var result = actResult.getData().getSerializableExtra(
+                                ComicPreviewAndEditActivity.UPDATE_RESULT_PATH);
+
+                        String comicId = actResult
+                                .getData()
+                                .getStringExtra(ComicPreviewAndEditActivity.COMIC_ID_RESULT);
+
+                        if (result == ComicPreviewAndEditActivity.UpdateResult.Created) {
+                            Log.e("profileAct", "Updated result ... ");
+                            viewModel.updateMyCreatedComics(comicId);
+                        } else if (result == ComicPreviewAndEditActivity.UpdateResult.Updated) {
+                            int newCount = actResult
+                                    .getData()
+                                    .getIntExtra(ComicPreviewAndEditActivity.NEW_PAGES_COUNT_RESULT, 0);
+
+                            Log.e("profileAct", "Updated count with: " + newCount);
+
+                            viewModel.updatePagesCount(comicId, newCount);
+                        } else {
+                            Log.e("profileAct", "Unknown result ... ");
+                        }
+
+                    }
+
+                });
     }
 
     private void initView() {
@@ -475,17 +514,21 @@ public class ProfileActivity extends AppCompatActivity {
     // region click handlers
 
     private void addComicClick(View v) {
-        Intent addIntent = new Intent(this, ComicPreviewAndEditActivity.class);
-        addIntent.putExtra(
+
+        Intent crateIntent = new Intent(this, ComicPreviewAndEditActivity.class);
+        crateIntent.putExtra(
                 ComicPreviewAndEditActivity.PREVIEW_REASON,
                 ComicPreviewAndEditActivity.PreviewReason.Create);
 
-        startActivity(addIntent);
+        createComicActivityLauncher.launch(crateIntent);
     }
 
     private void createdComicClick(String id) {
         Intent updateIntent = new Intent(this, ComicPreviewAndEditActivity.class);
         ViewComic comic = viewModel.getCreatedComic(id);
+
+        Log.e("profileAct", "Clicked on created with count: " + comic.pagesCount);
+
         updateIntent.putExtra(
                 ComicPreviewAndEditActivity.COMIC_INFO_EXTRA,
                 comic);
@@ -499,11 +542,19 @@ public class ProfileActivity extends AppCompatActivity {
                     ComicPreviewAndEditActivity.PreviewReason.JustPreview);
         }
 
-        startActivity(updateIntent);
+
+        createComicActivityLauncher.launch(updateIntent);
+//        startActivity(updateIntent);
     }
 
     private void discoverComicClick(View v) {
-        // TODO implement ... I guess open map with comics
+
+        // show only unknownComics
+        MapFiltersState filters = new MapFiltersState(false, false, false, false, true);
+
+        Intent mapIntent = new Intent(this, DiscoverMapActivity.class);
+        mapIntent.putExtra(DiscoverMapActivity.FILTERS_EXTRA, filters);
+        startActivity(mapIntent);
     }
 
     private void collectedComicClick(String id) {
@@ -521,6 +572,12 @@ public class ProfileActivity extends AppCompatActivity {
 
     private void findFriendsClick(View v) {
 
+        // show only unknownPeople
+        MapFiltersState filters = new MapFiltersState(false, true, false, false, false);
+
+        Intent mapIntent = new Intent(this, DiscoverMapActivity.class);
+        mapIntent.putExtra(DiscoverMapActivity.FILTERS_EXTRA, filters);
+        startActivity(mapIntent);
     }
 
     private void friendPreviewClick(String id) {

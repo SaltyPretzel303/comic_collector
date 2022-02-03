@@ -44,7 +44,7 @@ public class AuthUserViewModel extends AndroidViewModel {
 
         UserAuthResponse authResponse = this.authRepo.getCurrentUser();
 
-        this.liveUser.postValue(this.userMapper.mapToViewModel(authResponse));
+        this.liveUser.postValue(this.userMapper.mapThis(authResponse));
 
         return this.liveUser;
     }
@@ -60,7 +60,7 @@ public class AuthUserViewModel extends AndroidViewModel {
         // mixing user and comic repository ...
 //        this.comicRepo.clearComicsCache();
 
-        this.liveUser.postValue(this.userMapper.mapToViewModel(response));
+        this.liveUser.postValue(this.userMapper.mapThis(response));
 
         return this.liveUser;
 
@@ -73,7 +73,7 @@ public class AuthUserViewModel extends AndroidViewModel {
 
         this.authRepo.loginWithEmail(email, password,
                 (UserAuthResponse response) -> {
-                    liveUser.postValue(userMapper.mapToViewModel(response));
+                    liveUser.postValue(userMapper.mapThis(response));
                 });
 
         return this.liveUser;
@@ -86,7 +86,7 @@ public class AuthUserViewModel extends AndroidViewModel {
 
         this.authRepo.registerWithEmail(email, username, password,
                 (UserAuthResponse response) -> {
-                    liveRegUser.postValue(userMapper.mapToViewModel(response));
+                    liveRegUser.postValue(userMapper.mapThis(response));
                 });
 
         return this.liveRegUser;
@@ -100,7 +100,7 @@ public class AuthUserViewModel extends AndroidViewModel {
         this.authRepo.logInWithGoogleAuth(
                 credentials,
                 (UserAuthResponse response) -> {
-                    liveUser.postValue(userMapper.mapToViewModel(response));
+                    liveUser.postValue(userMapper.mapThis(response));
                 });
 
 

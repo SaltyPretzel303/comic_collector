@@ -8,18 +8,15 @@
 
     <ImageView
         android:id="@+id/profile_pic_people_map"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="20dp"
-        android:adjustViewBounds="true"
-        android:maxWidth="200dp"
-        android:maxHeight="200dp" />
+        android:layout_width="220dp"
+        android:layout_height="220dp"
+        android:layout_margin="20dp" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_margin="20dp"
-        android:gravity="center"
+        android:gravity="top|center_horizontal"
         android:orientation="vertical">
 
         <TextView
@@ -35,12 +32,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="PlaceholderText"
-            android:textSize="35dp" />
+            android:textAlignment="center"
+            android:textSize="30dp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="15dp"
+            android:layout_marginTop="20dp"
             android:background="@drawable/rounded_gradient_back"
             android:paddingHorizontal="10dp"
             android:text="Rating" />

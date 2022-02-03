@@ -56,11 +56,10 @@ import mosis.comiccollector.util.Toaster;
 
 public class DiscoverMapActivity extends AppCompatActivity implements LocationConsumer {
 
+    public static final String FILTERS_EXTRA = "filters";
+
     private static final String PREFS_PATH = "map_prefs";
     private static final String FOLLOWING_BOOL = "is_following";
-    private static final String SHOW_FRIENDS_BOOL = "is_showing_friends";
-    private static final String SHOW_COMICS_BOOL = "is_showing_comics";
-
 
     private static final String[] POSSIBLE_PERMISSIONS = new String[]{
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -93,6 +92,7 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
     private IMyLocationConsumer myLocationConsumer;
 
     private MapFiltersState filtersState;
+    private boolean transientFilters;
 
     private UpdatableItemsOverlay friendsOverlay;
     private UpdatableItemsOverlay unknownPeopleOverlay;
@@ -118,10 +118,15 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
 
         this.viewModel = new ViewModelProvider(this).get(DiscoveryViewModel.class);
 
-
         this.loadDrawables();
 
         this.setupMapView();
+
+        Intent intent = getIntent();
+        if (intent.hasExtra(FILTERS_EXTRA)) {
+            filtersState = (MapFiltersState) intent.getSerializableExtra(FILTERS_EXTRA);
+            transientFilters = true; // will not be saved on pause
+        }
         this.setupFilters();
 
         this.loadMyself();
@@ -972,7 +977,7 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
             this.myLocationReceiver = null;
         }
 
-        if (filtersState != null) {
+        if (filtersState != null && !transientFilters) {
             MapFiltersState.write(this, filtersState);
         }
 
