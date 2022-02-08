@@ -23,6 +23,9 @@
             android:name=".ui.comic.ComicPreviewAndEditActivity"
             android:exported="false" />
         <activity
+            android:name=".ui.ListItemsActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.map.DiscoverMapActivity"
             android:exported="false" />
         <activity

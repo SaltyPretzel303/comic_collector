@@ -69,8 +69,6 @@ public class PreviewListAdapter extends RecyclerView.Adapter<PreviewListAdapter.
             this.textHolder.setVisibility(View.VISIBLE);
             this.page.setVisibility(View.GONE);
         }
-
-
     }
 
     private final Context context;

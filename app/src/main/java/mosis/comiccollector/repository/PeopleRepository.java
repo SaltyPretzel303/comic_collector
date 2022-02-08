@@ -57,6 +57,8 @@ public interface PeopleRepository {
 
     void getFriends(String userId, @NotNull PeopleReady peopleHandler);
 
+    void getUnknownPeople(String userId, @NotNull PeopleReady peopleHandler);
+
     void updateLocation(String userId, UserLocation newLocation);
 
     void createUser(User newUser, @NotNull PeopleReady doneHandler);

@@ -417,30 +417,31 @@ public class FirebaseComicRepository implements ComicRepository {
             .document(userId)
             .get()
             .addOnCompleteListener((@NonNull Task<DocumentSnapshot> task) -> {
-                if (!task.isSuccessful() || !task.getResult().exists()) {
-                    handler.handleComics(null);
-                    return;
+
+                List<String> collectedIds = new ArrayList<>();
+                collectedIds.add("-1"); // never matching id
+
+                if (task.isSuccessful()
+                    && task.getResult().exists()
+                    && task.getResult() != null) {
+
+                    var collectedObj = task
+                        .getResult()
+                        .toObject(UserCollectedComicsList.class);
+
+                    if (collectedObj != null && collectedObj.comicsIds != null) {
+                        collectedIds.addAll(collectedObj.comicsIds);
+                    }
+
                 }
 
-                UserCollectedComicsList collectedList = task
-                    .getResult()
-                    .toObject(UserCollectedComicsList.class);
-
-                if (collectedList == null
-                    || collectedList.comicsIds == null
-                    || collectedList.comicsIds.size() == 0) {
-
-                    handler.handleComics(Collections.emptyList());
-                    return;
-                }
-
-                var ids = splitSegments(
-                    collectedList.comicsIds,
+                var idSegments = splitSegments(
+                    collectedIds,
                     FIREBASE_WHEREIN_LIMIT);
 
                 List<Task<?>> tasks = new ArrayList<>();
 
-                for (var idsSegment : ids) {
+                for (var idsSegment : idSegments) {
                     tasks.add(FirebaseFirestore.getInstance()
                         .collection(COMICS_INFO_PATH)
                         .whereNotIn(Comic.COMIC_ID_FIELD, idsSegment)

@@ -16,7 +16,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import mosis.comiccollector.model.comic.Comic;
 import mosis.comiccollector.model.user.User;
@@ -665,17 +664,14 @@ public class DiscoveryViewModel extends AndroidViewModel {
     }
 
     public List<Comic> filterComics(List<Comic> input) {
-        var output = new ArrayList<Comic>();
+        var output = new ArrayList<>(input);
+
         if (comicTextFilter != null) {
-            output.addAll(input.stream()
-                .filter(comic -> comicTextFilter.matching(comic))
-                .collect(Collectors.toList()));
+            output.removeIf(comic -> !comicTextFilter.matching(comic));
         }
 
         if (comicRatingFilter != null) {
-            output.addAll(input.stream()
-                .filter(comic -> comicRatingFilter.matching(comic))
-                .collect(Collectors.toList()));
+            output.removeIf(comic -> !comicRatingFilter.matching(comic));
         }
 
         return output;

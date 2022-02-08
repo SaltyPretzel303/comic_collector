@@ -227,7 +227,7 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
     private MapFiltersDialog.TextFilter getPeopleTextFilter() {
         return new MapFiltersDialog.TextFilter() {
             @Override
-            public String lastText() {
+            public String getLastText() {
                 return lastPeopleTextFilter;
             }
 
@@ -248,7 +248,7 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
         return new MapFiltersDialog.RatingFilter() {
 
             @Override
-            public float lastRating() {
+            public float getLastRating() {
                 return lastPeopleRatingFilter;
             }
 
@@ -325,7 +325,7 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
         return new MapFiltersDialog.TextFilter() {
 
             @Override
-            public String lastText() {
+            public String getLastText() {
                 return lastComicTextFilter;
             }
 
@@ -338,6 +338,10 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
             public void handleText(String text) {
                 lastComicTextFilter = text;
                 viewModel.filterComicsByText(text);
+
+                loadCreatedComics();
+                loadCollectedComics();
+                loadUnknownComics();
             }
         };
     }
@@ -346,7 +350,7 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
         return new MapFiltersDialog.RatingFilter() {
 
             @Override
-            public float lastRating() {
+            public float getLastRating() {
                 return lastComicRatingFilter;
             }
 
@@ -354,6 +358,10 @@ public class DiscoverMapActivity extends AppCompatActivity implements LocationCo
             public void handlerRating(float rating) {
                 lastComicRatingFilter = rating;
                 viewModel.filterComicsByRating(rating);
+
+                loadCreatedComics();
+                loadCollectedComics();
+                loadUnknownComics();
             }
         };
     }

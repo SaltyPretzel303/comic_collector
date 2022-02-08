@@ -325,6 +325,62 @@ public class FirebasePeopleRepository implements PeopleRepository {
     }
 
     @Override
+    public void getUnknownPeople(String userId, @NonNull PeopleReady peopleHandler) {
+        FirebaseFirestore.getInstance()
+            .collection(USER_FRIENDS_PATH)
+            .document(userId)
+            .get()
+            .addOnCompleteListener((@NonNull Task<DocumentSnapshot> friendsTask) -> {
+
+                List<String> friendIds = new ArrayList<>();
+                friendIds.add("-1"); // never matching id
+
+                if (friendsTask.isSuccessful()
+                    && friendsTask.getResult().exists()
+                    && friendsTask.getResult() != null) {
+
+                    var friendsObj = friendsTask
+                        .getResult()
+                        .toObject(UserFriendsList.class);
+
+                    friendIds.addAll(friendsObj.friendsIds);
+                }
+
+                var idSegments = splitSegments(
+                    friendIds,
+                    FIREBASE_WHEREIN_LIMIT);
+
+                List<Task<QuerySnapshot>> tasks = new ArrayList<>();
+                for (var idSegment : idSegments) {
+                    tasks.add(
+                        FirebaseFirestore.getInstance()
+                            .collection(USER_INFO_PATH)
+                            .whereNotIn(User.USER_ID_FIELD, idSegment)
+                            .get());
+                }
+
+                Tasks
+                    .whenAllComplete(tasks)
+                    .addOnCompleteListener((@NonNull Task<List<Task<?>>> resultTask) -> {
+                        if (!resultTask.isSuccessful()) {
+                            peopleHandler.handlePeople(Collections.emptyList());
+                            return;
+                        }
+
+                        List<User> people = joinTaskResults(
+                            resultTask.getResult(),
+                            User.class);
+                        people.removeIf((person) -> person.getUserId().equals(userId));
+
+                        peopleHandler.handlePeople(people);
+
+                        return;
+                    });
+            });
+
+    }
+
+    @Override
     public void updateLocation(String userId, UserLocation newLocation) {
 
         new GeoFirestore(FirebaseFirestore.getInstance().collection(USER_LOCATIONS_PATH))

@@ -18,9 +18,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.RatingBar;
 import android.widget.TextView;
 
@@ -29,6 +27,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import mosis.comiccollector.R;
+import mosis.comiccollector.ui.ListItemsActivity;
 import mosis.comiccollector.ui.PreviewItemData;
 import mosis.comiccollector.ui.PreviewItemProvider;
 import mosis.comiccollector.ui.SortDialog;
@@ -286,7 +285,7 @@ public class ProfileActivity extends AppCompatActivity {
             @Override
             public void performSort() {
                 collectedSort = getDisplayName();
-                viewModel.sortCreatedComics((comic1, comic2) -> {
+                viewModel.sortCollectedComics((comic1, comic2) -> {
                     return comic1.title.compareTo(comic2.title) * -1;
                 });
                 collectedAdapter.notifyDataSetChanged();
@@ -302,9 +301,8 @@ public class ProfileActivity extends AppCompatActivity {
             @Override
             public void performSort() {
                 collectedSort = getDisplayName();
-                viewModel.sortCreatedComics((comic1, comic2) -> {
-                    return 0;
-//                    return comic1.rating - comic2.rating;
+                viewModel.sortCollectedComics((comic1, comic2) -> {
+                    return (int) (comic1.rating - comic2.rating);
                 });
                 collectedAdapter.notifyDataSetChanged();
             }
@@ -319,7 +317,7 @@ public class ProfileActivity extends AppCompatActivity {
             @Override
             public void performSort() {
                 collectedSort = getDisplayName();
-                viewModel.sortCreatedComics((comic1, comic2) -> {
+                viewModel.sortCollectedComics((comic1, comic2) -> {
                     return comic1.pagesCount - comic2.pagesCount;
                 });
                 collectedAdapter.notifyDataSetChanged();
@@ -344,7 +342,7 @@ public class ProfileActivity extends AppCompatActivity {
             @Override
             public void performSort() {
                 friendsSort = getDisplayName();
-                viewModel.sortFirends((user1, user2) -> {
+                viewModel.sortPeople((user1, user2) -> {
                     return user1.name.compareTo(user2.name);
                 });
                 friendsAdapter.notifyDataSetChanged();
@@ -560,12 +558,20 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void discoverComicClick(View v) {
-        // show only unknownComics
-        MapFiltersState filters = new MapFiltersState(false, false, false, false, true);
 
-        Intent mapIntent = new Intent(this, DiscoverMapActivity.class);
-        mapIntent.putExtra(DiscoverMapActivity.FILTERS_EXTRA, filters);
-        startActivity(mapIntent);
+        Intent listIntent = new Intent(this, ListItemsActivity.class);
+        listIntent.putExtra(
+            ListItemsActivity.LIST_TYPE_EXTRA,
+            ListItemsActivity.TYPE_COMIC);
+
+        startActivity(listIntent);
+
+        // show only unknownComics
+//        MapFiltersState filters = new MapFiltersState(false, false, false, false, true);
+//
+//        Intent mapIntent = new Intent(this, DiscoverMapActivity.class);
+//        mapIntent.putExtra(DiscoverMapActivity.FILTERS_EXTRA, filters);
+//        startActivity(mapIntent);
     }
 
     private void collectedComicClick(String id) {
@@ -587,12 +593,19 @@ public class ProfileActivity extends AppCompatActivity {
 
     private void findFriendsClick(View v) {
 
-        // show only unknownPeople
-        MapFiltersState filters = new MapFiltersState(false, true, false, false, false);
+        Intent listIntent = new Intent(this, ListItemsActivity.class);
+        listIntent.putExtra(
+            ListItemsActivity.LIST_TYPE_EXTRA,
+            ListItemsActivity.TYPE_PEOPLE);
 
-        Intent mapIntent = new Intent(this, DiscoverMapActivity.class);
-        mapIntent.putExtra(DiscoverMapActivity.FILTERS_EXTRA, filters);
-        startActivity(mapIntent);
+        startActivity(listIntent);
+
+        // show only unknownPeople
+//        MapFiltersState filters = new MapFiltersState(false, true, false, false, false);
+//
+//        Intent mapIntent = new Intent(this, DiscoverMapActivity.class);
+//        mapIntent.putExtra(DiscoverMapActivity.FILTERS_EXTRA, filters);
+//        startActivity(mapIntent);
     }
 
     private void friendPreviewClick(String id) {

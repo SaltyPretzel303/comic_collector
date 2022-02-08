@@ -27,7 +27,7 @@ public class MapFiltersDialog extends Dialog {
     }
 
     public interface TextFilter {
-        String lastText();
+        String getLastText();
 
         String getText();
 
@@ -35,7 +35,7 @@ public class MapFiltersDialog extends Dialog {
     }
 
     public interface RatingFilter {
-        float lastRating();
+        float getLastRating();
 
         void handlerRating(float rating);
     }
@@ -79,7 +79,7 @@ public class MapFiltersDialog extends Dialog {
         if (textFilter != null) {
 
             ((EditText) findViewById(R.id.map_text_filter))
-                .setTooltipText(textFilter.getText());
+                .setText(textFilter.getLastText());
 
             ((EditText) findViewById(R.id.map_text_filter))
                 .addTextChangedListener(new TextWatcher() {
@@ -104,6 +104,9 @@ public class MapFiltersDialog extends Dialog {
         }
 
         if (ratingFilter != null) {
+            ((RatingBar) findViewById(R.id.map_rating_filter))
+                .setRating(ratingFilter.getLastRating());
+
             ((RatingBar) findViewById(R.id.map_rating_filter))
                 .setOnRatingBarChangeListener((ratingBar, rating, fromUser) -> {
                     ratingFilter.handlerRating(rating);

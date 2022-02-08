@@ -29,7 +29,7 @@ public class UserProfileViewModel extends AndroidViewModel {
         int compare(ViewComic comic1, ViewComic comic2);
     }
 
-    public interface SortFriendsCriteria {
+    public interface SortPeopleCriteria {
         int compare(ViewUser user1, ViewUser user2);
     }
 
@@ -201,8 +201,8 @@ public class UserProfileViewModel extends AndroidViewModel {
 
     public ViewComic getCreatedComicAt(int index, int width, int height) {
         if (liveCreatedComics != null
-                && liveCreatedComics.getValue() != null
-                && liveCreatedComics.getValue().size() >= index) {
+            && liveCreatedComics.getValue() != null
+            && liveCreatedComics.getValue().size() >= index) {
 
             ViewComic comic = liveCreatedComics.getValue().get(index);
             if (comic.liveTitlePage == null) {
@@ -217,7 +217,7 @@ public class UserProfileViewModel extends AndroidViewModel {
 
     public int getCreatedCount() {
         if (liveCreatedComics != null
-                && liveCreatedComics.getValue() != null) {
+            && liveCreatedComics.getValue() != null) {
             return liveCreatedComics.getValue().size();
         }
 
@@ -285,15 +285,15 @@ public class UserProfileViewModel extends AndroidViewModel {
 
     public ViewComic getCollectedComicAt(int index, int width, int height) {
         if (liveCollectedComics != null
-                && liveCollectedComics.getValue() != null
-                && liveCollectedComics.getValue().size() >= index) {
+            && liveCollectedComics.getValue() != null
+            && liveCollectedComics.getValue().size() >= index) {
 
             ViewComic comic = liveCollectedComics.getValue().get(index);
             if (comic.liveTitlePage == null) {
                 comic.liveTitlePage = this.loadTitlePage(
-                        comic.comicId,
-                        width,
-                        height);
+                    comic.comicId,
+                    width,
+                    height);
             }
 
             return comic;
@@ -353,8 +353,8 @@ public class UserProfileViewModel extends AndroidViewModel {
 
     public ViewUser getFriendAt(int index, int width, int height) {
         if (liveFriends != null
-                && liveFriends.getValue() != null
-                && liveFriends.getValue().size() >= index) {
+            && liveFriends.getValue() != null
+            && liveFriends.getValue().size() >= index) {
 
             ViewUser friend = liveFriends.getValue().get(index);
             if (friend.liveProfilePic == null) {
@@ -385,7 +385,7 @@ public class UserProfileViewModel extends AndroidViewModel {
         this.liveCollectedComics.getValue().sort(criteria::compare);
     }
 
-    public void sortFirends(SortFriendsCriteria criteria) {
+    public void sortPeople(SortPeopleCriteria criteria) {
         this.liveFriends.getValue().sort(criteria::compare);
     }
 
