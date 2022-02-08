@@ -43,16 +43,17 @@ public interface PeopleRepository {
 
     void getLastLocation(String userId, @NotNull LocationsReady handleLocation);
 
-    void getNearbyFriendsLocations(String userId, GeoPoint point, double range,
-                                   @NotNull PeopleUpdateHandler onFriendsUpdate);
-
-    void updateFriendsRadius(GeoPoint point, double radius);
-
-
-    void getNearbyPeopleLocations(String userId, GeoPoint point, double range,
-                                  @NotNull PeopleUpdateHandler onPeopleUpdate);
+    void getNearbyFriends(String userId, GeoPoint point, double range,
+                          @NotNull PeopleUpdateHandler onFriendsUpdate);
 
     void updatePeopleRadius(GeoPoint point, double radius);
+
+
+    void getNearbyUnknownPeople(String userId, GeoPoint point, double range,
+                                @NotNull PeopleUpdateHandler onPeopleUpdate);
+
+    void stopFollowingPeople(String userId);
+
 
     void getFriends(String userId, @NotNull PeopleReady peopleHandler);
 
@@ -68,12 +69,10 @@ public interface PeopleRepository {
 
     void updatePicUri(String userId, String picUri, @NotNull UriReady uriHandler);
 
-    UnsubscribeProvider subscribeForLocUpdates(String userId, PeopleLocationConsumer locHandler);
-
     void makeFriends(String user_1, String user_2, DoneHandler doneHandler);
 
     void sendFriendRequest(String sender, String receiver, DoneHandler doneHandler);
 
-    void addRating(String userId, float rating, DoneHandler handler);
+    void updateRating(String userId, float newRating, DoneHandler onDone);
 
 }

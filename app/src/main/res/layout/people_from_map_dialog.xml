@@ -4,7 +4,6 @@
     android:layout_height="match_parent"
     android:gravity="center"
     android:orientation="vertical">
-    <!--    TODO adjust bckColor ... just not white-->
 
     <ImageView
         android:id="@+id/profile_pic_people_map"
@@ -12,63 +11,36 @@
         android:layout_height="220dp"
         android:layout_margin="20dp" />
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_margin="20dp"
-        android:gravity="top|center_horizontal"
-        android:orientation="vertical">
+    <!--    <LinearLayout-->
+    <!--        android:layout_width="match_parent"-->
+    <!--        android:layout_height="match_parent"-->
+    <!--        android:layout_margin="20dp"-->
+    <!--        android:gravity="top|center_horizontal"-->
+    <!--        android:orientation="vertical">-->
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/rounded_gradient_back"
-            android:paddingHorizontal="10dp"
-            android:text="Username"
-            android:textSize="18dp" />
-
-        <TextView
-            android:id="@+id/username_people_map"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="PlaceholderText"
-            android:textAlignment="center"
-            android:textSize="30dp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:background="@drawable/rounded_gradient_back"
-            android:paddingHorizontal="10dp"
-            android:text="Rating" />
-
-        <ProgressBar
-            android:id="@+id/rating_people_map_pb"
-            style="@android:style/Widget.ProgressBar.Horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="10dp"
-            android:layout_marginHorizontal="20dp"
-            android:layout_marginTop="5dp"
-            android:max="100"
-            android:progress="65"
-            android:progressBackgroundTint="@android:color/holo_red_dark"
-            android:progressTint="@android:color/holo_green_light" />
-
-        <TextView
-            android:id="@+id/rating_people_map_tv"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="61/100" />
-
-        <Button
-            android:id="@+id/open_profile_people_map"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:text="View profile" />
+    <TextView
+        android:id="@+id/username_people_map"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="PlaceholderText"
+        android:textAlignment="center"
+        android:textSize="30dp" />
 
 
-    </LinearLayout>
+    <RatingBar
+        android:isIndicator="true"
+        android:id="@+id/people_from_map_rating_rb"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp" />
+
+    <Button
+        android:id="@+id/open_profile_people_map"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="View profile" />
+
+
+    <!--    </LinearLayout>-->
 
 </LinearLayout>

@@ -12,16 +12,22 @@ import androidx.lifecycle.MutableLiveData;
 import java.util.ArrayList;
 import java.util.List;
 
+import mosis.comiccollector.repository.AuthRepository;
 import mosis.comiccollector.repository.ComicRepository;
+import mosis.comiccollector.repository.DoneHandler;
 import mosis.comiccollector.repository.PeopleRepository;
+import mosis.comiccollector.repository.RatingsRepository;
 import mosis.comiccollector.ui.comic.IndexedUriPage;
 import mosis.comiccollector.ui.comic.ViewComic;
 import mosis.comiccollector.util.DepProvider;
 
 public class ReadViewModel extends AndroidViewModel {
 
+    private AuthRepository authRepo;
     private PeopleRepository peopleRepo;
     private ComicRepository comicsRepo;
+
+    private RatingsRepository ratingRepo;
 
     private List<IndexedBitmapPage> pages;
     private ViewComic comic;
@@ -30,8 +36,10 @@ public class ReadViewModel extends AndroidViewModel {
         super(application);
 
         this.pages = new ArrayList<>();
+        this.authRepo = DepProvider.getAuthRepository();
         this.peopleRepo = DepProvider.getPeopleRepository();
         this.comicsRepo = DepProvider.getComicRepository();
+        this.ratingRepo = DepProvider.getRatingRepository();
     }
 
     public void setComic(ViewComic newComic) {
@@ -71,40 +79,60 @@ public class ReadViewModel extends AndroidViewModel {
 
     private IndexedBitmapPage searchLoadedPages(int index) {
         return pages.stream()
-                .filter((page) -> page.index == index)
-                .findFirst()
-                .orElse(null);
+            .filter((page) -> page.index == index)
+            .findFirst()
+            .orElse(null);
     }
 
     public int getPagesCount() {
         return comic.pagesCount;
     }
 
-    public LiveData<Void> setRating(float comicRating, float authorRating) {
+    public LiveData<Void> addRating(float comicRating, float authorRating) {
         var retData = new MutableLiveData<Void>();
 
-        comicsRepo.addRating(comic.comicId, comicRating, (comicErr) -> {
+        ratingRepo.addRating(
+            authRepo.getCurrentUser().user.getUserId(),
+            comic.authorId,
+            authorRating,
+            comic.comicId,
+            comicRating,
+            (err) -> {
 
-            if (comicErr != null) {
-                Log.e("readViewModel", "Error while updating comic rating: " + comicErr);
+                // TODO I guess this is gonna be used just to hide loading screen
+                // with void I kinda can't see if there was an error
                 retData.postValue(null);
-                return;
-            }
+                Log.e("readViewModel", "New rating added ... ");
 
-            peopleRepo.addRating(comic.authorId, authorRating, (authorErr) -> {
-                if (authorErr != null) {
-                    Log.e("readViewModel", "Error while updating author rating: " + authorErr);
-                    retData.postValue(null);
-                    return;
-                }
-
-                Log.e("readViewModel", "Ratings updated ... ");
-                retData.postValue(null);
             });
 
-        });
-
         return retData;
+    }
+
+    public boolean isMine() {
+        return authRepo.getCurrentUser().user.getUserId().equals(comic.authorId);
+    }
+
+    public LiveData<Boolean> shouldRate() {
+        var liveData = new MutableLiveData<Boolean>();
+
+        if (isMine()) {
+            Log.e("readViewModel", "Comic is mine ... ");
+            liveData.postValue(false);
+        } else {
+            Log.e("readViewModel", "Comic is NOT mine, checking prev. rating ... ");
+
+            var myId = authRepo.getCurrentUser().user.getUserId();
+
+            ratingRepo.getRating(myId, comic.comicId, (value) -> {
+                Log.e("readViewModel", "Got " + (value != null) + " from repo ... ");
+
+                liveData.postValue(value == null);
+            });
+
+        }
+
+        return liveData;
     }
 
 }

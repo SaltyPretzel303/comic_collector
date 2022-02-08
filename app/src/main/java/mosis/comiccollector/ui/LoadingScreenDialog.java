@@ -15,7 +15,7 @@ import java.util.Date;
 import mosis.comiccollector.R;
 
 // TODO remove, this one won't be used I think
-// is kinda brokern
+// is kinda broken
 public class LoadingScreenDialog extends Dialog {
 
     private Handler handler;

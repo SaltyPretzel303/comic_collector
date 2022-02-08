@@ -11,6 +11,7 @@ import android.util.Log;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.RatingBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -52,9 +53,9 @@ public class ShortComicDialog extends Dialog implements LocationConsumer {
     private UserLocation lastLocation;
 
     public ShortComicDialog(
-            @NonNull Context context,
-            MutableLiveData<ViewComic> comic,
-            ComicOrigin origin) {
+        @NonNull Context context,
+        MutableLiveData<ViewComic> comic,
+        ComicOrigin origin) {
         super(context);
 
         this.context = context;
@@ -64,17 +65,15 @@ public class ShortComicDialog extends Dialog implements LocationConsumer {
     }
 
     public ShortComicDialog(
-            @NonNull Context context,
-            MutableLiveData<ViewComic> comic,
-            ComicOrigin origin,
-            LiveData<UserLocation> liveLocation,
-            CollectHandler howToCollect) {
+        @NonNull Context context,
+        MutableLiveData<ViewComic> comic,
+        ComicOrigin origin,
+        LiveData<UserLocation> liveLocation,
+        CollectHandler howToCollect) {
         this(context, comic, origin);
 
         this.liveLocation = liveLocation;
         this.howToCollect = howToCollect;
-
-
     }
 
     @Override
@@ -99,15 +98,10 @@ public class ShortComicDialog extends Dialog implements LocationConsumer {
     private void initViews(ViewComic vComic) {
 
         ((TextView) findViewById(R.id.comic_from_map_title_tv))
-                .setText(vComic.title);
+            .setText(vComic.title);
 
         ((TextView) findViewById(R.id.comic_from_map_description_tv))
-                .setText(vComic.description);
-
-        ((ProgressBar) findViewById(R.id.comic_from_map_pb))
-                .setProgress(vComic.rating);
-        ((TextView) findViewById(R.id.comic_from_map_rating_tv))
-                .setText(vComic.rating + "/100");
+            .setText(vComic.description);
 
         vComic.liveAuthor.observe((LifecycleOwner) context, (ViewUser viewUser) -> {
             TextView button = findViewById(R.id.comic_from_map_author_tv);
@@ -116,7 +110,10 @@ public class ShortComicDialog extends Dialog implements LocationConsumer {
                 Dialog authorDialog = new ShortProfileDialog(context, vComic.liveAuthor);
                 authorDialog.show();
             });
+
         });
+
+        ((RatingBar) findViewById(R.id.short_comic_rating_rb)).setRating(vComic.rating);
 
         vComic.liveTitlePage.observe((LifecycleOwner) context, (Bitmap page) -> {
             if (page == null) {
@@ -125,7 +122,7 @@ public class ShortComicDialog extends Dialog implements LocationConsumer {
             }
 
             ((ImageView) findViewById(R.id.comic_from_map_title_page_iv))
-                    .setImageBitmap(page);
+                .setImageBitmap(page);
 
         });
 
@@ -135,27 +132,29 @@ public class ShortComicDialog extends Dialog implements LocationConsumer {
             actionButton.setOnClickListener(v -> {
                 Intent updateIntent = new Intent(context, ComicPreviewAndEditActivity.class);
                 updateIntent.putExtra(
-                        ComicPreviewAndEditActivity.COMIC_INFO_EXTRA,
-                        vComic);
+                    ComicPreviewAndEditActivity.COMIC_INFO_EXTRA,
+                    vComic);
                 updateIntent.putExtra(
-                        ComicPreviewAndEditActivity.PREVIEW_REASON,
-                        ComicPreviewAndEditActivity.PreviewReason.PreviewAndEdit);
+                    ComicPreviewAndEditActivity.PREVIEW_REASON,
+                    ComicPreviewAndEditActivity.PreviewReason.PreviewAndEdit);
 
                 context.startActivity(updateIntent);
             });
+            actionButton.setEnabled(true);
         } else if (origin == ComicOrigin.Collected) {
             actionButton.setText(KNOWN_COMIC_BUTTON_TEXT);
             actionButton.setOnClickListener(v -> {
                 Intent updateIntent = new Intent(context, ComicPreviewAndEditActivity.class);
                 updateIntent.putExtra(
-                        ComicPreviewAndEditActivity.COMIC_INFO_EXTRA,
-                        vComic);
+                    ComicPreviewAndEditActivity.COMIC_INFO_EXTRA,
+                    vComic);
                 updateIntent.putExtra(
-                        ComicPreviewAndEditActivity.PREVIEW_REASON,
-                        ComicPreviewAndEditActivity.PreviewReason.JustPreview);
+                    ComicPreviewAndEditActivity.PREVIEW_REASON,
+                    ComicPreviewAndEditActivity.PreviewReason.JustPreview);
 
                 context.startActivity(updateIntent);
             });
+            actionButton.setEnabled(true);
         } else {
             // unknown comic
 
@@ -170,8 +169,8 @@ public class ShortComicDialog extends Dialog implements LocationConsumer {
             boolean enabled = false;
             if (lastLocation != null) {
                 double distance = myDistance(
-                        lastLocation.getLatitude(),
-                        lastLocation.getLongitude());
+                    lastLocation.getLatitude(),
+                    lastLocation.getLongitude());
 
                 Log.e("shortComic", "INITIAL (m) distance is : " + distance);
 
@@ -196,10 +195,10 @@ public class ShortComicDialog extends Dialog implements LocationConsumer {
     private double myDistance(double myLat, double myLong) {
         if (comic.getValue() != null) {
             double myDistance = Distance.calculateInKm(
-                    myLat,
-                    myLong,
-                    comic.getValue().location.latitude,
-                    comic.getValue().location.longitude);
+                myLat,
+                myLong,
+                comic.getValue().location.latitude,
+                comic.getValue().location.longitude);
 
             Log.e("shortComic", "Calculated (m) distance is : " + myDistance);
 

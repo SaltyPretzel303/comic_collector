@@ -8,11 +8,13 @@ import mosis.comiccollector.model.user.User;
 import mosis.comiccollector.model.user.UserAuthResponse;
 import mosis.comiccollector.repository.DataMapper;
 import mosis.comiccollector.repository.PeopleRepository;
+import mosis.comiccollector.repository.RatingsRepository;
 import mosis.comiccollector.repository.impl.FirebaseComicRepository;
 import mosis.comiccollector.repository.impl.FirebasePeopleRepository;
 import mosis.comiccollector.repository.impl.FirebaseAuthRepository;
 import mosis.comiccollector.repository.ComicRepository;
 import mosis.comiccollector.repository.AuthRepository;
+import mosis.comiccollector.repository.impl.FirebaseRatingRepository;
 import mosis.comiccollector.ui.comic.ViewComic;
 import mosis.comiccollector.ui.user.ViewUser;
 import mosis.comiccollector.ui.viewmodel.mapper.AuthUserMapper;
@@ -64,6 +66,10 @@ public class DepProvider {
 
     public static PeopleRepository getPeopleRepository() {
         return new FirebasePeopleRepository();
+    }
+
+    public static RatingsRepository getRatingRepository() {
+        return new FirebaseRatingRepository();
     }
 
     public static DataMapper<UserAuthResponse, ViewUser> getAuthUserMapper() {

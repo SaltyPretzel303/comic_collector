@@ -1,5 +1,6 @@
 package mosis.comiccollector.ui.comic;
 
+import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
@@ -21,6 +22,7 @@ import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.RatingBar;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -35,6 +37,7 @@ import mosis.comiccollector.ui.map.PickAPlaceDialog;
 import mosis.comiccollector.ui.PreviewItemData;
 import mosis.comiccollector.ui.PreviewItemProvider;
 import mosis.comiccollector.ui.ProgressDialog;
+import mosis.comiccollector.ui.user.ShortProfileDialog;
 import mosis.comiccollector.ui.viewmodel.ComicPreviewViewModel;
 import mosis.comiccollector.util.Toaster;
 
@@ -60,10 +63,10 @@ public class ComicPreviewAndEditActivity extends AppCompatActivity {
 
 
     private static final String[] POSSIBLE_PERMISSIONS = new String[]{
-            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.ACCESS_COARSE_LOCATION,
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_BACKGROUND_LOCATION
+        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+        Manifest.permission.ACCESS_COARSE_LOCATION,
+        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.ACCESS_BACKGROUND_LOCATION
     };
 
     private static final int PREVIEW_PAGE_WIDTH = 150;
@@ -81,6 +84,7 @@ public class ComicPreviewAndEditActivity extends AppCompatActivity {
     private Location pickedLocation;
 
     private ActivityResultLauncher<String> loadPicActivityLauncher;
+    private ActivityResultLauncher<Intent> readActivityLauncher;
 
     private Dialog currentDialog;
 
@@ -92,6 +96,7 @@ public class ComicPreviewAndEditActivity extends AppCompatActivity {
         setContentView(R.layout.activity_comic_preview_edit);
 
         initLoadPictureActivityLauncher();
+        initReadActivityLauncher();
         initPermissionRequester();
 
         this.viewModel = new ViewModelProvider(this).get(ComicPreviewViewModel.class);
@@ -129,10 +134,13 @@ public class ComicPreviewAndEditActivity extends AppCompatActivity {
         findViewById(R.id.add_page_button).setVisibility(View.GONE);
 
         ((TextView) findViewById(R.id.comic_name_tv))
-                .setText(viewModel.getComic().title);
+            .setText(viewModel.getComic().title);
         ((TextView) findViewById(R.id.comic_description_tv))
-                .setText(viewModel.getComic().description);
+            .setText(viewModel.getComic().description);
+        ((RatingBar) findViewById(R.id.preview_edit_comic_rating_rb))
+            .setRating(viewModel.getComic().rating);
 
+        findViewById(R.id.preview_comic_author_button).setOnClickListener(this::showAuthorClick);
     }
 
     private void setupForEdit() {
@@ -149,9 +157,11 @@ public class ComicPreviewAndEditActivity extends AppCompatActivity {
         findViewById(R.id.add_comic_finish_button).setOnClickListener(this::updateFinishClick);
 
         ((TextView) findViewById(R.id.comic_name_tv))
-                .setText(viewModel.getComic().title);
+            .setText(viewModel.getComic().title);
         ((TextView) findViewById(R.id.comic_description_tv))
-                .setText(viewModel.getComic().description);
+            .setText(viewModel.getComic().description);
+        ((RatingBar) findViewById(R.id.preview_edit_comic_rating_rb))
+            .setRating(viewModel.getComic().rating);
     }
 
     private void setupForCreate() {
@@ -164,60 +174,62 @@ public class ComicPreviewAndEditActivity extends AppCompatActivity {
 
         findViewById(R.id.preview_comic_author_button_holder).setVisibility(View.GONE);
 
+        findViewById(R.id.preview_edit_comic_rating_rb).setVisibility(View.GONE);
+
         findViewById(R.id.add_page_button).setOnClickListener(this::addPageClick);
         findViewById(R.id.pick_a_place_button).setOnClickListener(this::pickAPlaceClick);
         findViewById(R.id.add_comic_finish_button).setOnClickListener(this::createFinishClick);
+
     }
 
     private void setupPagesAdapter(PreviewClickHandler clickHandler) {
 
         pagesListRv = findViewById(R.id.new_pages_rv);
         pagesAdapter = new PreviewListAdapter(
-                this,
-                R.layout.comic_preview_list_item,
-                PREVIEW_PAGE_WIDTH,
-                PREVIEW_PAGE_HEIGHT,
-                new PreviewItemProvider() {
-                    @Override
-                    public PreviewItemData getItem(int index) {
-                        return new PreviewItemData(
-                                "" + index,
-                                "" + index,
-                                " ",
-                                viewModel.getPage(
-                                        index,
-                                        PREVIEW_PAGE_WIDTH,
-                                        PREVIEW_PAGE_HEIGHT)
-                                        .livePage);
-                    }
+            this,
+            R.layout.comic_preview_list_item,
+            PREVIEW_PAGE_WIDTH,
+            PREVIEW_PAGE_HEIGHT,
+            new PreviewItemProvider() {
+                @Override
+                public PreviewItemData getItem(int index) {
+                    return new PreviewItemData(
+                        "" + index,
+                        "" + index,
+                        " ",
+                        viewModel.getPage(
+                            index,
+                            PREVIEW_PAGE_WIDTH,
+                            PREVIEW_PAGE_HEIGHT)
+                            .livePage);
+                }
 
-                    @Override
-                    public int getItemsCount() {
-                        return viewModel.getPagesCount();
-                    }
-                },
-                clickHandler);
+                @Override
+                public int getItemsCount() {
+                    return viewModel.getPagesCount();
+                }
+            },
+            clickHandler);
 
         pagesListRv.setAdapter(this.pagesAdapter);
     }
 
     private void pagePreviewCLick(String itemId) {
         Bitmap image = viewModel.getPage(
-                Integer.parseInt(itemId),
-                ImagePreviewWithActionsDialog.PAGE_WIDTH,
-                ImagePreviewWithActionsDialog.PAGE_HEIGHT)
-                .livePage
-                .getValue(); // this bitmap should already be loaded
+            Integer.parseInt(itemId),
+            ImagePreviewWithActionsDialog.PAGE_WIDTH,
+            ImagePreviewWithActionsDialog.PAGE_HEIGHT)
+            .livePage
+            .getValue(); // this bitmap should already be loaded
         // TODO dimensions for dialog are gonna be larger than for previewList
         // pass LiveData to dialog and setup ViewModel to reload bitmap if diff size is requested
 
         Intent readIntent = new Intent(this, ReadActivity.class);
         readIntent.putExtra(ReadActivity.COMIC_EXTRA, viewModel.getComic());
         readIntent.putExtra(ReadActivity.COMIC_PAGE_EXTRA, Integer.parseInt(itemId));
-        startActivity(readIntent);
+//        startActivity(readIntent);
+        readActivityLauncher.launch(readIntent);
 
-//        this.currentDialog = new ImagePreviewWithActionsDialog(this, image, null);
-//        this.currentDialog.show();
     }
 
     private void previewWithRemoveClick(String itemId) {
@@ -226,11 +238,11 @@ public class ComicPreviewAndEditActivity extends AppCompatActivity {
         if (viewModel.isNewPage(index)) {
             // clicked on some of the new comics
             Bitmap image = viewModel.getPage(
-                    Integer.parseInt(itemId),
-                    ImagePreviewWithActionsDialog.PAGE_WIDTH,
-                    ImagePreviewWithActionsDialog.PAGE_HEIGHT)
-                    .livePage
-                    .getValue(); // this bitmap should already be loaded
+                Integer.parseInt(itemId),
+                ImagePreviewWithActionsDialog.PAGE_WIDTH,
+                ImagePreviewWithActionsDialog.PAGE_HEIGHT)
+                .livePage
+                .getValue(); // this bitmap should already be loaded
 
             ImagePreviewWithActionsDialog.Action action = new ImagePreviewWithActionsDialog.Action() {
                 @Override
@@ -266,30 +278,30 @@ public class ComicPreviewAndEditActivity extends AppCompatActivity {
 
     private void initPermissionRequester() {
         this.permissionsRequesterLauncher = registerForActivityResult(
-                new ActivityResultContracts.RequestMultiplePermissions(),
-                (Map<String, Boolean> result) -> {
+            new ActivityResultContracts.RequestMultiplePermissions(),
+            (Map<String, Boolean> result) -> {
 
-                    for (String key : result.keySet()) {
+                for (String key : result.keySet()) {
 
-                        if (result.get(key) == false) {
-                            Log.e("Permission denied", "User denied permission: " + key);
-                            if (permissionRequester != null) {
-                                permissionRequester.handlePermissionResult(false);
-                                permissionRequester = null;
-                            }
-                            return;
+                    if (result.get(key) == false) {
+                        Log.e("Permission denied", "User denied permission: " + key);
+                        if (permissionRequester != null) {
+                            permissionRequester.handlePermissionResult(false);
+                            permissionRequester = null;
                         }
+                        return;
                     }
+                }
 
-                    Log.e("permissions", "All permissions granted ... ");
+                Log.e("permissions", "All permissions granted ... ");
 
-                    if (permissionRequester != null) {
-                        permissionRequester.handlePermissionResult(true);
-                        permissionRequester = null;
-                    }
+                if (permissionRequester != null) {
+                    permissionRequester.handlePermissionResult(true);
+                    permissionRequester = null;
+                }
 
-                    return;
-                });
+                return;
+            });
     }
 
     private List<String> getRequiredPermissions() {
@@ -325,16 +337,36 @@ public class ComicPreviewAndEditActivity extends AppCompatActivity {
 
     private void initLoadPictureActivityLauncher() {
         this.loadPicActivityLauncher = registerForActivityResult(
-                new ActivityResultContracts.GetContent(),
-                (Uri uri) -> {
-                    if (uri == null) {
-                        Log.e("newPageAct", "Load new page act. returned null as uri ... ");
-                        return;
-                    }
-                    addNewPage(uri.toString());
+            new ActivityResultContracts.GetContent(),
+            (Uri uri) -> {
+                if (uri == null) {
+                    Log.e("newPageAct", "Load new page act. returned null as uri ... ");
+                    return;
                 }
+                addNewPage(uri.toString());
+            }
         );
     }
+
+    private void initReadActivityLauncher() {
+        readActivityLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            (actResult) -> {
+                if (actResult.getResultCode() == Activity.RESULT_OK
+                    && actResult.getData() != null
+                    && actResult.getData().hasExtra(ReadActivity.RATING_DONE_EXTRA)
+                    && actResult.getData().getBooleanExtra(ReadActivity.RATING_DONE_EXTRA, false)) {
+
+                    viewModel
+                        .getRating()
+                        .observe(this, (rating) -> {
+                            ((RatingBar) findViewById(R.id.preview_edit_comic_rating_rb))
+                                .setRating(rating);
+                        });
+                }
+            });
+    }
+
 
     private void addPageClick(View v) {
         this.loadPicActivityLauncher.launch("image/*");
@@ -388,33 +420,40 @@ public class ComicPreviewAndEditActivity extends AppCompatActivity {
             Handler mainHandler = new Handler(Looper.getMainLooper());
 
             viewModel.createComic(
-                    titleText.getText().toString(),
-                    descText.getText().toString(),
-                    pickedLocation)
-                    .observe(this, (ComicPreviewViewModel.UploadProgress upProgress) -> {
+                titleText.getText().toString(),
+                descText.getText().toString(),
+                pickedLocation)
+                .observe(this, (ComicPreviewViewModel.UploadProgress upProgress) -> {
 
-                        mainHandler.post(() -> {
-                            if (upProgress.progress < 0) {
-                                Log.e("progressBar", "Cant update progress bar with neg. value ... ");
-                                return;
-                            }
+                    mainHandler.post(() -> {
+                        if (upProgress.progress < 0) {
+                            Log.e("progressBar", "Cant update progress bar with neg. value ... ");
+                            return;
+                        }
 
-                            progressDialog.addProgress(1);
-                            if (progressDialog.isDone()) {
-                                progressDialog.hide();
-                                progressDialog.dismiss();
+                        progressDialog.addProgress(1);
+                        if (progressDialog.isDone()) {
+                            progressDialog.hide();
+                            progressDialog.dismiss();
 
-                                setupForEdit();
+                            setupForEdit();
 
-                                updated = true;
-                            }
-                        });
+                            updated = true;
+                        }
                     });
+                });
 
         } else {
             Toaster.makeToast(this, "Fill all fields to finish ... ");
         }
 
+    }
+
+    private void showAuthorClick(View v) {
+        Dialog authorDialog = new ShortProfileDialog(
+            this,
+            viewModel.getAuthor());
+        authorDialog.show();
     }
 
     private void updateFinishClick(View v) {
@@ -448,9 +487,9 @@ public class ComicPreviewAndEditActivity extends AppCompatActivity {
 
     private boolean validateInputs(EditText title, EditText description) {
         return (title.getText() != null && !title.getText().toString().isEmpty())
-                && (description.getText() != null && !description.getText().toString().isEmpty())
-                && (viewModel.getNewCount() > 0)
-                && (this.pickedLocation != null);
+            && (description.getText() != null && !description.getText().toString().isEmpty())
+            && (viewModel.getNewCount() > 0)
+            && (this.pickedLocation != null);
 
     }
 

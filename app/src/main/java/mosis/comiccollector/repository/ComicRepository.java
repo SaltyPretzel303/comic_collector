@@ -23,9 +23,10 @@ public interface ComicRepository {
         void handleSingleUpload(String docId, int pageIndex, long uploadSize);
     }
 
-    interface DoneHandler {
-        void handle(String error);
+    interface RatingHandler {
+        void handleRating(float rating);
     }
+
 
     void getCreatedComics(String userId, ComicsHandler handler);
 
@@ -59,6 +60,8 @@ public interface ComicRepository {
 
     void getComic(String comicId, ComicsHandler handler);
 
-    void addRating(String comicId, float rating, DoneHandler handler);
+    void updateRating(String comicId, float newRating, DoneHandler onDone);
+
+    void getRating(String comicId, RatingHandler handler);
 
 }

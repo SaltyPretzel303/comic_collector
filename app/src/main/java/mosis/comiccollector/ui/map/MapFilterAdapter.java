@@ -14,21 +14,21 @@ import java.util.List;
 
 import mosis.comiccollector.R;
 
-public class MapFilterAdapter extends ArrayAdapter<MapFiltersDialog.Filter> {
+public class MapFilterAdapter extends ArrayAdapter<MapFiltersDialog.BooleanFilter> {
 
     private Context context;
     private int resId;
-    private List<MapFiltersDialog.Filter> filters;
+    private List<MapFiltersDialog.BooleanFilter> booleanFilters;
 
     public MapFilterAdapter(@NonNull Context context,
                             int resource,
-                            List<MapFiltersDialog.Filter> filters) {
+                            List<MapFiltersDialog.BooleanFilter> booleanFilters) {
         super(context, resource);
 
         this.context = context;
         this.resId = resource;
 
-        this.filters = filters;
+        this.booleanFilters = booleanFilters;
     }
 
     public View getView(int position, View convertView, ViewGroup parent) {
@@ -51,11 +51,11 @@ public class MapFilterAdapter extends ArrayAdapter<MapFiltersDialog.Filter> {
     }
 
     public int getCount() {
-        return filters.size();
+        return booleanFilters.size();
     }
 
-    private MapFiltersDialog.Filter getFilter(int index) {
-        return filters.get(index);
+    private MapFiltersDialog.BooleanFilter getFilter(int index) {
+        return booleanFilters.get(index);
     }
 
 

@@ -45,4 +45,8 @@ uloge mape
 - neki oblik notifikacije ...
     pretpostaljam da moze da se iskoristi trenutni locationBroadcastReceiver
 
+=============================
+
+# nakon rate-ovanja reload rating na comicPreviewAndEdit strani
+zabrani otvaranje comic-a korisnika sa kojima nisi prijatelj (no click handler)
 

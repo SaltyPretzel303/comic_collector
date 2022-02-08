@@ -12,6 +12,7 @@ public class User implements Serializable {
 
     public static final String USER_ID_FIELD = "userId";
     public static final String PROFILE_PIC_FIELD = "profilePicUri";
+    public static final String RATING_FIELD = "rating";
 
     private String userId;
 
@@ -20,16 +21,17 @@ public class User implements Serializable {
 
     private String profilePicUri;
 
-    private int rating;
+    private float rating;
 
-    // required for serialization
     public User() {
 
     }
 
-    public User(String userId, String email, String name,
+    public User(String userId,
+                String email,
+                String name,
                 Uri profilePicUri,
-                int rating) {
+                float rating) {
 
         this.userId = userId;
         this.email = email;
@@ -41,7 +43,6 @@ public class User implements Serializable {
         }
 
         this.rating = rating;
-
     }
 
     public String getEmail() {
@@ -52,10 +53,6 @@ public class User implements Serializable {
         return userId;
     }
 
-    public int getRating() {
-        return rating;
-    }
-
     public String getName() {
         return name;
     }
@@ -64,8 +61,7 @@ public class User implements Serializable {
         return profilePicUri;
     }
 
-    public void setProfilePicUri(String newUri) {
-        this.profilePicUri = newUri;
+    public float getRating() {
+        return rating;
     }
-
 }

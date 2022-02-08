@@ -11,6 +11,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.RatingBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -29,8 +30,8 @@ import mosis.comiccollector.ui.map.PersonFollower;
 import mosis.comiccollector.util.Distance;
 
 public class ShortProfileDialog
-        extends Dialog
-        implements LocationConsumer, PersonFollower {
+    extends Dialog
+    implements LocationConsumer, PersonFollower {
 
     public interface FriendRequestHandler {
         void friendRequest(String userId);
@@ -64,8 +65,8 @@ public class ShortProfileDialog
     private boolean areFriends;
 
     public ShortProfileDialog(
-            @NonNull Context context,
-            LiveData<ViewUser> liveData) {
+        @NonNull Context context,
+        LiveData<ViewUser> liveData) {
         super(context);
 
         this.context = context;
@@ -76,11 +77,11 @@ public class ShortProfileDialog
     }
 
     public ShortProfileDialog(
-            @NonNull Context context,
-            LiveData<ViewUser> liveData,
-            LiveData<UserLocation> personLocation,
-            LiveData<UserLocation> myLocation,
-            FriendRequestHandler reqHandler) {
+        @NonNull Context context,
+        LiveData<ViewUser> liveData,
+        LiveData<UserLocation> personLocation,
+        LiveData<UserLocation> myLocation,
+        FriendRequestHandler reqHandler) {
         this(context, liveData);
 
         this.myLiveLocation = myLocation;
@@ -133,25 +134,27 @@ public class ShortProfileDialog
         this.loadStages.add(LoadStages.DataLoaded);
 
         Bitmap defaultBitmap = BitmapFactory.decodeResource(
-                context.getResources(),
-                R.drawable.profile_pic);
+            context.getResources(),
+            R.drawable.profile_pic);
         RoundedBitmapDrawable roundedBitmapDrawable = RoundedBitmapDrawableFactory.create(
-                context.getResources(),
-                defaultBitmap);
+            context.getResources(),
+            defaultBitmap);
         roundedBitmapDrawable.setCircular(true);
         ((ImageView) findViewById(R.id.profile_pic_people_map))
-                .setImageDrawable(roundedBitmapDrawable);
+            .setImageDrawable(roundedBitmapDrawable);
 
         user.liveProfilePic.observe((LifecycleOwner) context, this::setupProfilePic);
 
         ((TextView) findViewById(R.id.username_people_map)).setText(user.name);
 
-        ((ProgressBar) findViewById(R.id.rating_people_map_pb)).setProgress(user.rating);
-        ((TextView) findViewById(R.id.rating_people_map_tv)).setText(user.rating + "/100");
+        ((RatingBar) findViewById(R.id.people_from_map_rating_rb)).setRating(user.rating);
+
+//        ((ProgressBar) findViewById(R.id.rating_people_map_pb)).setProgress(user.rating);
+//        ((TextView) findViewById(R.id.rating_people_map_tv)).setText(user.rating + "/100");
 
         if (this.loadStages.contains(LoadStages.DataLoaded)
-                && this.loadStages.contains(LoadStages.ImageLoaded)
-                && areFriends) {
+            && this.loadStages.contains(LoadStages.ImageLoaded)
+            && areFriends) {
 
             // if areFriends != true button will be activated from location consumer methods
 
@@ -166,8 +169,8 @@ public class ShortProfileDialog
 
             ImageView imageView = findViewById(R.id.profile_pic_people_map);
             RoundedBitmapDrawable rbd = RoundedBitmapDrawableFactory.create(
-                    context.getResources(),
-                    pic);
+                context.getResources(),
+                pic);
             rbd.setCircular(true);
             imageView.setImageDrawable(rbd);
 
@@ -175,8 +178,8 @@ public class ShortProfileDialog
         }
 
         if (this.loadStages.contains(LoadStages.DataLoaded)
-                && this.loadStages.contains(LoadStages.ImageLoaded)
-                && areFriends) {
+            && this.loadStages.contains(LoadStages.ImageLoaded)
+            && areFriends) {
 
             this.actionButton.setEnabled(true);
         }
@@ -188,13 +191,14 @@ public class ShortProfileDialog
 
         Intent profileIntent = new Intent(context, ProfileActivity.class);
         profileIntent.putExtra(ProfileActivity.USER_DATA_EXTRA, vUser);
+        profileIntent.putExtra(ProfileActivity.IS_FRIEND_EXTRA, areFriends);
         context.startActivity(profileIntent);
     }
 
     private void beFriendsClick(View v) {
         if (friendReqHandler != null
-                && liveUserData != null
-                && liveUserData.getValue() != null) {
+            && liveUserData != null
+            && liveUserData.getValue() != null) {
             friendReqHandler.friendRequest(liveUserData.getValue().userId);
         }
     }
@@ -229,10 +233,10 @@ public class ShortProfileDialog
     private double ourDistance() {
         if (myLastLocation != null && personLastLocation != null) {
             double distance = Distance.calculateInKm(
-                    myLastLocation.getLatitude(),
-                    myLastLocation.getLongitude(),
-                    personLastLocation.getLatitude(),
-                    personLastLocation.getLongitude());
+                myLastLocation.getLatitude(),
+                myLastLocation.getLongitude(),
+                personLastLocation.getLatitude(),
+                personLastLocation.getLongitude());
 
             Log.e("shortUser", "Distance: " + distance);
 

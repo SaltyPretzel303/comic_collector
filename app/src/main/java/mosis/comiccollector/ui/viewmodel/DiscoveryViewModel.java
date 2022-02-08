@@ -2,6 +2,7 @@ package mosis.comiccollector.ui.viewmodel;
 
 import android.app.Application;
 import android.graphics.Bitmap;
+import android.os.Handler;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -15,6 +16,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import mosis.comiccollector.model.comic.Comic;
 import mosis.comiccollector.model.user.User;
@@ -23,9 +25,8 @@ import mosis.comiccollector.repository.AuthRepository;
 import mosis.comiccollector.repository.ComicRepository;
 import mosis.comiccollector.repository.DataMapper;
 import mosis.comiccollector.repository.PeopleRepository;
-import mosis.comiccollector.repository.PeopleLocationConsumer;
+import mosis.comiccollector.repository.RatingsRepository;
 import mosis.comiccollector.repository.UnsubscribeProvider;
-import mosis.comiccollector.ui.map.PersonFollower;
 import mosis.comiccollector.ui.comic.ViewComic;
 import mosis.comiccollector.ui.map.LocationWithPicture;
 import mosis.comiccollector.ui.user.ViewUser;
@@ -33,20 +34,37 @@ import mosis.comiccollector.util.DepProvider;
 
 public class DiscoveryViewModel extends AndroidViewModel {
 
+    private interface PeopleFilter {
+        boolean matching(User user);
+    }
+
+    private interface ComicFilter {
+        boolean matching(Comic comic);
+    }
+
+
     private AuthRepository authRepo;
     private PeopleRepository peopleRepo;
     private ComicRepository comicRepo;
+    private RatingsRepository ratingRepo;
 
+    private PeopleFilter peopleTextFilter;
+    private PeopleFilter peopleRatingFilter;
     private MutableLiveData<List<LocationWithPicture>> nearbyFriends;
-    private MutableLiveData<List<LocationWithPicture>> nearbyPeople;
+    private MutableLiveData<List<LocationWithPicture>> nearbyUnknownPeople;
     private List<UnsubscribeProvider> unsubscribeProviders;
 
+    private ComicFilter comicTextFilter;
+    private ComicFilter comicRatingFilter;
     private MutableLiveData<List<LocationWithPicture>> createdComics;
     private MutableLiveData<List<LocationWithPicture>> collectedComics;
     private MutableLiveData<List<LocationWithPicture>> unknownComics;
 
-    private DataMapper<User, ViewUser> viewUserMapper;
-    private DataMapper<Comic, ViewComic> viewComicMapper;
+    private final DataMapper<User, ViewUser> viewUserMapper;
+    private final DataMapper<Comic, ViewComic> viewComicMapper;
+
+    private Handler handler;
+
 
     public DiscoveryViewModel(@NonNull Application application) {
         super(application);
@@ -54,15 +72,18 @@ public class DiscoveryViewModel extends AndroidViewModel {
         this.authRepo = DepProvider.getAuthRepository();
         this.peopleRepo = DepProvider.getPeopleRepository();
         this.comicRepo = DepProvider.getComicRepository();
+        this.ratingRepo = DepProvider.getRatingRepository();
 
         this.viewUserMapper = DepProvider.getUserModelMapper();
         this.viewComicMapper = DepProvider.getComicModelMapper();
 
         this.unsubscribeProviders = new ArrayList<>();
-        this.peopleFollowers = new ArrayList<>();
+
+        handler = new Handler();
+
+
     }
 
-    private List<PersonFollower> peopleFollowers;
 
     // region people
 
@@ -71,9 +92,9 @@ public class DiscoveryViewModel extends AndroidViewModel {
     }
 
     public MutableLiveData<List<LocationWithPicture>> getNearbyFriends(
-            double lat,
-            double lon,
-            double range) {
+        double lat,
+        double lon,
+        double range) {
 
         if (nearbyFriends == null) {
             nearbyFriends = new MutableLiveData<>();
@@ -81,134 +102,153 @@ public class DiscoveryViewModel extends AndroidViewModel {
 
         String userId = authRepo.getCurrentUser().user.getUserId();
 
-        this.peopleRepo.getNearbyFriendsLocations(
-                userId,
-                new GeoPoint(lat, lon),
-                range,
-                new PeopleRepository.PeopleUpdateHandler() {
-                    @Override
-                    public void personIn(String id, GeoPoint loc) {
+        peopleRepo.getNearbyFriends(
+            userId,
+            new GeoPoint(lat, lon),
+            range,
+            new PeopleRepository.PeopleUpdateHandler() {
+                @Override
+                public void personIn(String id, GeoPoint loc) {
 
-                        List<LocationWithPicture> currentUsers = nearbyFriends.getValue();
-                        if (currentUsers == null) {
-                            currentUsers = new ArrayList<>();
+                    List<LocationWithPicture> currentUsers = nearbyFriends.getValue();
+                    if (currentUsers == null) {
+                        currentUsers = new ArrayList<>();
+                    }
+
+                    if (currentUsers.stream().noneMatch((l) -> l.getId().equals(id))) {
+
+                        LocationWithPicture newUser = new LocationWithPicture(id, loc);
+                        newUser.setLivePic(loadUserPic(id));
+
+                        currentUsers.add(newUser);
+                        nearbyFriends.postValue(currentUsers);
+                    }
+
+                }
+
+                @Override
+                public void personOut(String id) {
+                    List<LocationWithPicture> users = nearbyFriends.getValue();
+
+                    users.removeIf((user) -> user.getId().equals(id));
+
+                    nearbyFriends.postValue(users);
+                }
+
+                @Override
+                public void personMoved(String id, GeoPoint loc) {
+                    for (var friend : nearbyFriends.getValue()) {
+                        if (friend.getId().equals(id)) {
+
+                            friend.updateLocation(loc);
+                            nearbyFriends.postValue(nearbyFriends.getValue());
+
+                            return;
                         }
-
-                        if (currentUsers.stream().noneMatch((l) -> l.getId().equals(id))) {
-
-                            LocationWithPicture newUser = new LocationWithPicture(id, loc);
-                            newUser.setLivePic(loadUserPic(id));
-
-                            currentUsers.add(newUser);
-                            nearbyFriends.postValue(currentUsers);
-                        }
-
                     }
+                }
 
-                    @Override
-                    public void personOut(String id) {
-                        List<LocationWithPicture> users = nearbyFriends.getValue();
+                @Override
+                public void everyoneLoaded() {
+                }
 
-                        users.removeIf((user) -> user.getId().equals(id));
-
-                        nearbyFriends.postValue(users);
-                    }
-
-                    @Override
-                    public void personMoved(String id, GeoPoint loc) {
-                        for (var friend : nearbyFriends.getValue()) {
-                            if (friend.getId().equals(id)) {
-
-                                friend.updateLocation(loc);
-                                nearbyFriends.postValue(nearbyFriends.getValue());
-
-                                return;
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void everyoneLoaded() {
-                    }
-
-                    @Override
-                    public void error(String err) {
-                        return;
-                    }
-                });
+                @Override
+                public void error(String err) {
+                    return;
+                }
+            });
 
         return nearbyFriends;
     }
 
     public MutableLiveData<List<LocationWithPicture>> getNearbyUnknownPeople(
-            double lat,
-            double lon,
-            double range) {
+        double lat,
+        double lon,
+        double range) {
 
-        if (nearbyPeople == null) {
-            nearbyPeople = new MutableLiveData<>();
+        if (nearbyUnknownPeople == null) {
+            nearbyUnknownPeople = new MutableLiveData<>();
+            nearbyUnknownPeople.postValue(new ArrayList<>());
         }
+
+        Log.e("discViewModel", "Requesting unknown people ... "
+            + nearbyUnknownPeople.hasActiveObservers());
 
         String userId = authRepo.getCurrentUser().user.getUserId();
 
-        this.peopleRepo.getNearbyPeopleLocations(
-                userId,
-                new GeoPoint(lat, lon),
-                range,
-                new PeopleRepository.PeopleUpdateHandler() {
-                    @Override
-                    public void personIn(String id, GeoPoint loc) {
+        peopleRepo.getNearbyUnknownPeople(
+            userId,
+            new GeoPoint(lat, lon),
+            range,
+            new PeopleRepository.PeopleUpdateHandler() {
+                @Override
+                public void personIn(String id, GeoPoint loc) {
 
-                        List<LocationWithPicture> currentPeople = nearbyPeople.getValue();
+//                    long tid = Thread.currentThread().getId();
+//                    Log.e("discViewModel", "Out thread: " + tid);
+
+                    handler.post(() -> {
+
+                        List<LocationWithPicture> currentPeople = nearbyUnknownPeople.getValue();
                         if (currentPeople == null) {
+                            long thId = Thread.currentThread().getId();
+                            Log.e("discViewModel", "Creating unknown people array ... " + thId);
                             currentPeople = new ArrayList<>();
                         }
 
                         if (currentPeople.stream().noneMatch((l) -> l.getId().equals(id))) {
 
+//                            Log.e("discViewModel", "Found new unknown person ... " + id);
+
                             LocationWithPicture newUser = new LocationWithPicture(id, loc);
                             newUser.setLivePic(loadUserPic(id));
 
                             currentPeople.add(newUser);
-                            nearbyPeople.postValue(currentPeople);
+                            nearbyUnknownPeople.postValue(currentPeople);
                         }
+                    });
 
-                    }
+                }
 
-                    @Override
-                    public void personOut(String id) {
-                        List<LocationWithPicture> users = nearbyPeople.getValue();
+                @Override
+                public void personOut(String id) {
+                    handler.post(() -> {
+                        List<LocationWithPicture> users = nearbyUnknownPeople.getValue();
+
+//                        Log.e("discViewModel", "Unknown person left fieldOfView ... " + id);
 
                         users.removeIf((user) -> user.getId().equals(id));
 
-                        nearbyPeople.postValue(users);
-                    }
+                        nearbyUnknownPeople.postValue(users);
+                    });
 
-                    @Override
-                    public void personMoved(String id, GeoPoint loc) {
-                        for (var person : nearbyPeople.getValue()) {
-                            if (person.getId().equals(id)) {
+                }
 
-                                person.updateLocation(loc);
-                                nearbyPeople.postValue(nearbyPeople.getValue());
+                @Override
+                public void personMoved(String id, GeoPoint loc) {
+                    for (var person : nearbyUnknownPeople.getValue()) {
+                        if (person.getId().equals(id)) {
 
-                                return;
-                            }
+                            person.updateLocation(loc);
+                            nearbyUnknownPeople.postValue(nearbyUnknownPeople.getValue());
+
+                            return;
                         }
                     }
+                }
 
-                    @Override
-                    public void everyoneLoaded() {
-                        return;
-                    }
+                @Override
+                public void everyoneLoaded() {
+                    return;
+                }
 
-                    @Override
-                    public void error(String err) {
-                        return;
-                    }
-                });
+                @Override
+                public void error(String err) {
+                    return;
+                }
+            });
 
-        return nearbyPeople;
+        return nearbyUnknownPeople;
     }
 
     private MutableLiveData<Bitmap> loadUserPic(String userId) {
@@ -219,25 +259,6 @@ public class DiscoveryViewModel extends AndroidViewModel {
         });
 
         return livePicUri;
-    }
-
-    public void subscribeForLocationUpdates(String userId,
-                                            PeopleLocationConsumer locationConsumer) {
-
-        UnsubscribeProvider unsubProvider =
-                this.peopleRepo.subscribeForLocUpdates(userId, locationConsumer);
-
-        this.unsubscribeProviders.add(unsubProvider);
-    }
-
-    public void unsubscribeForLocationUpdates(String userId) {
-        this.unsubscribeProviders.removeIf((unsubscribeProvider) -> {
-            if (unsubscribeProvider.getItemId().equals(userId)) {
-                unsubscribeProvider.unsubscribe();
-                return true;
-            }
-            return false;
-        });
     }
 
     public MutableLiveData<ViewUser> getShortUser(String userId) {
@@ -268,8 +289,8 @@ public class DiscoveryViewModel extends AndroidViewModel {
             }
         }
 
-        if (nearbyPeople != null && nearbyPeople.getValue() != null) {
-            for (var locWithPicture : nearbyPeople.getValue()) {
+        if (nearbyUnknownPeople != null && nearbyUnknownPeople.getValue() != null) {
+            for (var locWithPicture : nearbyUnknownPeople.getValue()) {
                 if (locWithPicture.getId().equals(userId)) {
                     return locWithPicture.getLivePic();
                 }
@@ -353,15 +374,15 @@ public class DiscoveryViewModel extends AndroidViewModel {
     }
 
     private LocationWithPicture removeUnknownPerson(String id) {
-        if (nearbyPeople != null && nearbyPeople.getValue() != null) {
-            var people = nearbyPeople.getValue();
+        if (nearbyUnknownPeople != null && nearbyUnknownPeople.getValue() != null) {
+            var people = nearbyUnknownPeople.getValue();
 
             for (int i = 0; i < people.size(); i++) {
                 LocationWithPicture person = people.get(i);
                 if (person.getId().equals(id)) {
 
                     people.remove(i);
-                    nearbyPeople.postValue(people);
+                    nearbyUnknownPeople.postValue(people);
 
                     return person;
                 }
@@ -384,16 +405,28 @@ public class DiscoveryViewModel extends AndroidViewModel {
         }
     }
 
+    public void stopFollowingPeople() {
+        peopleRepo.stopFollowingPeople(getMyId());
+    }
+
+    public void filterPeopleByText(String text) {
+        peopleTextFilter = user -> user.getName().contains(text);
+    }
+
+    public void filterPeopleByRating(float rating) {
+        peopleTextFilter = user -> user.getRating() >= rating;
+    }
+
     // endregion
 
     // region comics
 
     public MutableLiveData<List<LocationWithPicture>> getCreatedComics(
-            int width,
-            int height,
-            double lat,
-            double lon,
-            double radius) {
+        int width,
+        int height,
+        double lat,
+        double lon,
+        double radius) {
 
         if (this.createdComics == null) {
             this.createdComics = new MutableLiveData<>();
@@ -401,18 +434,20 @@ public class DiscoveryViewModel extends AndroidViewModel {
 
         String myId = this.getMyId();
 
-        this.comicRepo.getCreatedComics(myId, lat, lon, radius, (List<Comic> dataComics) -> {
+        comicRepo.getCreatedComics(myId, lat, lon, radius * 1000, (List<Comic> dataComics) -> {
             if (dataComics == null) {
                 Log.e("discViewModel", "got err as createdComics ... ");
                 createdComics.postValue(Collections.emptyList());
                 return;
             }
 
+            var filtered = filterComics(dataComics);
+
             createdComics.postValue(mapComics(
-                    createdComics.getValue(),
-                    dataComics,
-                    width,
-                    height));
+                createdComics.getValue(),
+                filtered,
+                width,
+                height));
 
             return;
         });
@@ -421,11 +456,11 @@ public class DiscoveryViewModel extends AndroidViewModel {
     }
 
     public MutableLiveData<List<LocationWithPicture>> getCollectedComics(
-            int width,
-            int height,
-            double lat,
-            double lon,
-            double radius) {
+        int width,
+        int height,
+        double lat,
+        double lon,
+        double radius) {
 
         if (this.collectedComics == null) {
             this.collectedComics = new MutableLiveData<>();
@@ -433,30 +468,34 @@ public class DiscoveryViewModel extends AndroidViewModel {
 
         String myId = this.getMyId();
 
-        this.comicRepo.getCollectedComics(myId, lat, lon, radius, (List<Comic> newComics) -> {
+        this.comicRepo.getCollectedComics(myId, lat, lon, radius * 1000, (List<Comic> newComics) -> {
             if (newComics == null) {
                 Log.e("discViewModel", "Failed to get collected comics ... ");
                 collectedComics.postValue(new ArrayList<>());
                 return;
             }
 
-            Log.e("discViewModel", "Got collected comics: " + newComics.size());
+            if (newComics.size() > 0) {
+                Log.e("discViewModel", "Got collected comics: " + newComics.size());
+            }
+
+            var filtered = filterComics(newComics);
 
             if (collectedComics.getValue() != null) {
                 // if I collected some comic before other collected comics are retrieved ...
                 collectedComics.postValue(union(
-                        collectedComics.getValue(),
-                        mapComics(collectedComics.getValue(),
-                                newComics,
-                                width,
-                                height)));
+                    collectedComics.getValue(),
+                    mapComics(collectedComics.getValue(),
+                        filtered,
+                        width,
+                        height)));
 
             } else {
                 collectedComics.postValue(mapComics(
-                        collectedComics.getValue(),
-                        newComics,
-                        width,
-                        height));
+                    collectedComics.getValue(),
+                    filtered,
+                    width,
+                    height));
             }
 
             return;
@@ -466,8 +505,8 @@ public class DiscoveryViewModel extends AndroidViewModel {
     }
 
     private List<LocationWithPicture> union(
-            List<LocationWithPicture> list_1,
-            List<LocationWithPicture> list_2) {
+        List<LocationWithPicture> list_1,
+        List<LocationWithPicture> list_2) {
 
         List<LocationWithPicture> retList = new ArrayList<>(list_1);
 
@@ -480,47 +519,35 @@ public class DiscoveryViewModel extends AndroidViewModel {
         return retList;
     }
 
-    private boolean isDiff(
-            List<LocationWithPicture> oldList,
-            List<LocationWithPicture> newList) {
-
-        if (oldList.size() != newList.size()) {
-            return true;
-        } else {
-            for (var newItem : newList) {
-                if (oldList.stream().noneMatch((oldItem) -> oldItem.getId().equals(newItem.getId()))) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
     public MutableLiveData<List<LocationWithPicture>> getUnknownComics(
-            int width,
-            int height,
-            double lat,
-            double lon,
-            double radius) {
+        int width,
+        int height,
+        double lat,
+        double lon,
+        double radius) {
 
         if (this.unknownComics == null) {
             this.unknownComics = new MutableLiveData<>();
         }
 
         String myId = this.getMyId();
-
-        this.comicRepo.getUnknownComics(myId, lat, lon, radius, (List<Comic> newComics) -> {
-            if (newComics == null || newComics.size() == 0) {
+        // even tough doc. says this radius should be given in km, it is actually
+        // used in calculations as meters so ... yeah ... * 1000
+        comicRepo.getUnknownComics(myId, lat, lon, radius * 1000, (List<Comic> newComics) -> {
+            if (newComics == null) {
                 Log.e("discViewModel", "Failed to get unknown comics ... ");
+                unknownComics.postValue(Collections.emptyList());
                 return;
             }
 
+            var filtered = filterComics(newComics);
+
+            Log.e("discViewModel", "God unknown comics ... ");
             unknownComics.postValue(mapComics(
-                    unknownComics.getValue(),
-                    newComics,
-                    width,
-                    height));
+                unknownComics.getValue(),
+                filtered,
+                width,
+                height));
 
             return;
         });
@@ -540,21 +567,8 @@ public class DiscoveryViewModel extends AndroidViewModel {
             }
 
             ViewComic vComic = viewComicMapper.mapThis(newComics.get(0));
-            vComic.liveTitlePage = new MutableLiveData<>();
-
-            comicRepo.loadTitlePage(id, width, height, (List<Bitmap> pages) -> {
-                if (pages == null) {
-                    Log.e("discViewModel", "Failed to load title page ... ");
-                    return;
-                }
-
-                vComic.liveTitlePage.postValue(pages.get(0));
-
-                return;
-            });
-
+            vComic.liveTitlePage = loadTitlePage(id, width, height);
             vComic.liveAuthor = getAuthor(newComics.get(0).getAuthorId());
-
 
             liveComic.postValue(vComic);
 
@@ -623,6 +637,50 @@ public class DiscoveryViewModel extends AndroidViewModel {
         return -1;
     }
 
+    private MutableLiveData<Bitmap> loadTitlePage(String comicId, int width, int height) {
+        var liveData = new MutableLiveData<Bitmap>();
+
+        comicRepo.loadTitlePage(comicId, width, height, (pages) -> {
+            if (pages == null) {
+                Log.e("discViewModel", "Failed to load title page ... ");
+                liveData.postValue(null);
+                return;
+            }
+
+            liveData.postValue(pages.get(0));
+
+            return;
+        });
+
+
+        return liveData;
+    }
+
+    public void filterComicsByText(String text) {
+        comicTextFilter = comic -> comic.getComicTitle().contains(text);
+    }
+
+    public void filterComicsByRating(float rating) {
+        comicRatingFilter = comic -> comic.getRating() >= rating;
+    }
+
+    public List<Comic> filterComics(List<Comic> input) {
+        var output = new ArrayList<Comic>();
+        if (comicTextFilter != null) {
+            output.addAll(input.stream()
+                .filter(comic -> comicTextFilter.matching(comic))
+                .collect(Collectors.toList()));
+        }
+
+        if (comicRatingFilter != null) {
+            output.addAll(input.stream()
+                .filter(comic -> comicRatingFilter.matching(comic))
+                .collect(Collectors.toList()));
+        }
+
+        return output;
+    }
+
     // endregion
 
     @Override
@@ -632,16 +690,17 @@ public class DiscoveryViewModel extends AndroidViewModel {
         for (UnsubscribeProvider provider : this.unsubscribeProviders) {
             provider.unsubscribe();
         }
+
         this.unsubscribeProviders.clear();
+
+        stopFollowingPeople();
     }
 
     private List<LocationWithPicture> mapComics(
-            List<LocationWithPicture> oldComics,
-            List<Comic> comics,
-            int titleWidth,
-            int titleHeight) {
-
-        Log.e("discViewModel", "Mapping new collected comics ... ");
+        List<LocationWithPicture> oldComics,
+        List<Comic> comics,
+        int titleWidth,
+        int titleHeight) {
 
         List<LocationWithPicture> locations = new ArrayList<>();
 
@@ -657,24 +716,24 @@ public class DiscoveryViewModel extends AndroidViewModel {
             } else {
 
                 LocationWithPicture locWithPic = new LocationWithPicture(
-                        comic.getId(),
-                        comic.getLocation());
+                    comic.getId(),
+                    comic.getLocation());
 
                 locWithPic.setLivePic(new MutableLiveData<>());
 
                 comicRepo.loadTitlePage(
-                        comic.getId(),
-                        titleWidth,
-                        titleHeight,
-                        (List<Bitmap> pages) -> {
-                            if (pages == null || pages.size() == 0) {
-                                Log.e("discViewModel", "Failed to load title page ... ");
-                                return;
-                            }
-
-                            locWithPic.getLivePic().postValue(pages.get(0));
+                    comic.getId(),
+                    titleWidth,
+                    titleHeight,
+                    (List<Bitmap> pages) -> {
+                        if (pages == null || pages.size() == 0) {
+                            Log.e("discViewModel", "Failed to load title page ... ");
                             return;
-                        });
+                        }
+
+                        locWithPic.getLivePic().postValue(pages.get(0));
+                        return;
+                    });
 
                 locations.add(locWithPic);
             }

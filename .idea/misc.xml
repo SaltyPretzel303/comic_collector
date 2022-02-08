@@ -12,7 +12,7 @@
         <entry key="app/src/main/res/drawable/small_preview_background.xml" value="0.18518518518518517" />
         <entry key="app/src/main/res/layout/activity_add_comic.xml" value="0.25" />
         <entry key="app/src/main/res/layout/activity_add_update_comic.xml" value="0.25" />
-        <entry key="app/src/main/res/layout/activity_comic_preview_edit.xml" value="0.33" />
+        <entry key="app/src/main/res/layout/activity_comic_preview_edit.xml" value="0.22" />
         <entry key="app/src/main/res/layout/activity_login.xml" value="0.41510416666666666" />
         <entry key="app/src/main/res/layout/activity_map.xml" value="0.2" />
         <entry key="app/src/main/res/layout/collected_preview_controls.xml" value="0.307518115942029" />
@@ -28,12 +28,12 @@
         <entry key="app/src/main/res/layout/loading_screen.xml" value="0.21559633027522937" />
         <entry key="app/src/main/res/layout/login_layout.xml" value="0.25" />
         <entry key="app/src/main/res/layout/main_page.xml" value="0.25" />
-        <entry key="app/src/main/res/layout/map_filter_dialog.xml" value="0.22" />
+        <entry key="app/src/main/res/layout/map_filter_dialog.xml" value="0.2" />
         <entry key="app/src/main/res/layout/map_filter_item.xml" value="0.22" />
         <entry key="app/src/main/res/layout/people_from_map_dialog.xml" value="0.22" />
         <entry key="app/src/main/res/layout/people_map_dialog.xml" value="0.22" />
         <entry key="app/src/main/res/layout/pick_a_place_dialog.xml" value="0.25" />
-        <entry key="app/src/main/res/layout/profile_page.xml" value="0.38650306748466257" />
+        <entry key="app/src/main/res/layout/profile_page.xml" value="0.2" />
         <entry key="app/src/main/res/layout/progress_dialog.xml" value="0.22" />
         <entry key="app/src/main/res/layout/queued_preview_controls.xml" value="0.4140625" />
         <entry key="app/src/main/res/layout/rate_dialog.xml" value="0.22" />

@@ -13,8 +13,8 @@ public class ViewComicMapper implements DataMapper<ViewComic, Comic> {
                 input.authorId,
                 input.title,
                 input.description,
-                input.rating,
                 input.pagesCount,
-                input.location);
+                input.location,
+                0);
     }
 }

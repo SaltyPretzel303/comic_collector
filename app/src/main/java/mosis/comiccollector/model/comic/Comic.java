@@ -10,17 +10,19 @@ public class Comic implements Serializable {
     public static final String COMIC_ID_FIELD = "id";
     public static final String PAGES_COUNT_FIELD = "pagesCount";
 
+    public static final String RATING_FIELD = "rating";
+
     private String authorId;
 
     private String id;
     private String comicTitle;
     private String description;
 
-    private int rating;
-
     private int pagesCount;
 
     private Location location;
+
+    private float rating;
 
     public Comic() {
 
@@ -29,16 +31,16 @@ public class Comic implements Serializable {
     public Comic(String authorId,
                  String comicTitle,
                  String description,
-                 int rating,
                  int pagesCount,
-                 Location location) {
+                 Location location,
+                 float rating) {
 
         this.authorId = authorId;
         this.comicTitle = comicTitle;
         this.description = description;
-        this.rating = rating;
         this.pagesCount = pagesCount;
         this.location = location;
+        this.rating = rating;
     }
 
     public String getAuthorId() {
@@ -58,15 +60,15 @@ public class Comic implements Serializable {
         return description;
     }
 
-    public int getRating() {
-        return rating;
-    }
-
     public int getPagesCount() {
         return pagesCount;
     }
 
     public Location getLocation() {
         return location;
+    }
+
+    public float getRating() {
+        return rating;
     }
 }

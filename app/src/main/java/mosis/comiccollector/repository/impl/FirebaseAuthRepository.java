@@ -217,7 +217,7 @@ public class FirebaseAuthRepository implements AuthRepository {
                     user.getEmail(),
                     user.getDisplayName(),
                     user.getPhotoUrl(),
-                    -1);
+                    0);
         }
 
         return null;

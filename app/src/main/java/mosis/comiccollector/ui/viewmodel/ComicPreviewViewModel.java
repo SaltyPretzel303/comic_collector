@@ -7,6 +7,7 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.nostra13.universalimageloader.core.ImageLoader;
@@ -17,10 +18,14 @@ import java.util.List;
 
 import mosis.comiccollector.model.Location;
 import mosis.comiccollector.model.comic.Comic;
+import mosis.comiccollector.model.user.User;
 import mosis.comiccollector.repository.AuthRepository;
 import mosis.comiccollector.repository.ComicRepository;
+import mosis.comiccollector.repository.DataMapper;
+import mosis.comiccollector.repository.PeopleRepository;
 import mosis.comiccollector.ui.comic.IndexedUriPage;
 import mosis.comiccollector.ui.comic.ViewComic;
+import mosis.comiccollector.ui.user.ViewUser;
 import mosis.comiccollector.util.DepProvider;
 
 public class ComicPreviewViewModel extends AndroidViewModel {
@@ -36,9 +41,12 @@ public class ComicPreviewViewModel extends AndroidViewModel {
     }
 
     private final AuthRepository authRepo;
+    private final PeopleRepository peopleRepo;
     private final ComicRepository comicsRepo;
 
     private ViewComic currentComic;
+
+    private DataMapper<User, ViewUser> userMapper;
 
     private final List<IndexedBitmapPage> pages;
 
@@ -49,7 +57,10 @@ public class ComicPreviewViewModel extends AndroidViewModel {
         this.pages = new ArrayList<>();
 
         this.authRepo = DepProvider.getAuthRepository();
+        this.peopleRepo = DepProvider.getPeopleRepository();
         this.comicsRepo = DepProvider.getComicRepository();
+
+        this.userMapper = DepProvider.getUserModelMapper();
     }
 
     public void setComic(ViewComic comic) {
@@ -100,17 +111,17 @@ public class ComicPreviewViewModel extends AndroidViewModel {
             this.pages.add(targetPage);
 
             comicsRepo.loadPage(currentComic.comicId, width, height, pageIndex,
-                    (List<Bitmap> newPages) -> {
-                        if (newPages == null || newPages.size() == 0) {
-                            Log.e("updateViewModel", "Comic repo returned null as page ... ");
-                            livePage.postValue(null);
-                            return;
-                        }
-
-                        livePage.postValue(newPages.get(0));
-
+                (List<Bitmap> newPages) -> {
+                    if (newPages == null || newPages.size() == 0) {
+                        Log.e("updateViewModel", "Comic repo returned null as page ... ");
+                        livePage.postValue(null);
                         return;
-                    });
+                    }
+
+                    livePage.postValue(newPages.get(0));
+
+                    return;
+                });
         }
 
         return targetPage;
@@ -172,13 +183,13 @@ public class ComicPreviewViewModel extends AndroidViewModel {
         MutableLiveData<Long> liveResult = new MutableLiveData<>();
 
         comicsRepo.addPages(
-                currentComic.comicId,
-                currentComic.pagesCount,
-                getNewPages(),
-                (String docId, int pageIndex, long uploadValue) -> {
-                    markAsOld(pageIndex);
-                    liveResult.postValue(uploadValue);
-                });
+            currentComic.comicId,
+            currentComic.pagesCount,
+            getNewPages(),
+            (String docId, int pageIndex, long uploadValue) -> {
+                markAsOld(pageIndex);
+                liveResult.postValue(uploadValue);
+            });
 
         return liveResult;
     }
@@ -199,7 +210,6 @@ public class ComicPreviewViewModel extends AndroidViewModel {
         this.currentComic.location = location;
         this.currentComic.pagesCount = this.getNewCount();
         this.currentComic.authorId = authorId;
-        this.currentComic.rating = 0;
 
         Comic newComic = DepProvider.getViewComicMapper().mapThis(currentComic);
 //        Comic newComic = new Comic(
@@ -211,14 +221,14 @@ public class ComicPreviewViewModel extends AndroidViewModel {
 //                this.currentComic.location);
 
         comicsRepo.createComic(
-                newComic,
-                this.getNewPages(),
-                (String docId, int pageIndex, long uploadSize) -> {
-                    this.currentComic.comicId = docId;
-                    markAsOld(pageIndex);
+            newComic,
+            this.getNewPages(),
+            (String docId, int pageIndex, long uploadSize) -> {
+                this.currentComic.comicId = docId;
+                markAsOld(pageIndex);
 
-                    liveUri.postValue(new UploadProgress(docId, uploadSize));
-                });
+                liveUri.postValue(new UploadProgress(docId, uploadSize));
+            });
 
         return liveUri;
     }
@@ -233,6 +243,28 @@ public class ComicPreviewViewModel extends AndroidViewModel {
         return uris;
     }
 
+    public LiveData<ViewUser> getAuthor() {
+        var liveResult = new MutableLiveData<ViewUser>();
+
+        peopleRepo.getUser(currentComic.authorId, (people) -> {
+            if (people == null || people.size() == 0) {
+                Log.e("previewViewModel", "Failed to load comic author ... ");
+                liveResult.postValue(null);
+
+                return;
+            }
+
+            var viewUser = userMapper.mapThis(people.get(0));
+
+            viewUser.liveProfilePic = new MutableLiveData<>();
+            peopleRepo.loadProfilePic(viewUser.userId, viewUser.liveProfilePic::postValue);
+
+            liveResult.postValue(viewUser);
+        });
+
+        return liveResult;
+    }
+
     private void markAsOld(int index) {
         for (var page : pages) {
             if (page.isNew && page.index == index) {
@@ -243,5 +275,12 @@ public class ComicPreviewViewModel extends AndroidViewModel {
         }
 
     }
+
+    public LiveData<Float> getRating() {
+        var liveData = new MutableLiveData<Float>();
+        comicsRepo.getRating(currentComic.comicId, liveData::postValue);
+        return liveData;
+    }
+
 
 }

@@ -22,7 +22,8 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:gravity="center"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:paddingVertical="5dp">
 
             <ImageView
                 android:id="@+id/profile_pic_iv"
@@ -41,44 +42,20 @@
             android:orientation="vertical">
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="20dp"
-                android:text="NAME"
-                android:textAlignment="center"
-                android:textSize="13sp" />
-
-            <TextView
                 android:id="@+id/profile_username_tv"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
                 android:text="SomeName"
                 android:textAlignment="center"
                 android:textSize="20dp" />
 
-            <TextView
+            <RatingBar
+                android:id="@+id/user_rating_rb"
                 android:layout_width="wrap_content"
-                android:layout_height="20dp"
-                android:layout_marginTop="20dp"
-                android:text="RATING"
-                android:textAlignment="center"
-                android:textSize="13sp" />
-
-            <ProgressBar
-                android:id="@+id/user_rating_pb"
-                style="@android:style/Widget.ProgressBar.Horizontal"
-                android:layout_width="match_parent"
-                android:layout_height="10dp"
-                android:layout_marginHorizontal="20dp"
-                android:max="100"
-                android:progress="65"
-                android:progressBackgroundTint="@android:color/holo_red_dark"
-                android:progressTint="@android:color/holo_green_light" />
-
-            <TextView
-                android:id="@+id/user_rating_tv"
-                android:layout_width="wrap_content"
-                android:layout_height="25dp"
-                android:text="65/100" />
+                android:layout_height="40dp"
+                android:layout_marginTop="30dp"
+                android:isIndicator="true" />
 
         </LinearLayout>
 

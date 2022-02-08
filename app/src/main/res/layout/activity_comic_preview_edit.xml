@@ -40,7 +40,7 @@
     <TextView
         android:id="@+id/comic_description_tv"
         android:layout_width="300dp"
-        android:layout_height="120dp"
+        android:layout_height="100dp"
         android:layout_marginTop="20dp"
         android:gravity="top|center"
         android:hint="Comic Description"
@@ -88,6 +88,12 @@
             android:src="@drawable/add_plus" />
 
     </LinearLayout>
+
+    <RatingBar
+        android:id="@+id/preview_edit_comic_rating_rb"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:isIndicator="true" />
 
     <LinearLayout
         android:id="@+id/create_comic_finish_buttons"

@@ -6,7 +6,9 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -25,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,6 +35,7 @@ import java.util.stream.Collectors;
 import mosis.comiccollector.model.UserCollectedComicsList;
 import mosis.comiccollector.model.comic.Comic;
 import mosis.comiccollector.repository.ComicRepository;
+import mosis.comiccollector.repository.DoneHandler;
 import mosis.comiccollector.ui.comic.IndexedUriPage;
 
 public class FirebaseComicRepository implements ComicRepository {
@@ -43,67 +47,80 @@ public class FirebaseComicRepository implements ComicRepository {
 
     private static final String COMICS_STORAGE = "comics";
 
+    // firebase supports up to 10 items in whereIn query
+    private static final int FIREBASE_WHEREIN_LIMIT = 10;
+
     @Override
     public void getCreatedComics(String userId, ComicsHandler handler) {
 
         FirebaseFirestore.getInstance()
-                .collection(COMICS_INFO_PATH)
-                .whereEqualTo(Comic.AUTHOR_ID_FIELD, userId)
-                .get()
-                .addOnCompleteListener((@NonNull Task<QuerySnapshot> task) -> {
-                    if (!task.isSuccessful()) {
-                        Log.e("comicRepo", "Failed to load created comics for: " + userId);
-                        handler.handleComics(null);
-                        return;
-                    }
-
-                    handler.handleComics(task.getResult().toObjects(Comic.class));
-
+            .collection(COMICS_INFO_PATH)
+            .whereEqualTo(Comic.AUTHOR_ID_FIELD, userId)
+            .get()
+            .addOnCompleteListener((@NonNull Task<QuerySnapshot> task) -> {
+                if (!task.isSuccessful()) {
+                    Log.e("comicRepo", "Failed to load created comics for: " + userId);
+                    handler.handleComics(null);
                     return;
-                });
+                }
+
+                handler.handleComics(task.getResult().toObjects(Comic.class));
+
+                return;
+            });
     }
 
     @Override
     public void getCreatedComics(String userId, double lat, double lon, double rad,
                                  ComicsHandler handler) {
 
-        new GeoFirestore(FirebaseFirestore.getInstance().collection(COMICS_LOCATION_PATH))
-                .getAtLocation(
-                        new GeoPoint(lat, lon),
-                        rad,
-                        (@Nullable List<? extends DocumentSnapshot> list, @Nullable Exception e) -> {
-                            if (e != null) {
-                                Log.e("comicRepo", "Failed to load createdComics in range ... ");
+        new GeoFirestore(FirebaseFirestore.getInstance()
+            .collection(COMICS_LOCATION_PATH))
+            .getAtLocation(
+                new GeoPoint(lat, lon),
+                rad,
+                (@Nullable List<? extends DocumentSnapshot> list, @Nullable Exception e) -> {
+                    if (e != null || list == null) {
+                        Log.e("comicRepo", "Failed to query createdComics in range ... ");
+                        handler.handleComics(Collections.emptyList());
+                        return;
+                    }
+
+                    if (list.size() == 0) {
+                        handler.handleComics(Collections.emptyList());
+                        return;
+                    }
+
+                    List<String> ids = list.stream()
+                        .map(DocumentSnapshot::getId)
+                        .collect(Collectors.toList());
+
+                    var idSegments = splitSegments(ids, FIREBASE_WHEREIN_LIMIT);
+
+                    var tasks = new ArrayList<Task<QuerySnapshot>>();
+                    for (var segment : idSegments) {
+                        tasks.add(FirebaseFirestore.getInstance()
+                            .collection(COMICS_INFO_PATH)
+                            .whereIn(FieldPath.documentId(), segment)
+                            .whereEqualTo(Comic.AUTHOR_ID_FIELD, userId)
+                            .get());
+                    }
+
+                    Tasks.whenAllComplete(tasks)
+                        .addOnCompleteListener((@NonNull Task<List<Task<?>>> task) -> {
+                            if (!task.isSuccessful() || task.getResult() == null) {
+                                Log.e("comicRepo", "Failed to query created comics ... ");
                                 handler.handleComics(Collections.emptyList());
                                 return;
                             }
 
-                            List<String> ids = new ArrayList<>();
-                            for (var item : list) {
-                                ids.add(item.getId());
-                            }
-                            if (ids.size() == 0) {
-                                handler.handleComics(Collections.emptyList());
-                                return;
-                            }
+                            List<Comic> data = joinTaskResults(task.getResult(), Comic.class);
+                            handler.handleComics(data);
 
-                            FirebaseFirestore.getInstance()
-                                    .collection(COMICS_INFO_PATH)
-                                    .whereIn(FieldPath.documentId(), ids)
-                                    .whereEqualTo(Comic.AUTHOR_ID_FIELD, userId)
-                                    .get()
-                                    .addOnCompleteListener((@NonNull Task<QuerySnapshot> task) -> {
-                                        if (!task.isSuccessful()) {
-                                            Log.e("comicRepo", "Failed to load comic by id query ... ");
-                                            handler.handleComics(Collections.emptyList());
-                                            return;
-                                        }
-
-                                        handler.handleComics(task.getResult().toObjects(Comic.class));
-
-                                        return;
-                                    });
+                            return;
                         });
+
+                });
 
     }
 
@@ -111,41 +128,58 @@ public class FirebaseComicRepository implements ComicRepository {
     public void getCollectedComics(String userId, ComicsHandler handler) {
 
         FirebaseFirestore.getInstance()
-                .collection(USER_COLLECTED_COMICS)
-                .document(userId)
-                .get()
-                .addOnCompleteListener((@NonNull Task<DocumentSnapshot> task) -> {
+            .collection(USER_COLLECTED_COMICS)
+            .document(userId)
+            .get()
+            .addOnCompleteListener((@NonNull Task<DocumentSnapshot> task) -> {
 
-                    if (!task.isSuccessful() || !task.getResult().exists()) {
-                        Log.e("comicsRepo", "Failed to load collected comics for: " + userId);
-                        handler.handleComics(null);
+                if (!task.isSuccessful() || !task.getResult().exists()) {
+                    Log.e("comicsRepo", "Failed to load collected comics for: " + userId);
+                    handler.handleComics(null);
+                    return;
+                }
+
+                UserCollectedComicsList collectedList = task
+                    .getResult()
+                    .toObject(UserCollectedComicsList.class);
+
+                if (collectedList == null || collectedList.comicsIds.size() == 0) {
+                    handler.handleComics(Collections.emptyList());
+                    return;
+                }
+
+                List<List<String>> idSegments = splitSegments(
+                    collectedList.comicsIds,
+                    FIREBASE_WHEREIN_LIMIT);
+
+                var tasks = new ArrayList<Task<QuerySnapshot>>();
+
+                for (var segment : idSegments) {
+                    tasks.add(FirebaseFirestore.getInstance()
+                        .collection(COMICS_INFO_PATH)
+                        .whereIn(Comic.COMIC_ID_FIELD, segment)
+                        .get());
+                }
+
+                Tasks
+                    .whenAllComplete(tasks)
+                    .addOnCompleteListener((@NonNull Task<List<Task<?>>> segmentTask) -> {
+                        if (!segmentTask.isSuccessful() || segmentTask.getResult() == null) {
+                            Log.e("comicRepo", "Failed to query collected comics segments .. ");
+                            handler.handleComics(Collections.emptyList());
+                            return;
+                        }
+
+                        List<Comic> data = joinTaskResults(
+                            segmentTask.getResult(),
+                            Comic.class);
+
+                        handler.handleComics(data);
                         return;
-                    }
 
-                    UserCollectedComicsList collectedList = task
-                            .getResult()
-                            .toObject(UserCollectedComicsList.class);
+                    });
 
-                    FirebaseFirestore.getInstance()
-                            .collection(COMICS_INFO_PATH)
-                            .whereIn(Comic.COMIC_ID_FIELD, collectedList.comicsIds)
-                            .get()
-                            .addOnCompleteListener((@NonNull Task<QuerySnapshot> comicsTask) -> {
-
-                                if (!comicsTask.isSuccessful()) {
-                                    Log.e("comicRepo", "Failed to load comics info ... ");
-                                    handler.handleComics(null);
-                                    return;
-                                }
-
-                                handler.handleComics(comicsTask
-                                        .getResult()
-                                        .toObjects(Comic.class));
-
-                                return;
-                            });
-
-                });
+            });
     }
 
     @Override
@@ -155,86 +189,90 @@ public class FirebaseComicRepository implements ComicRepository {
         var point = new GeoPoint(lat, lon);
 
         new GeoFirestore(FirebaseFirestore.getInstance().collection(COMICS_LOCATION_PATH))
-                .getAtLocation(
-                        point,
-                        rad,
-                        (@Nullable List<? extends DocumentSnapshot> list, @Nullable Exception e) -> {
-                            if (e != null) {
-                                Log.e("comicRepo", "Failed to get collected comics on location ");
+            .getAtLocation(
+                point,
+                rad,
+                (@Nullable List<? extends DocumentSnapshot> list, @Nullable Exception e) -> {
+                    if (e != null || list == null) {
+                        Log.e("comicRepo", "Failed to get collected comics on location ");
+                        handler.handleComics(Collections.emptyList());
+                        return;
+                    }
+
+                    if (list.size() == 0) {
+                        handler.handleComics(Collections.emptyList());
+                        return;
+                    }
+
+                    List<String> nearbyIds = list.stream()
+                        .map(DocumentSnapshot::getId)
+                        .collect(Collectors.toList());
+
+                    FirebaseFirestore.getInstance()
+                        .collection(USER_COLLECTED_COMICS)
+                        .document(userId)
+                        .get()
+                        .addOnCompleteListener((@NonNull Task<DocumentSnapshot> task) -> {
+                            if (!task.isSuccessful()
+                                || task.getResult() == null
+                                || !task.getResult().exists()) {
+
                                 handler.handleComics(Collections.emptyList());
                                 return;
                             }
-                            Log.e("comicRepo", "Got nearby comics: " + list.size());
-                            List<String> nearbyIds = new ArrayList<>();
-                            for (var item : list) {
-                                nearbyIds.add(item.getId());
-                            }
-                            if (nearbyIds.size() == 0) {
+
+                            UserCollectedComicsList collected = task
+                                .getResult()
+                                .toObject(UserCollectedComicsList.class);
+
+                            if (collected == null
+                                || collected.comicsIds == null
+                                || collected.comicsIds.size() == 0) {
                                 handler.handleComics(Collections.emptyList());
                                 return;
                             }
 
-                            Log.e("comicRepo", "Got nearby comics: " + nearbyIds.size());
+                            var collectedNearby = intersection(
+                                nearbyIds,
+                                collected.comicsIds);
 
-                            FirebaseFirestore.getInstance()
-                                    .collection(USER_COLLECTED_COMICS)
-                                    .document(userId)
-                                    .get()
-                                    .addOnCompleteListener((@NonNull Task<DocumentSnapshot> task) -> {
-                                        if (!task.isSuccessful()
-                                                || task.getResult() == null
-                                                || !task.getResult().exists()) {
-                                            Log.e("comicRepo", "Failed ot get collected ids ... ");
-                                            handler.handleComics(Collections.emptyList());
-                                            return;
-                                        }
+                            if (collectedNearby.size() == 0) {
+                                handler.handleComics(Collections.emptyList());
+                                return;
+                            }
 
-                                        UserCollectedComicsList collected = task
-                                                .getResult()
-                                                .toObject(UserCollectedComicsList.class);
+                            var idSegments = splitSegments(
+                                collectedNearby,
+                                FIREBASE_WHEREIN_LIMIT);
 
-                                        if (collected.comicsIds == null
-                                                || collected.comicsIds.size() == 0) {
-                                            handler.handleComics(Collections.emptyList());
-                                            return;
-                                        }
+                            var tasks = new ArrayList<Task<QuerySnapshot>>();
+                            for (var segment : idSegments) {
+                                tasks.add(FirebaseFirestore.getInstance()
+                                    .collection(COMICS_INFO_PATH)
+                                    .whereIn(Comic.COMIC_ID_FIELD, segment)
+                                    .get());
+                            }
 
-                                        var collectedNearby = intersection(
-                                                nearbyIds,
-                                                collected.comicsIds);
+                            Tasks
+                                .whenAllComplete(tasks)
+                                .addOnCompleteListener((@NonNull Task<List<Task<?>>> segmentTask) -> {
+                                    if (!segmentTask.isSuccessful() || segmentTask.getResult() == null) {
+                                        handler.handleComics(Collections.emptyList());
+                                        return;
+                                    }
 
-                                        // this will ensure that list is not empty
-                                        // nad -1 for sure wont be matched with any of comic ids
-                                        collectedNearby.add("-1");
+                                    List<Comic> data = joinTaskResults(
+                                        segmentTask.getResult(),
+                                        Comic.class);
+                                    handler.handleComics(data);
 
-                                        FirebaseFirestore.getInstance()
-                                                .collection(COMICS_INFO_PATH)
-                                                .whereIn(Comic.COMIC_ID_FIELD, collectedNearby)
-                                                .get()
-                                                .addOnCompleteListener((@NonNull Task<QuerySnapshot> queryTask) -> {
-
-                                                    if (!queryTask.isSuccessful() || queryTask.getResult() == null) {
-                                                        Log.e("comicRepo", "Failed to query near and collected ... ");
-                                                        handler.handleComics(Collections.emptyList());
-                                                        return;
-                                                    }
-
-                                                    handler.handleComics(queryTask
-                                                            .getResult()
-                                                            .toObjects(Comic.class));
-
-                                                    return;
-                                                });
-
-                                    });
+                                    return;
+                                });
 
                         });
 
+                });
 
-    }
-
-    private List<String> intersection(List<String> list_1, List<String> list_2) {
-        return list_1.stream().filter(list_2::contains).collect(Collectors.toList());
     }
 
     @Override
@@ -253,25 +291,24 @@ public class FirebaseComicRepository implements ComicRepository {
                          PagesHandler handler) {
 
         FirebaseStorage.getInstance()
-                .getReference(COMICS_STORAGE)
-                .child(comicId)
-                .child("" + pageInd)
-                .getDownloadUrl()
-                .addOnCompleteListener((@NonNull Task<Uri> task) -> {
-                    if (!task.isSuccessful()) {
-                        Log.e("comicRepo", "Failed to get page download uri ... page: " + pageInd);
-                        handler.handlePages(null);
-                        return;
-                    }
+            .getReference(COMICS_STORAGE)
+            .child(comicId)
+            .child("" + pageInd)
+            .getDownloadUrl()
+            .addOnCompleteListener((@NonNull Task<Uri> task) -> {
+                if (!task.isSuccessful()) {
+                    handler.handlePages(null);
+                    return;
+                }
 
-                    String uri = task.getResult().toString();
+                String uri = task.getResult().toString();
 
-                    ImageLoader.getInstance().loadImage(
-                            uri,
-                            new ImageSize(width, height),
-                            new MyImageListener(handler));
+                ImageLoader.getInstance().loadImage(
+                    uri,
+                    new ImageSize(width, height),
+                    new MyImageListener(handler));
 
-                });
+            });
 
     }
 
@@ -282,33 +319,32 @@ public class FirebaseComicRepository implements ComicRepository {
                          @NotNull UploadHandler handler) {
 
         FirebaseFirestore.getInstance()
-                .collection(COMICS_INFO_PATH)
-                .document(comicId)
-                .update(Comic.PAGES_COUNT_FIELD, newCount)
-                .addOnCompleteListener((@NonNull Task<Void> updateTask) -> {
-                    // TODO I guess do something ...
-                });
+            .collection(COMICS_INFO_PATH)
+            .document(comicId)
+            .update(Comic.PAGES_COUNT_FIELD, newCount)
+            .addOnCompleteListener((@NonNull Task<Void> updateTask) -> {
+                // TODO I guess do something ...
+            });
 
 
         for (IndexedUriPage indexedUri : pageUris) {
             FirebaseStorage.getInstance()
-                    .getReference(COMICS_STORAGE)
-                    .child(comicId)
-                    .child("" + indexedUri.index)
-                    .putFile(Uri.parse(indexedUri.pageUri))
-                    .addOnCompleteListener((@NonNull Task<UploadTask.TaskSnapshot> task) -> {
-                        if (!task.isSuccessful()) {
-                            Log.e("comicsRepo", "Failed to update comic ... ");
-                            handler.handleSingleUpload(comicId, indexedUri.index, 0);
-                            return;
-                        }
+                .getReference(COMICS_STORAGE)
+                .child(comicId)
+                .child("" + indexedUri.index)
+                .putFile(Uri.parse(indexedUri.pageUri))
+                .addOnCompleteListener((@NonNull Task<UploadTask.TaskSnapshot> task) -> {
+                    if (!task.isSuccessful()) {
+                        handler.handleSingleUpload(comicId, indexedUri.index, 0);
+                        return;
+                    }
 
-                        handler.handleSingleUpload(
-                                comicId,
-                                indexedUri.index,
-                                task.getResult().getBytesTransferred());
+                    handler.handleSingleUpload(
+                        comicId,
+                        indexedUri.index,
+                        task.getResult().getBytesTransferred());
 
-                    });
+                });
 
         }
 
@@ -319,106 +355,117 @@ public class FirebaseComicRepository implements ComicRepository {
                             List<IndexedUriPage> pages,
                             @NonNull UploadHandler handler) {
         CollectionReference comicCollection = FirebaseFirestore.getInstance()
-                .collection(COMICS_INFO_PATH);
+            .collection(COMICS_INFO_PATH);
 
         comicCollection
-                .add(newComic)
-                .addOnCompleteListener((@NonNull Task<DocumentReference> createTask) -> {
-                    if (!createTask.isSuccessful()) {
-                        Log.e("comicRepo", "Failed to create comic info ... ");
-                        handler.handleSingleUpload("", 0, -1);
-                        return;
-                    }
+            .add(newComic)
+            .addOnCompleteListener((@NonNull Task<DocumentReference> createTask) -> {
+                if (!createTask.isSuccessful()) {
+                    handler.handleSingleUpload("", 0, -1);
+                    return;
+                }
 
-                    String docId = createTask.getResult().getId();
+                String docId = createTask.getResult().getId();
 
-                    new GeoFirestore(FirebaseFirestore.getInstance()
-                            .collection(COMICS_LOCATION_PATH))
-                            .setLocation(docId, new GeoPoint(
-                                    newComic.getLocation().latitude,
-                                    newComic.getLocation().longitude));
-                    // TODO somehow wait for the upper query to finish first ... ?
+                new GeoFirestore(FirebaseFirestore.getInstance()
+                    .collection(COMICS_LOCATION_PATH))
+                    .setLocation(docId, new GeoPoint(
+                        newComic.getLocation().latitude,
+                        newComic.getLocation().longitude));
+                // TODO somehow wait for the upper query to finish first ... ?
 
-                    createTask.getResult()
-                            .update(Comic.COMIC_ID_FIELD, docId)
-                            .addOnCompleteListener((@NonNull Task<Void> updateTask) -> {
-                                if (!updateTask.isSuccessful()) {
-                                    Log.e("comicsRepo", "Failed to update comic id ... ");
-                                    handler.handleSingleUpload(docId, 0, -1);
-                                    return;
-                                }
+                createTask.getResult()
+                    .update(Comic.COMIC_ID_FIELD, docId)
+                    .addOnCompleteListener((@NonNull Task<Void> updateTask) -> {
+                        if (!updateTask.isSuccessful()) {
+                            handler.handleSingleUpload(docId, 0, -1);
+                            return;
+                        }
 
-                                for (IndexedUriPage page : pages) {
-                                    FirebaseStorage.getInstance()
-                                            .getReference(COMICS_STORAGE)
-                                            .child(docId)
-                                            .child("" + page.index)
-                                            .putFile(Uri.parse(page.pageUri))
-                                            .addOnCompleteListener((@NonNull Task<UploadTask.TaskSnapshot> task) -> {
-                                                if (!task.isSuccessful()) {
-                                                    Log.e("comicsRepo", "Failed to update comic ... ");
-                                                    handler.handleSingleUpload(
-                                                            docId,
-                                                            page.index,
-                                                            0);
-                                                    return;
-                                                }
+                        for (IndexedUriPage page : pages) {
+                            FirebaseStorage.getInstance()
+                                .getReference(COMICS_STORAGE)
+                                .child(docId)
+                                .child("" + page.index)
+                                .putFile(Uri.parse(page.pageUri))
+                                .addOnCompleteListener((@NonNull Task<UploadTask.TaskSnapshot> task) -> {
+                                    if (!task.isSuccessful()) {
+                                        handler.handleSingleUpload(
+                                            docId,
+                                            page.index,
+                                            0);
+                                        return;
+                                    }
 
-                                                handler.handleSingleUpload(
-                                                        docId,
-                                                        page.index,
-                                                        task.getResult().getBytesTransferred());
+                                    handler.handleSingleUpload(
+                                        docId,
+                                        page.index,
+                                        task.getResult().getBytesTransferred());
 
-                                            });
-                                }
+                                });
+                        }
 
-                            });
+                    });
 
-                });
+            });
     }
 
     @Override
     public void getUnknownComics(String userId, ComicsHandler handler) {
         FirebaseFirestore.getInstance()
-                .collection(USER_COLLECTED_COMICS)
-                .document(userId)
-                .get()
-                .addOnCompleteListener((@NonNull Task<DocumentSnapshot> task) -> {
-                    if (!task.isSuccessful() || !task.getResult().exists()) {
-                        Log.e("comicsRepo", "Failed to load collected comics for: " + userId);
-                        handler.handleComics(null);
+            .collection(USER_COLLECTED_COMICS)
+            .document(userId)
+            .get()
+            .addOnCompleteListener((@NonNull Task<DocumentSnapshot> task) -> {
+                if (!task.isSuccessful() || !task.getResult().exists()) {
+                    handler.handleComics(null);
+                    return;
+                }
+
+                UserCollectedComicsList collectedList = task
+                    .getResult()
+                    .toObject(UserCollectedComicsList.class);
+
+                if (collectedList == null
+                    || collectedList.comicsIds == null
+                    || collectedList.comicsIds.size() == 0) {
+
+                    handler.handleComics(Collections.emptyList());
+                    return;
+                }
+
+                var ids = splitSegments(
+                    collectedList.comicsIds,
+                    FIREBASE_WHEREIN_LIMIT);
+
+                List<Task<?>> tasks = new ArrayList<>();
+
+                for (var idsSegment : ids) {
+                    tasks.add(FirebaseFirestore.getInstance()
+                        .collection(COMICS_INFO_PATH)
+                        .whereNotIn(Comic.COMIC_ID_FIELD, idsSegment)
+                        .get());
+                }
+
+                Tasks
+                    .whenAllComplete(tasks)
+                    .addOnCompleteListener((@NonNull Task<List<Task<?>>> segmentTask) -> {
+                        if (!segmentTask.isSuccessful() || segmentTask.getResult() == null) {
+                            Log.e("comicRepo", "Failed to get unknown comics ... ");
+                            handler.handleComics(Collections.emptyList());
+                            return;
+                        }
+
+                        List<Comic> data = joinTaskResults(
+                            segmentTask.getResult(),
+                            Comic.class);
+                        data.removeIf((input) -> input.getAuthorId().equals(userId));
+
+                        handler.handleComics(data);
                         return;
-                    }
+                    });
 
-                    UserCollectedComicsList collectedList = task
-                            .getResult()
-                            .toObject(UserCollectedComicsList.class);
-
-                    FirebaseFirestore.getInstance()
-                            .collection(COMICS_INFO_PATH)
-                            .whereNotIn(Comic.COMIC_ID_FIELD, collectedList.comicsIds)
-                            .get()
-                            .addOnCompleteListener((@NonNull Task<QuerySnapshot> queryTask) -> {
-                                if (!queryTask.isSuccessful()) {
-                                    Log.e("comicRepo", "Failed to query unknown comics ... ");
-                                    handler.handleComics(null);
-                                    return;
-                                }
-
-                                List<Comic> comics = queryTask
-                                        .getResult()
-                                        .toObjects(Comic.class);
-                                comics.removeIf((comic) -> {
-                                    return comic.getAuthorId().equals(userId);
-                                });
-
-                                handler.handleComics(comics);
-
-                                return;
-                            });
-
-
-                });
+            });
     }
 
     @Override
@@ -428,74 +475,78 @@ public class FirebaseComicRepository implements ComicRepository {
         GeoPoint point = new GeoPoint(lat, lon);
 
         new GeoFirestore(FirebaseFirestore.getInstance().collection(COMICS_LOCATION_PATH))
-                .getAtLocation(point, rad, (@Nullable List<? extends DocumentSnapshot> list, @Nullable Exception e) -> {
-                    if (e != null) {
-                        Log.e("comicRepo", "Failed to get unknown comics at location ... ");
+            .getAtLocation(
+                point,
+                rad,
+                (@Nullable List<? extends DocumentSnapshot> list, @Nullable Exception e) -> {
+                    if (e != null || list == null) {
                         handler.handleComics(Collections.emptyList());
                         return;
                     }
 
-                    Log.e("comicRepo", "unknown comic at location: " + list.size());
-
-                    List<String> nearbyIds = new ArrayList<>();
-                    for (var item : list) {
-                        nearbyIds.add(item.getId());
-                    }
-                    if (nearbyIds.size() == 0) {
+                    if (list.size() == 0) {
                         handler.handleComics(Collections.emptyList());
                         return;
                     }
+
+                    List<String> nearbyIds = list.stream()
+                        .map(DocumentSnapshot::getId)
+                        .collect(Collectors.toList());
 
                     FirebaseFirestore.getInstance()
-                            .collection(USER_COLLECTED_COMICS)
-                            .document(userId)
-                            .get()
-                            .addOnCompleteListener((@NonNull Task<DocumentSnapshot> task) -> {
-                                if (!task.isSuccessful()) {
-                                    Log.e("comicsRepo", "Failed to load collected comics for: " + userId);
-                                    handler.handleComics(null);
+                        .collection(USER_COLLECTED_COMICS)
+                        .document(userId)
+                        .get()
+                        .addOnCompleteListener((@NonNull Task<DocumentSnapshot> task) -> {
+                            List<String> collectedIds = new ArrayList<>();
+                            if (task.isSuccessful()
+                                && task.getResult().exists()
+                                && task.getResult() != null) {
+
+                                var collectedObj = task
+                                    .getResult()
+                                    .toObject(UserCollectedComicsList.class);
+
+                                if (collectedObj != null && collectedObj.comicsIds != null) {
+                                    collectedIds.addAll(collectedObj.comicsIds);
+                                }
+
+                            }
+
+                            nearbyIds.removeIf(collectedIds::contains);
+
+                            List<List<String>> nearbyIdSegments = splitSegments(
+                                nearbyIds,
+                                FIREBASE_WHEREIN_LIMIT);
+
+                            List<Task<?>> tasks = new ArrayList<>();
+
+                            for (var singleSegment : nearbyIdSegments) {
+                                tasks.add(FirebaseFirestore.getInstance()
+                                    .collection(COMICS_INFO_PATH)
+                                    .whereIn(Comic.COMIC_ID_FIELD, singleSegment)
+                                    .get());
+                            }
+
+                            Tasks.whenAllComplete(tasks)
+                                .addOnCompleteListener((@NonNull Task<List<Task<?>>> segmentTask) -> {
+                                    if (!segmentTask.isSuccessful()
+                                        || segmentTask.getResult() == null) {
+
+                                        handler.handleComics(Collections.emptyList());
+                                        return;
+                                    }
+
+                                    List<Comic> data = joinTaskResults(
+                                        segmentTask.getResult(),
+                                        Comic.class);
+                                    data.removeIf(comic -> comic.getAuthorId().equals(userId));
+
+                                    handler.handleComics(data);
                                     return;
-                                }
+                                });
 
-                                // this should be empty array but firebase doesn't support
-                                // whereNotIn query on an empty array so "-1" should be Id
-                                // impossible to match ...
-                                List<String> collectedIds = Arrays.asList("-1");
-
-                                if (task.getResult().exists() && task.getResult() != null) {
-                                    // this person HAS some collected comics
-                                    collectedIds = task
-                                            .getResult()
-                                            .toObject(UserCollectedComicsList.class)
-                                            .comicsIds;
-                                }
-
-
-                                FirebaseFirestore.getInstance()
-                                        .collection(COMICS_INFO_PATH)
-                                        .whereNotIn(Comic.COMIC_ID_FIELD, collectedIds)
-                                        .get()
-                                        .addOnCompleteListener((@NonNull Task<QuerySnapshot> queryTask) -> {
-                                            if (!queryTask.isSuccessful()) {
-                                                Log.e("comicRepo", "Failed to query unknown comics ... ");
-                                                handler.handleComics(null);
-                                                return;
-                                            }
-
-                                            List<Comic> comics = queryTask
-                                                    .getResult()
-                                                    .toObjects(Comic.class);
-                                            comics.removeIf((comic) -> {
-                                                return comic.getAuthorId().equals(userId);
-                                            });
-
-                                            handler.handleComics(comics);
-
-                                            return;
-                                        });
-
-
-                            });
+                        });
 
                 });
 
@@ -504,65 +555,135 @@ public class FirebaseComicRepository implements ComicRepository {
     @Override
     public void collectComic(String userId, String comicId, DoneHandler handler) {
         FirebaseFirestore.getInstance()
-                .collection(USER_COLLECTED_COMICS)
-                .document(userId)
-                .update(UserCollectedComicsList.COLLECTED_LIST_FIELD, FieldValue.arrayUnion(comicId))
-                .addOnCompleteListener((@NonNull Task<Void> task) -> {
-                    if (!task.isSuccessful()) {
-                        Log.e("comicRepo", "Failed to UPDATE collected comics list ... ");
+            .collection(USER_COLLECTED_COMICS)
+            .document(userId)
+            .update(UserCollectedComicsList.COLLECTED_LIST_FIELD, FieldValue.arrayUnion(comicId))
+            .addOnCompleteListener((@NonNull Task<Void> task) -> {
+                if (!task.isSuccessful()) {
 
-                        FirebaseFirestore.getInstance()
-                                .collection(USER_COLLECTED_COMICS)
-                                .document(userId)
-                                .set(new UserCollectedComicsList(userId, Arrays.asList(comicId)))
-                                .addOnCompleteListener((@NonNull Task<Void> setTask) -> {
+                    FirebaseFirestore.getInstance()
+                        .collection(USER_COLLECTED_COMICS)
+                        .document(userId)
+                        .set(new UserCollectedComicsList(userId, Arrays.asList(comicId)))
+                        .addOnCompleteListener((@NonNull Task<Void> setTask) -> {
 
-                                    if (!setTask.isSuccessful()) {
-                                        Log.e("comicRepo", "Failed to SET collected comics list ... ");
-                                        if (setTask.getException() != null) {
-                                            handler.handle(setTask.getException().getMessage());
-                                        } else {
-                                            handler.handle("Unknown message");
-                                        }
+                            if (!setTask.isSuccessful()) {
+                                if (setTask.getException() != null) {
+                                    handler.handleDone(setTask.getException().getMessage());
+                                } else {
+                                    handler.handleDone("Unknown message");
+                                }
 
-                                    }
+                            }
 
-                                    handler.handle(null);
+                            handler.handleDone(null);
 
-                                    return;
-                                });
+                            return;
+                        });
 
 
-                        return;
-                    }
-
-                    handler.handle(null);
                     return;
-                });
+                }
+
+                handler.handleDone(null);
+                return;
+            });
     }
 
     @Override
     public void getComic(String comicId, ComicsHandler handler) {
         FirebaseFirestore.getInstance()
-                .collection(COMICS_INFO_PATH)
-                .document(comicId)
-                .get().
-                addOnCompleteListener((@NonNull Task<DocumentSnapshot> task) -> {
-                    if (!task.isSuccessful()) {
-                        Log.e("comicRepo", "Failed to get comic: " + comicId);
-                        handler.handleComics(null);
-                        return;
-                    }
-
-                    Comic comic = task.getResult().toObject(Comic.class);
-                    handler.handleComics(Arrays.asList(comic));
-
+            .collection(COMICS_INFO_PATH)
+            .document(comicId)
+            .get().
+            addOnCompleteListener((@NonNull Task<DocumentSnapshot> task) -> {
+                if (!task.isSuccessful()) {
+                    handler.handleComics(null);
                     return;
-                });
+                }
+
+                Comic comic = task.getResult().toObject(Comic.class);
+                handler.handleComics(Arrays.asList(comic));
+
+                return;
+            });
     }
 
     @Override
-    public void addRating(String comicId, float rating, DoneHandler handler) {
+    public void updateRating(String comicId, float newRating, DoneHandler onDone) {
+        FirebaseFirestore.getInstance()
+            .collection(COMICS_INFO_PATH)
+            .document(comicId)
+            .update(Comic.RATING_FIELD, newRating)
+            .addOnCompleteListener((task) -> {
+                if (!task.isSuccessful()) {
+                    var err = "Unknown err ... ";
+                    if (task.getException() != null) {
+                        err = task.getException().getMessage();
+                    }
 
+                    onDone.handleDone(err);
+                    return;
+                }
+
+                onDone.handleDone(null);
+            });
+    }
+
+    @Override
+    public void getRating(String comicId, RatingHandler handler) {
+        FirebaseFirestore.getInstance()
+            .collection(COMICS_INFO_PATH)
+            .document(comicId)
+            .get()
+            .addOnCompleteListener((@NonNull Task<DocumentSnapshot> task) -> {
+                if (!task.isSuccessful()) {
+                    handler.handleRating(0);
+                    return;
+                }
+
+                float rating = task.getResult().toObject(Comic.class).getRating();
+                handler.handleRating(rating);
+            });
+    }
+
+    private List<List<String>> splitSegments(List<String> input, int size) {
+        List<List<String>> regions = new ArrayList<>();
+
+        int starting = 0;
+        // second index in list.sublist(starting, ending) is not included in resulting list
+        int lastIndex = input.size();
+
+        int ending;
+        while (starting < lastIndex) {
+            ending = starting + size;
+            if (ending > lastIndex) {
+                ending = lastIndex;
+            }
+
+            regions.add(input.subList(starting, ending));
+
+            starting += size;
+        }
+
+        return regions;
+
+    }
+
+    private <T> List<T> joinTaskResults(List<Task<?>> results, Class T) {
+        List<T> data = new ArrayList<>();
+
+        for (var resultTask : results) {
+            if (!resultTask.isSuccessful() || resultTask.getResult() == null) {
+            } else {
+                data.addAll(((Task<QuerySnapshot>) resultTask).getResult().toObjects(T));
+            }
+        }
+
+        return data;
+    }
+
+    private List<String> intersection(List<String> list_1, List<String> list_2) {
+        return list_1.stream().filter(list_2::contains).collect(Collectors.toList());
     }
 }

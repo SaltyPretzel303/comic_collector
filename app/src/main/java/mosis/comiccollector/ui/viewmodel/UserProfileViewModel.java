@@ -18,6 +18,7 @@ import mosis.comiccollector.repository.AuthRepository;
 import mosis.comiccollector.repository.ComicRepository;
 import mosis.comiccollector.repository.DataMapper;
 import mosis.comiccollector.repository.PeopleRepository;
+import mosis.comiccollector.repository.RatingsRepository;
 import mosis.comiccollector.ui.comic.ViewComic;
 import mosis.comiccollector.ui.user.ViewUser;
 import mosis.comiccollector.util.DepProvider;
@@ -35,6 +36,7 @@ public class UserProfileViewModel extends AndroidViewModel {
     private AuthRepository authRepo;
     private ComicRepository comicRepo;
     private PeopleRepository peopleRepo;
+    private RatingsRepository ratingRepo;
 
     private MutableLiveData<ViewUser> liveUserData;
     private MutableLiveData<Bitmap> liveProfilePic;
@@ -52,6 +54,7 @@ public class UserProfileViewModel extends AndroidViewModel {
         this.authRepo = DepProvider.getAuthRepository();
         this.comicRepo = DepProvider.getComicRepository();
         this.peopleRepo = DepProvider.getPeopleRepository();
+        this.ratingRepo = DepProvider.getRatingRepository();
 
         this.userMapper = DepProvider.getUserModelMapper();
         this.comicMapper = DepProvider.getComicModelMapper();
@@ -74,7 +77,8 @@ public class UserProfileViewModel extends AndroidViewModel {
             // where did I got id if that user doesn't exists ...
             User user = people.get(0);
             ViewUser viewUser = this.userMapper.mapThis(user);
-            viewUser.setLiveProfilePic(this.loadProfilePic(userId, width, height));
+
+            viewUser.setLiveProfilePic(loadProfilePic(userId, width, height));
 
             this.liveUserData.postValue(viewUser);
         });
@@ -115,6 +119,15 @@ public class UserProfileViewModel extends AndroidViewModel {
 
 //        return this.liveProfilePic;
         return livePic;
+    }
+
+    private MutableLiveData<Float> getUserRating(String userId) {
+        var liveData = new MutableLiveData<Float>();
+
+        ratingRepo.getAuthorRating(userId, liveData::postValue);
+
+
+        return liveData;
     }
 
     // endregion
@@ -345,7 +358,7 @@ public class UserProfileViewModel extends AndroidViewModel {
 
             ViewUser friend = liveFriends.getValue().get(index);
             if (friend.liveProfilePic == null) {
-                friend.liveProfilePic = this.loadProfilePic(friend.userId, width, height);
+                friend.liveProfilePic = loadProfilePic(friend.userId, width, height);
             }
 
             return friend;

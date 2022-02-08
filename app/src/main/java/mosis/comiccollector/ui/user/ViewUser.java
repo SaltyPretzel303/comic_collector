@@ -18,10 +18,10 @@ public class ViewUser implements Serializable {
 
     public transient MutableLiveData<Bitmap> liveProfilePic;
 
-    public int rating;
-
     private transient MutableLiveData<List<ViewComic>> createdComics;
     private transient MutableLiveData<List<ViewComic>> collectedComics;
+
+    public float rating;
 
     // mainly used for auth
     public String errorMessage;
@@ -31,25 +31,26 @@ public class ViewUser implements Serializable {
     }
 
     public ViewUser(String errorMessage) {
-        this("-Unknown-", "Unknown", "Unknown", -1, errorMessage);
+        this("-Unknown-", "Unknown", "Unknown", 0, errorMessage);
     }
 
     public ViewUser(String userId,
                     String email,
                     String name,
-                    int rating,
+                    float rating,
                     String errorMessage) {
 
         this.userId = userId;
         this.email = email;
         this.name = name;
-        this.rating = rating;
         this.errorMessage = errorMessage;
+        this.rating = rating;
     }
 
     public void setLiveProfilePic(MutableLiveData<Bitmap> livePicUri) {
         this.liveProfilePic = livePicUri;
     }
+
 
     public MutableLiveData<List<ViewComic>> getCreatedComics() {
         return createdComics;
@@ -66,4 +67,5 @@ public class ViewUser implements Serializable {
     public void setCollectedComics(MutableLiveData<List<ViewComic>> collectedComics) {
         this.collectedComics = collectedComics;
     }
+
 }
