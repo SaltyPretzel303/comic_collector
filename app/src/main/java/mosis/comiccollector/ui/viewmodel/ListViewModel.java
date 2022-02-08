@@ -14,6 +14,7 @@ import java.util.List;
 
 import mosis.comiccollector.model.comic.Comic;
 import mosis.comiccollector.model.user.User;
+import mosis.comiccollector.model.user.UserLocation;
 import mosis.comiccollector.repository.AuthRepository;
 import mosis.comiccollector.repository.ComicRepository;
 import mosis.comiccollector.repository.DataMapper;
@@ -107,6 +108,20 @@ public class ListViewModel extends AndroidViewModel {
         return null;
     }
 
+    public ViewUser getUser(String id) {
+        if (livePeople != null
+            && livePeople.getValue() != null) {
+            for (var person : livePeople.getValue()) {
+                if (person.userId.equals(id)) {
+                    return person;
+                }
+            }
+        }
+
+        return null;
+    }
+
+
     public MutableLiveData<List<ViewComic>> getUnknownComics() {
         if (liveComics == null) {
             liveComics = new MutableLiveData<>();
@@ -155,6 +170,20 @@ public class ListViewModel extends AndroidViewModel {
 
         return null;
     }
+
+    public ViewComic getComic(String id) {
+        if (liveComics != null
+            && liveComics.getValue() != null) {
+            for (var comic : liveComics.getValue()) {
+                if (comic.comicId.equals(id)) {
+                    return comic;
+                }
+            }
+        }
+
+        return null;
+    }
+
 
     private List<ViewUser> mapUsers(List<User> inputUsers) {
         List<ViewUser> vUsers = new ArrayList<>();
@@ -255,4 +284,15 @@ public class ListViewModel extends AndroidViewModel {
             queryComics();
         }
     }
+
+    public MutableLiveData<UserLocation> getLastLocation(String userId) {
+        var liveData = new MutableLiveData<UserLocation>();
+        peopleRepo.getLastLocation(userId, (locations) -> {
+            if (locations != null) {
+                liveData.postValue(locations.get(0));
+            }
+        });
+        return liveData;
+    }
+
 }

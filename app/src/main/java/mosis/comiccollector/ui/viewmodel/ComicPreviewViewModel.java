@@ -243,7 +243,7 @@ public class ComicPreviewViewModel extends AndroidViewModel {
         return uris;
     }
 
-    public LiveData<ViewUser> getAuthor() {
+    public MutableLiveData<ViewUser> getAuthor() {
         var liveResult = new MutableLiveData<ViewUser>();
 
         peopleRepo.getUser(currentComic.authorId, (people) -> {

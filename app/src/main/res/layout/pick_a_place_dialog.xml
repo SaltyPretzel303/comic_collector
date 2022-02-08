@@ -6,14 +6,6 @@
     android:orientation="vertical"
     android:padding="15dp">
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="0px"
-        android:layout_weight="1"
-        android:text="Pick A Place"
-        android:textAlignment="center"
-        android:textSize="40dp" />
-
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="0px"
@@ -43,12 +35,12 @@
         android:gravity="center"
         android:orientation="horizontal">
 
-        <Button
-            android:id="@+id/pick_a_place_follow_button"
-            android:layout_width="150dp"
-            android:layout_height="match_parent"
-            android:layout_marginHorizontal="10dp"
-            android:text="FollowMe" />
+        <!--        <Button-->
+        <!--            android:id="@+id/pick_a_place_follow_button"-->
+        <!--            android:layout_width="150dp"-->
+        <!--            android:layout_height="match_parent"-->
+        <!--            android:layout_marginHorizontal="10dp"-->
+        <!--            android:text="FollowMe" />-->
 
         <Button
             android:id="@+id/pick_a_place_pick_button"

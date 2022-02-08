@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -22,6 +23,7 @@ import androidx.lifecycle.MutableLiveData;
 import mosis.comiccollector.R;
 import mosis.comiccollector.location.LocationConsumer;
 import mosis.comiccollector.model.user.UserLocation;
+import mosis.comiccollector.ui.map.ShortMapDialog;
 import mosis.comiccollector.ui.user.ShortProfileDialog;
 import mosis.comiccollector.ui.user.ViewUser;
 import mosis.comiccollector.util.Distance;
@@ -34,6 +36,7 @@ public class ShortComicDialog extends Dialog implements LocationConsumer {
 
     private static final String UNKNOWN_COMIC_BUTTON_TEXT = "COLLECT";
     private static final String KNOWN_COMIC_BUTTON_TEXT = "PREVIEW";
+    private static final String SHOW_ON_MAP_TEXT = "Show on Map";
 
     private static final double MAX_COLLECT_DISTANCE_M = 20; // 20m
 
@@ -51,6 +54,23 @@ public class ShortComicDialog extends Dialog implements LocationConsumer {
 
     private LiveData<UserLocation> liveLocation;
     private UserLocation lastLocation;
+
+    private boolean showOnMap;
+
+    public ShortComicDialog(
+        @NonNull Context context,
+        ViewComic comic,
+        ComicOrigin origin,
+        boolean showOnMap) {
+        super(context);
+
+        this.context = context;
+        this.comic = new MutableLiveData<>();
+        this.comic.postValue(comic);
+
+        this.origin = origin;
+        this.showOnMap = showOnMap;
+    }
 
     public ShortComicDialog(
         @NonNull Context context,
@@ -158,26 +178,34 @@ public class ShortComicDialog extends Dialog implements LocationConsumer {
         } else {
             // unknown comic
 
-            actionButton.setText(UNKNOWN_COMIC_BUTTON_TEXT);
-            actionButton.setOnClickListener(v -> {
-                Log.e("shortComic", "COLLECTING this comic ... ");
-                if (howToCollect != null) {
-                    howToCollect.collect(vComic.comicId);
+            if (showOnMap) {
+                actionButton.setText(SHOW_ON_MAP_TEXT);
+                actionButton.setOnClickListener(this::showOnMapClick);
+
+                actionButton.setEnabled(true);
+            } else {
+
+                actionButton.setText(UNKNOWN_COMIC_BUTTON_TEXT);
+                actionButton.setOnClickListener(v -> {
+                    Log.e("shortComic", "COLLECTING this comic ... ");
+                    if (howToCollect != null) {
+                        howToCollect.collect(vComic.comicId);
+                    }
+                });
+
+                boolean enabled = false;
+                if (lastLocation != null) {
+                    double distance = myDistance(
+                        lastLocation.getLatitude(),
+                        lastLocation.getLongitude());
+
+                    Log.e("shortComic", "INITIAL (m) distance is : " + distance);
+
+                    enabled = distance < MAX_COLLECT_DISTANCE_M;
                 }
-            });
 
-            boolean enabled = false;
-            if (lastLocation != null) {
-                double distance = myDistance(
-                    lastLocation.getLatitude(),
-                    lastLocation.getLongitude());
-
-                Log.e("shortComic", "INITIAL (m) distance is : " + distance);
-
-                enabled = distance < MAX_COLLECT_DISTANCE_M;
+                actionButton.setEnabled(enabled);
             }
-
-            actionButton.setEnabled(enabled);
         }
 
 
@@ -208,5 +236,13 @@ public class ShortComicDialog extends Dialog implements LocationConsumer {
         // just some value that wont trigger collect button activation
         return 100 * MAX_COLLECT_DISTANCE_M;
     }
+
+    private void showOnMapClick(View v) {
+        if (comic.getValue() != null && comic.getValue().location != null) {
+            var mapDialog = new ShortMapDialog(context, comic.getValue().location);
+            mapDialog.show();
+        }
+    }
+
 
 }

@@ -1,6 +1,5 @@
 package mosis.comiccollector.ui.comic;
 
-import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
@@ -33,7 +32,7 @@ import java.util.Map;
 import mosis.comiccollector.R;
 import mosis.comiccollector.model.Location;
 import mosis.comiccollector.ui.PermissionRequester;
-import mosis.comiccollector.ui.map.PickAPlaceDialog;
+import mosis.comiccollector.ui.map.ShortMapDialog;
 import mosis.comiccollector.ui.PreviewItemData;
 import mosis.comiccollector.ui.PreviewItemProvider;
 import mosis.comiccollector.ui.ProgressDialog;
@@ -395,7 +394,7 @@ public class ComicPreviewAndEditActivity extends AppCompatActivity {
     private void pickAPlaceClick(View v) {
         this.requestPermissions((boolean granted) -> {
             if (granted) {
-                Dialog dialog = new PickAPlaceDialog(this, (Location place) -> {
+                Dialog dialog = new ShortMapDialog(this, (Location place) -> {
                     this.pickedLocation = place;
                 });
                 dialog.show();

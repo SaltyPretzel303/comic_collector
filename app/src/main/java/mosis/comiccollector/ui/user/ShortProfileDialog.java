@@ -10,7 +10,6 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.RatingBar;
 import android.widget.TextView;
 
@@ -19,14 +18,17 @@ import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import mosis.comiccollector.R;
 import mosis.comiccollector.location.LocationConsumer;
+import mosis.comiccollector.model.Location;
 import mosis.comiccollector.model.user.UserLocation;
 import mosis.comiccollector.ui.map.PersonFollower;
+import mosis.comiccollector.ui.map.ShortMapDialog;
 import mosis.comiccollector.util.Distance;
 
 public class ShortProfileDialog
@@ -39,6 +41,7 @@ public class ShortProfileDialog
 
     private static final String VIEW_PROFILE_STRING = "View Profile";
     private static final String BE_FRIENDS_STRING = "Be Friends";
+    private static final String SHOW_ON_MAP_STRING = "Show on Map";
 
     private static final int MAX_BE_FRIENDS_DISTANCE_M = 20; // 20,
 
@@ -50,7 +53,7 @@ public class ShortProfileDialog
 
     private final List<LoadStages> loadStages;
 
-    private final LiveData<ViewUser> liveUserData;
+    private final MutableLiveData<ViewUser> liveUserData;
 
     private Button actionButton;
 
@@ -63,10 +66,24 @@ public class ShortProfileDialog
     private FriendRequestHandler friendReqHandler;
 
     private boolean areFriends;
+    private LiveData<UserLocation> liveUserLocation;
+
+    public ShortProfileDialog(@NonNull Context context,
+                              ViewUser user,
+                              LiveData<UserLocation> userLocation) {
+        super(context);
+
+        this.context = context;
+        this.liveUserData = new MutableLiveData<>();
+        this.liveUserData.postValue(user);
+        this.loadStages = new ArrayList<>();
+
+        this.liveUserLocation = userLocation;
+    }
 
     public ShortProfileDialog(
         @NonNull Context context,
-        LiveData<ViewUser> liveData) {
+        MutableLiveData<ViewUser> liveData) {
         super(context);
 
         this.context = context;
@@ -78,7 +95,7 @@ public class ShortProfileDialog
 
     public ShortProfileDialog(
         @NonNull Context context,
-        LiveData<ViewUser> liveData,
+        MutableLiveData<ViewUser> liveData,
         LiveData<UserLocation> personLocation,
         LiveData<UserLocation> myLocation,
         FriendRequestHandler reqHandler) {
@@ -120,12 +137,24 @@ public class ShortProfileDialog
             });
         }
 
-        if (areFriends) {
-            actionButton.setText(VIEW_PROFILE_STRING);
-            actionButton.setOnClickListener(this::showProfileCLick);
+        if (liveUserLocation != null) {
+            actionButton.setText(SHOW_ON_MAP_STRING);
+            actionButton.setEnabled(false);
+
+            liveUserLocation.observe((LifecycleOwner) context, (userLocation) -> {
+                actionButton.setOnClickListener(this::showOnMapClick);
+                actionButton.setEnabled(true);
+            });
+
         } else {
-            actionButton.setText(BE_FRIENDS_STRING);
-            actionButton.setOnClickListener(this::beFriendsClick);
+
+            if (areFriends) {
+                actionButton.setText(VIEW_PROFILE_STRING);
+                actionButton.setOnClickListener(this::showProfileCLick);
+            } else {
+                actionButton.setText(BE_FRIENDS_STRING);
+                actionButton.setOnClickListener(this::beFriendsClick);
+            }
         }
 
     }
@@ -200,6 +229,17 @@ public class ShortProfileDialog
             && liveUserData != null
             && liveUserData.getValue() != null) {
             friendReqHandler.friendRequest(liveUserData.getValue().userId);
+        }
+    }
+
+    private void showOnMapClick(View v) {
+        if (liveUserLocation.getValue() != null) {
+            var loc = new Location(
+                liveUserLocation.getValue().getLatitude(),
+                liveUserLocation.getValue().getLongitude());
+
+            var mapDialog = new ShortMapDialog(context, loc);
+            mapDialog.show();
         }
     }
 

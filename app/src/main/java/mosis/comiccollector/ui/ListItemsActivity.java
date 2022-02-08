@@ -16,6 +16,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import mosis.comiccollector.R;
+import mosis.comiccollector.ui.comic.ComicOrigin;
+import mosis.comiccollector.ui.comic.ShortComicDialog;
+import mosis.comiccollector.ui.user.ShortProfileDialog;
 import mosis.comiccollector.ui.viewmodel.ListViewModel;
 
 public class ListItemsActivity extends AppCompatActivity {
@@ -298,12 +301,20 @@ public class ListItemsActivity extends AppCompatActivity {
             });
     }
 
-    private void comicItemClickHandler(String index) {
-
+    private void comicItemClickHandler(String id) {
+        var comic = viewModel.getComic(id);
+        var dialog = new ShortComicDialog(this, comic, ComicOrigin.Unknown, true);
+        dialog.show();
     }
 
-    private void personItemClickHandler(String index) {
+    private void personItemClickHandler(String id) {
+        var person = viewModel.getUser(id);
+        var dialog = new ShortProfileDialog(
+            this,
+            person,
+            viewModel.getLastLocation(id));
 
+        dialog.show();
     }
 
 }

@@ -11,13 +11,6 @@
         android:layout_height="220dp"
         android:layout_margin="20dp" />
 
-    <!--    <LinearLayout-->
-    <!--        android:layout_width="match_parent"-->
-    <!--        android:layout_height="match_parent"-->
-    <!--        android:layout_margin="20dp"-->
-    <!--        android:gravity="top|center_horizontal"-->
-    <!--        android:orientation="vertical">-->
-
     <TextView
         android:id="@+id/username_people_map"
         android:layout_width="wrap_content"
@@ -28,10 +21,10 @@
 
 
     <RatingBar
-        android:isIndicator="true"
         android:id="@+id/people_from_map_rating_rb"
         android:layout_width="wrap_content"
-        android:layout_height="40dp" />
+        android:layout_height="40dp"
+        android:isIndicator="true" />
 
     <Button
         android:id="@+id/open_profile_people_map"
@@ -40,7 +33,5 @@
         android:layout_marginTop="20dp"
         android:text="View profile" />
 
-
-    <!--    </LinearLayout>-->
 
 </LinearLayout>
